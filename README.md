@@ -20,6 +20,8 @@ So far I've found the native speech API has been fast and accurate.
 
 `app/routes/web-stt/components/voice-bars/tsx` - this is just a presentation component to display audio bars when the player is playing. No important logic in here.
 
+> Below is the original Remix readme. Other than adding the web-stt folder this is a vanilla Remix project
+
 ---
 
 # Welcome to Remix!
