@@ -33,9 +33,15 @@ const ParentComponent: React.FC = () => {
   const [curUrl, setCurUrl] = useState<string | undefined>(undefined);
 
   const handleTranscript = (transcript: string) => {
-    console.log("Received transcript from child:", transcript);
+    console.log(
+      "Received transcript from the record-button component:",
+      transcript
+    );
     setIsWaiting(true);
+
+    // post the transscript to n8n to start the workflow
     fetch("https://jleonard.app.n8n.cloud/webhook/go-time", {
+      // TODO - create env variable to manage the n8n url
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,11 +52,11 @@ const ParentComponent: React.FC = () => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-        return response.json(); // Parse the JSON response
+        return response.json(); // Parse the JSON response from n8n
       })
       .then((data) => {
         console.log("Received data:", data);
-        setCurUrl(data.wav); // Set the .wav URL to state
+        setCurUrl(data.wav); // Set the .wav URL to state to start playback
       })
       .catch((error) => {
         console.error("Error sending data:", error);
