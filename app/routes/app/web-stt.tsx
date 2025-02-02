@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import SpeechRecognitionButton from "./components/record-button";
 import WavPlayer from "./components/wav-player";
+import { useLoaderData } from "@remix-run/react";
 
 import { create } from "zustand";
 import VoiceBars from "./components/voice-bars";
+import type { loader } from "./app.loader";
+
+const n8nEndpoint = "https://jleonard.app.n8n.cloud/webhook/go-time";
 
 interface GlobalStore {
   isRecording: boolean;
@@ -29,6 +33,8 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 }));
 
 const ParentComponent: React.FC = () => {
+  const data = useLoaderData<typeof loader>();
+  console.log("user ....||||  ", data);
   const { isRecording, isWaiting, setIsWaiting, isSpeaking } = useGlobalStore();
   const [curUrl, setCurUrl] = useState<string | undefined>(undefined);
 
@@ -40,8 +46,7 @@ const ParentComponent: React.FC = () => {
     setIsWaiting(true);
 
     // post the transscript to n8n to start the workflow
-    fetch("https://jleonard.app.n8n.cloud/webhook/go-time", {
-      // TODO - create env variable to manage the n8n url
+    fetch(n8nEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -60,6 +65,7 @@ const ParentComponent: React.FC = () => {
       })
       .catch((error) => {
         console.error("Error sending data:", error);
+        // todo handle the error
       })
       .finally(() => {
         setIsWaiting(false);
@@ -83,6 +89,7 @@ const ParentComponent: React.FC = () => {
         />
         {isSpeaking && <VoiceBars />}
         <WavPlayer className="fixed bottom-4 right-4 opacity-0" url={curUrl} />
+        boofy
       </div>
     </div>
   );
