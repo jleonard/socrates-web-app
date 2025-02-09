@@ -118,7 +118,7 @@ const ParentComponent: React.FC = () => {
       <div className="flex flex-col items-center justify-center w-screen h-screen">
         <SpeechRecognitionButton className="" onTranscript={handleTranscript} />
         {isSpeaking && <VoiceBars />}
-        {isWaiting && <AgentWaiting />}
+        {!isWaiting && <AgentWaiting />}
         <WavPlayer className="fixed bottom-4 right-4 opacity-0" url={curUrl} />
       </div>
     </div>
