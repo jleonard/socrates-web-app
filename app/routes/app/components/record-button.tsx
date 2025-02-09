@@ -56,7 +56,7 @@ const SpeechRecognitionButton: React.FC<SpeechRecognitionButtonProps> = ({
         <button
           onMouseDown={startRecognition}
           disabled={isRecording}
-          className={`bg-green-700 text-white w-full ${className}`}
+          className={`bg-green-700 text-white w-full p-9 ${className}`}
         >
           {"Hold to Speak"}
         </button>
