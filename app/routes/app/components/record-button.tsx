@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { useGlobalStore } from "../web-stt";
 
 interface SpeechRecognitionButtonProps {
@@ -10,8 +10,7 @@ const SpeechRecognitionButton: React.FC<SpeechRecognitionButtonProps> = ({
   className,
   onTranscript,
 }) => {
-  const { isRecording, setIsRecording, setIsWaiting } = useGlobalStore();
-  const [isListening, setIsListening] = useState(false);
+  const { isRecording, startRecording, stopRecording } = useGlobalStore();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const startRecognition = () => {
@@ -41,15 +40,13 @@ const SpeechRecognitionButton: React.FC<SpeechRecognitionButtonProps> = ({
     }
 
     recognitionRef.current.start();
-    setIsRecording(true);
-    setIsListening(true);
+    startRecording();
   };
 
   const stopRecognition = () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
-      setIsListening(false);
-      setIsRecording(false);
+      stopRecording();
     }
   };
 
@@ -57,15 +54,15 @@ const SpeechRecognitionButton: React.FC<SpeechRecognitionButtonProps> = ({
     <div className="flex items-center gap-2">
       <button
         onMouseDown={startRecognition}
-        disabled={isListening}
+        disabled={isRecording}
         className={className}
       >
-        {isListening ? "Listening..." : "Hold to Speak"}
+        {isRecording ? "Listening..." : "Hold to Speak"}
       </button>
       {isRecording && (
         <button
           onMouseDown={stopRecognition}
-          disabled={!isListening}
+          disabled={!isRecording}
           className={className}
         >
           Stop

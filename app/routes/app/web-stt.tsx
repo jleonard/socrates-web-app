@@ -5,37 +5,70 @@ import { useLoaderData } from "@remix-run/react";
 
 import { create } from "zustand";
 import VoiceBars from "./components/voice-bars";
+import AgentWaiting from "./components/agent-waiting";
 import type { loader } from "./app.loader";
 
-const n8nEndpoint = "https://jleonard.app.n8n.cloud/webhook/go-time";
+const n8nEndpoint = process.env.N8N_URL!;
 
 interface GlobalStore {
+  agentStateString: string;
   isRecording: boolean;
-  setIsRecording: (bool: boolean) => void;
-
   isSpeaking: boolean;
-  setIsSpeaking: (bool: boolean) => void;
-
   isWaiting: boolean;
-  setIsWaiting: (bool: boolean) => void;
+
+  startRecording: () => void;
+  stopRecording: () => void;
+
+  startWaiting: () => void;
+  stopWaiting: () => void;
+
+  startSpeaking: () => void;
+  stopSpeaking: () => void;
 }
 
 // Define the store
 export const useGlobalStore = create<GlobalStore>((set) => ({
   isRecording: false,
-  setIsRecording: (bool: boolean) => set({ isRecording: bool }),
-
   isWaiting: false,
-  setIsWaiting: (bool: boolean) => set({ isWaiting: bool }),
+  isSpeaking: true,
+  agentStateString: "idle",
 
-  isSpeaking: false,
-  setIsSpeaking: (bool: boolean) => set({ isSpeaking: bool }),
+  startRecording: () =>
+    set({
+      isRecording: true,
+      isSpeaking: false,
+      isWaiting: false,
+      agentStateString: "recording",
+    }),
+
+  stopRecording: () => set({ isRecording: false }),
+
+  startSpeaking: () =>
+    set({
+      isRecording: false,
+      isSpeaking: true,
+      isWaiting: false,
+      agentStateString: "speaking",
+    }),
+
+  stopSpeaking: () => set({ isSpeaking: false }),
+
+  startWaiting: () =>
+    set({
+      isRecording: false,
+      isSpeaking: false,
+      isWaiting: true,
+      agentStateString: "waiting",
+    }),
+
+  stopWaiting: () => set({ isWaiting: false }),
 }));
 
 const ParentComponent: React.FC = () => {
   const data = useLoaderData<typeof loader>();
   console.log("user ....||||  ", data);
-  const { isRecording, isWaiting, setIsWaiting, isSpeaking } = useGlobalStore();
+  const { isRecording, isWaiting, isSpeaking, startWaiting, stopWaiting } =
+    useGlobalStore();
   const [curUrl, setCurUrl] = useState<string | undefined>(undefined);
 
   const handleTranscript = (transcript: string) => {
@@ -43,7 +76,7 @@ const ParentComponent: React.FC = () => {
       "Received transcript from the record-button component:",
       transcript
     );
-    setIsWaiting(true);
+    startWaiting();
 
     // post the transscript to n8n to start the workflow
     fetch(n8nEndpoint, {
@@ -68,7 +101,7 @@ const ParentComponent: React.FC = () => {
         // todo handle the error
       })
       .finally(() => {
-        setIsWaiting(false);
+        stopWaiting();
       });
   };
 
@@ -88,8 +121,8 @@ const ParentComponent: React.FC = () => {
           onTranscript={handleTranscript}
         />
         {isSpeaking && <VoiceBars />}
+        {isWaiting && <AgentWaiting />}
         <WavPlayer className="fixed bottom-4 right-4 opacity-0" url={curUrl} />
-        boofy
       </div>
     </div>
   );

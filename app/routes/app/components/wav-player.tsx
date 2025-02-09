@@ -10,7 +10,7 @@ interface WavPlayerProps {
 
 const WavPlayer: React.FC<WavPlayerProps> = ({ url, className }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { setIsSpeaking } = useGlobalStore();
+  const { startSpeaking, stopSpeaking } = useGlobalStore();
 
   // Whenever the URL changes, trigger playback
   useEffect(() => {
@@ -25,12 +25,12 @@ const WavPlayer: React.FC<WavPlayerProps> = ({ url, className }) => {
   }
 
   const handlePlay = () => {
-    setIsSpeaking(true);
+    startSpeaking();
   };
 
   // Event handler for when playback ends
   const handleEnded = () => {
-    setIsSpeaking(false);
+    stopSpeaking();
   };
 
   return (

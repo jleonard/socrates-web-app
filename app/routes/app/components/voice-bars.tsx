@@ -1,6 +1,3 @@
-import { useRef } from "react";
-import { useChat } from "../../chat/chat";
-
 const VoiceBars = () => {
   //const durations = [474, 345, 500, 322, 476, 312, 441, 289, 487, 346];
   const durations = [474, 433, 407, 458, 400, 427, 441, 419, 487, 442];
