@@ -30,7 +30,7 @@ interface GlobalStore {
 export const useGlobalStore = create<GlobalStore>((set) => ({
   isRecording: false,
   isWaiting: false,
-  isSpeaking: true,
+  isSpeaking: false,
   agentStateString: "idle",
 
   startRecording: () =>

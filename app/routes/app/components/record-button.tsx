@@ -51,7 +51,7 @@ const SpeechRecognitionButton: React.FC<SpeechRecognitionButtonProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="fixed bottom-200 left-1/2 -translate-x-1/2">
       {!isRecording && (
         <button
           onMouseDown={startRecognition}
