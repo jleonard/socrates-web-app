@@ -6,7 +6,7 @@ const VoiceBars = () => {
       {durations.map((duration, index) => (
         <div
           key={index}
-          className="w-2 h-6 rounded-lg bg-purple-500 animate-sound"
+          className="w-2 h-6 rounded-lg bg-slate-500 animate-sound"
           style={{ animationDuration: `${duration}ms` }}
         ></div>
       ))}
