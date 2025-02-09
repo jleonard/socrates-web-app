@@ -8,8 +8,6 @@ import VoiceBars from "./components/voice-bars";
 import AgentWaiting from "./components/agent-waiting";
 import type { loader } from "./app.loader";
 
-const n8nEndpoint = process.env.N8N_URL!;
-
 interface GlobalStore {
   agentStateString: string;
   isRecording: boolean;
@@ -65,6 +63,7 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 }));
 
 const ParentComponent: React.FC = () => {
+  const n8nEndpoint = process.env.N8N_URL!;
   const data = useLoaderData<typeof loader>();
   const { isRecording, isWaiting, isSpeaking, startWaiting, stopWaiting } =
     useGlobalStore();
