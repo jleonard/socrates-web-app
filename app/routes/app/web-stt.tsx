@@ -89,11 +89,12 @@ const ParentComponent: React.FC = () => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-        return response.json(); // Parse the JSON response from n8n
+        return response.blob(); // Parse the JSON response from n8n
       })
       .then((data) => {
         console.log("Received data:", data);
-        setCurUrl(data); // Set the .wav URL to state to start playback
+        const audioUrl = URL.createObjectURL(data);
+        setCurUrl(audioUrl); // Set the .wav URL to state to start playback
       })
       .catch((error) => {
         console.error("Error sending data:", error);
