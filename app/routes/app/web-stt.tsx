@@ -66,9 +66,9 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 
 const ParentComponent: React.FC = () => {
   const data = useLoaderData<typeof loader>();
-  console.log("user ....||||  ", data);
   const { isRecording, isWaiting, isSpeaking, startWaiting, stopWaiting } =
     useGlobalStore();
+
   const [curUrl, setCurUrl] = useState<string | undefined>(undefined);
 
   const handleTranscript = (transcript: string) => {
@@ -79,6 +79,7 @@ const ParentComponent: React.FC = () => {
     startWaiting();
 
     // post the transscript to n8n to start the workflow
+    console.log("n8nEndpoint ", n8nEndpoint);
     fetch(n8nEndpoint, {
       method: "POST",
       headers: {
