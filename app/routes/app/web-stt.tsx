@@ -93,7 +93,7 @@ const ParentComponent: React.FC = () => {
       })
       .then((data) => {
         console.log("Received data:", data);
-        setCurUrl(data.wav); // Set the .wav URL to state to start playback
+        setCurUrl(data); // Set the .wav URL to state to start playback
       })
       .catch((error) => {
         console.error("Error sending data:", error);
