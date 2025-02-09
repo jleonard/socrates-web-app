@@ -63,7 +63,6 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 }));
 
 const ParentComponent: React.FC = () => {
-  const n8nEndpoint = process.env.N8N_URL!;
   const data = useLoaderData<typeof loader>();
   const { isRecording, isWaiting, isSpeaking, startWaiting, stopWaiting } =
     useGlobalStore();
@@ -78,8 +77,8 @@ const ParentComponent: React.FC = () => {
     startWaiting();
 
     // post the transscript to n8n to start the workflow
-    console.log("n8nEndpoint ", n8nEndpoint);
-    fetch(n8nEndpoint, {
+    console.log("n8nEndpoint ", data.n8nEndpoint);
+    fetch(data.n8nEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

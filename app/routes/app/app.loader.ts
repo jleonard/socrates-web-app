@@ -18,5 +18,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   return Response.json({
     pageTitle: "App",
     user: user,
+    n8nEndpoint: process.env.N8N_URL!,
   });
 }
