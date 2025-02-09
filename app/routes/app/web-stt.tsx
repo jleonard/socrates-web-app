@@ -116,10 +116,7 @@ const ParentComponent: React.FC = () => {
         )}
       </div>
       <div className="flex flex-col items-center justify-center w-screen h-screen">
-        <SpeechRecognitionButton
-          className="p-4 bg-red-600 text-white rounded-sm absolute top-2 left-2"
-          onTranscript={handleTranscript}
-        />
+        <SpeechRecognitionButton className="" onTranscript={handleTranscript} />
         {isSpeaking && <VoiceBars />}
         {isWaiting && <AgentWaiting />}
         <WavPlayer className="fixed bottom-4 right-4 opacity-0" url={curUrl} />
