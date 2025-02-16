@@ -6,9 +6,14 @@ import { useGlobalStore } from "../web-stt";
 interface WavPlayerProps {
   url?: string;
   className?: string;
+  mimeType?: string;
 }
 
-const WavPlayer: React.FC<WavPlayerProps> = ({ url, className }) => {
+const WavPlayer: React.FC<WavPlayerProps> = ({
+  url,
+  className,
+  mimeType = "audio/mpeg",
+}) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { startSpeaking, stopSpeaking } = useGlobalStore();
 
@@ -42,7 +47,7 @@ const WavPlayer: React.FC<WavPlayerProps> = ({ url, className }) => {
         onPlay={handlePlay}
         onEnded={handleEnded}
       >
-        <source src={url} type="audio/wav" />
+        <source src={url} type={mimeType} />
         Your browser does not support the audio element.
       </audio>
     </div>

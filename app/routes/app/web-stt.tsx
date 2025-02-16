@@ -107,6 +107,7 @@ const ParentComponent: React.FC = () => {
 
   return (
     <div>
+      <code>02152025</code>
       <div className="absolute top-4 right-4">
         {isRecording && (
           <div className="bg-red-600 text-red-100 p-2">recording</div>
@@ -119,7 +120,11 @@ const ParentComponent: React.FC = () => {
         <SpeechRecognitionButton className="" onTranscript={handleTranscript} />
         {isSpeaking && <VoiceBars />}
         {isWaiting && <AgentWaiting />}
-        <WavPlayer className="fixed bottom-4 right-4 opacity-0" url={curUrl} />
+        <WavPlayer
+          className="fixed bottom-4 right-4 opacity-0"
+          url={curUrl}
+          mimeType="audio/mpeg"
+        />
       </div>
     </div>
   );
