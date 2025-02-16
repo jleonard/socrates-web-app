@@ -58,7 +58,7 @@ const SpeechRecognitionButton: React.FC<SpeechRecognitionButtonProps> = ({
           disabled={isRecording}
           className={`bg-green-700 text-white w-full p-9 rounded-sm text-2xl ${className}`}
         >
-          {"Speak"}
+          {"Speak!"}
         </button>
       )}
 
