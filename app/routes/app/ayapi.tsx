@@ -3,7 +3,7 @@ import type { loader } from "./app.loader";
 
 const ParentComponent: React.FC = () => {
   return (
-    <div>
+    <div className="flex items-center justify-center h-screen">
       {/* @ts-ignore */}
       <elevenlabs-convai agent-id="vSIN4qZQknqFJJiIdsfW"></elevenlabs-convai>
       <script
