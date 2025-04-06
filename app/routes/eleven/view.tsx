@@ -18,7 +18,7 @@ const ParentComponent: React.FC = () => {
 
       // Start the conversation with your agent
       await conversation.startSession({
-        agentId: "YOUR_AGENT_ID", // Replace with your agent ID
+        agentId: "vSIN4qZQknqFJJiIdsfW", // Replace with your agent ID
       });
     } catch (error) {
       console.error("Failed to start conversation:", error);
