@@ -9,7 +9,7 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") || "/app"; // Redirect to a specific page after login (optional)
+  const next = url.searchParams.get("next") || "/"; // Redirect to a specific page after login (optional)
 
   if (code) {
     // Parse cookies from the request

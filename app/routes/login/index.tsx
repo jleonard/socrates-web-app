@@ -3,6 +3,8 @@ import { type LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseBrowserClient } from "~/utils/supabase.client";
 import { useLoaderData } from "@remix-run/react";
 
+import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const env = {
     SUPABASE_URL: process.env.SUPABASE_URL,
@@ -28,19 +30,15 @@ export default function Login() {
       },
     });
     if (error) {
-      console.error("Login page error:", error.message);
+      console.error("Login page error:", error?.message);
     }
   };
 
   return (
     <div style={{ textAlign: "center", marginTop: "20px" }}>
       <h1>Login</h1>
-      <button
-        onClick={handleLogin}
-        style={{ padding: "10px 20px", fontSize: "16px" }}
-      >
-        Sign in with Google
-      </button>
+
+      <GoogleAuthButton label="Continue with Google" onClick={handleLogin} />
     </div>
   );
 }

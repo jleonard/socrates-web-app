@@ -1,22 +1,24 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
+  /* @TODO - remove after local testing!
   const { supabase } = getSupabaseServerClient(request);
-  console.log("loader is here ");
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
+   
 
   if (!user) {
-    return redirect("/login");
+     return redirect("/login");
   } else {
-    console.log("bam! ", user.user_metadata);
+    console.log("auth: ", user.user_metadata);
   }
+    */
+  const user = "foo";
 
   return Response.json({
-    pageTitle: "App",
+    pageTitle: "Eleven",
     user: user,
     n8nEndpoint: process.env.N8N_URL!,
   });

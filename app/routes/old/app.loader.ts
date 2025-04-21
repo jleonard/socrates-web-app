@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -11,11 +11,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   if (!user) {
     return redirect("/login");
   } else {
-    console.log("auth: ", user.user_metadata);
+    console.log("bam! ", user.user_metadata);
   }
 
   return Response.json({
-    pageTitle: "Eleven",
+    pageTitle: "App",
     user: user,
     n8nEndpoint: process.env.N8N_URL!,
   });
