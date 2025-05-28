@@ -54,6 +54,10 @@ const coreColors = {
     "200": "#F7A89D",
     "400": "#CB1E07",
   },
+  paper: {
+    DEFAULT: "#F0EDE4", // base paper color
+    dark: "#E3DFD6",
+  },
 };
 
 export const textColors = {
@@ -86,6 +90,10 @@ export const surfaceColors = {
   quaternary: coreColors.grey["800"],
   handle: coreColors.grey["700"],
   inverse: coreColors.granite["1100"],
+  paper: {
+    DEFAULT: coreColors.paper,
+    dark: coreColors.paper["dark"],
+  },
   emphasis: {
     DEFAULT: coreColors.blue["500"],
     subtle: coreColors.blue["100"],

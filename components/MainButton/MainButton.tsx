@@ -2,8 +2,11 @@ import React, { ReactElement } from "react";
 
 import { Button as ReactAriaButton } from "react-aria-components";
 
-import { MainButtonProps } from "./Mainbutton.types";
+import { MainButtonProps } from "./MainButton.types";
 import { MainButtonStyles } from "./MainButton.styles";
+
+import XIcon from "./icons/x.png";
+import MicrophoneIcon from "./icons/Microphone.png";
 
 export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
   (props, ref) => {
@@ -15,7 +18,11 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
         className={MainButtonStyles({ active, className })}
         {...rest}
       >
-        {children}
+        <>
+          {active && <img className="size-[24px]" src={XIcon} />}
+          {!active && <img className="size-[36px]" src={MicrophoneIcon} />}
+          {children}
+        </>
       </ReactAriaButton>
     );
   }

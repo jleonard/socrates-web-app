@@ -34,14 +34,47 @@ export default {
         ...borderColors,
       },
       keyframes: {
-        sound: {
-          "0%": { opacity: "0.35", height: "20px" },
-          "40%": { opacity: "0.35", height: "35px" },
-          "100%": { opacity: "1", height: "70px" },
+        largeSpeaking: {
+          "0%": { transform: "translateX(-50%) translateY(0%) scale(1)" },
+          "25%": { transform: "translateX(-50%) translateY(-20%) scale(1)" },
+          "50%": { transform: "translateX(-50%) translateY(0%) scale(1)" },
+          "75%": { transform: "translateX(-50%) translateY(30%) scale(1)" },
+          "100%": { transform: "translateX(-50%) translateY(0%) scale(1)" },
+        },
+        mediumSpeaking: {
+          "0%": { transform: "translateX(55%) translateY(0%) scale(1)" },
+          "25%": { transform: "translateX(55%) translateY(20%) scale(1)" },
+          "50%": { transform: "translateX(55%) translateY(0%) scale(1)" },
+          "75%": { transform: "translateX(55%) translateY(-30%) scale(1)" },
+          "100%": { transform: "translateX(55%) translateY(0%) scale(1)" },
+        },
+        equalizer: {
+          "0%": { opacity: "0.35", height: "13px" },
+          "100%": { opacity: "1", height: "78px" },
+        },
+        equalizerAlt: {
+          "0%": { opacity: "0.35", height: "23px" },
+          "100%": { opacity: "1", height: "78px" },
+        },
+        equalizerAltTwo: {
+          "0%": { opacity: "0.35", height: "8px" },
+          "100%": { opacity: "1", height: "78px" },
+        },
+        listening: {
+          "0%": {
+            opacity: "0.7",
+            height: "48px",
+          },
+          "100%": { opacity: "0.7", height: "52px" },
         },
       },
       animation: {
-        sound: "sound 0ms -600ms linear infinite alternate",
+        equalizer: "equalizer 100ms linear infinite alternate",
+        equalizerAlt: "equalizerAlt 100ms linear infinite alternate",
+        equalizerAltTwo: "equalizerAltTwo 100ms linear infinite alternate",
+        listening: "listening 800ms linear infinite alternate",
+        largeSpeaking: "largeSpeaking 75ms linear infinite",
+        mediumSpeaking: "mediumSpeaking 750ms linear infinite",
       },
     },
     borderRadius: {

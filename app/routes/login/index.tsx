@@ -35,10 +35,15 @@ export default function Login() {
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "20px" }}>
+    <div className="flex flex-col max-w-96 mx-auto">
       <h1>Login</h1>
-
-      <GoogleAuthButton label="Continue with Google" onClick={handleLogin} />
+      <div className="mt-auto pb-28 w-full">
+        <GoogleAuthButton
+          className="w-full"
+          label="Continue with Google"
+          onClick={handleLogin}
+        />
+      </div>
     </div>
   );
 }

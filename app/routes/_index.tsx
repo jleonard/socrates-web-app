@@ -9,7 +9,7 @@ export const loader: LoaderFunction = async () => {
 // Optional: meta still useful for crawlers, previews, etc.
 export const meta: MetaFunction = () => {
   return [
-    { title: "Ayapi" },
+    { title: "ayapi" },
     { name: "description", content: "Welcome to Ayapi!" },
   ];
 };

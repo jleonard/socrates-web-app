@@ -4,6 +4,7 @@ import { useConversation } from "@11labs/react";
 import { useCallback, useState } from "react";
 import { MainButton } from "components/MainButton/MainButton";
 import { Transcript } from "components/Transcript/Transcript";
+import { Avatar } from "components/Avatar/Avatar";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 
 const ParentComponent: React.FC = () => {
@@ -69,21 +70,38 @@ const ParentComponent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 h-screen w-screen">
-      <div className="fixed bottom-2 right-2 bg-lime-900 text-lime-300 rounded-sm shadow-lg p-4 flex flex-col">
-        <h3>Attention state</h3>
-        <p>status: {conversation.status}</p>
-        <p>isSpeaking: {conversation.isSpeaking ? "speaking" : "listening"}</p>
+    <>
+      <div className="flex flex-col items-center gap-4">
+        <div className="fixed bottom-2 right-2 bg-lime-900 text-lime-300 rounded-sm shadow-lg p-4 flex flex-col">
+          <h3>Attention state</h3>
+          <p>status: {conversation.status}</p>
+          <p>
+            isSpeaking: {conversation.isSpeaking ? "speaking" : "listening"}
+          </p>
+        </div>
       </div>
 
-      <Transcript />
-      <div className="flex mt-auto flex-row justify-center w-screen">
-        <MainButton onPress={handleMainButtonPress} active={attentionConnected}>
-          {!attentionConnected && "Start Conversation"}
-          {attentionConnected && "Stop Conversation"}
-        </MainButton>
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <Avatar
+          mode={
+            !attentionConnected
+              ? "idle"
+              : conversation.isSpeaking
+              ? "speaking"
+              : "listening"
+          }
+        />
       </div>
-    </div>
+      <div className="opacity-0">
+        <Transcript />
+      </div>
+
+      <MainButton
+        className="fixed left-1/2 -translate-x-1/2 bottom-20"
+        onPress={handleMainButtonPress}
+        active={attentionConnected}
+      ></MainButton>
+    </>
   );
 };
 
