@@ -36,8 +36,7 @@ export default function Login() {
 
   return (
     <div className="flex flex-col max-w-96 mx-auto">
-      <h1>Login</h1>
-      <div className="mt-auto pb-28 w-full">
+      <div className="mt-80 pb-28 w-full">
         <GoogleAuthButton
           className="w-full"
           label="Continue with Google"
