@@ -69,9 +69,9 @@ export default {
         },
       },
       animation: {
-        equalizer: "equalizer 100ms linear infinite alternate",
-        equalizerAlt: "equalizerAlt 100ms linear infinite alternate",
-        equalizerAltTwo: "equalizerAltTwo 100ms linear infinite alternate",
+        equalizerSmall: "equalizerSmall 100ms linear infinite alternate",
+        equalizerMedium: "equalizerMedium 100ms linear infinite alternate",
+        equalizerLarge: "equalizerLarge 100ms linear infinite alternate",
         listening: "listening 800ms linear infinite alternate",
         largeSpeaking: "largeSpeaking 75ms linear infinite",
         mediumSpeaking: "mediumSpeaking 750ms linear infinite",
