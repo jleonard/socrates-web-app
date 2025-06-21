@@ -48,16 +48,16 @@ export default {
           "75%": { transform: "translateX(55%) translateY(-30%) scale(1)" },
           "100%": { transform: "translateX(55%) translateY(0%) scale(1)" },
         },
-        equalizer: {
+        equalizerSmall: {
           "0%": { opacity: "0.35", height: "13px" },
-          "100%": { opacity: "1", height: "78px" },
+          "100%": { opacity: "1", height: "28px" },
         },
-        equalizerAlt: {
-          "0%": { opacity: "0.35", height: "23px" },
-          "100%": { opacity: "1", height: "78px" },
+        equalizerMedium: {
+          "0%": { opacity: "0.35", height: "28px" },
+          "100%": { opacity: "1", height: "40px" },
         },
-        equalizerAltTwo: {
-          "0%": { opacity: "0.35", height: "8px" },
+        equalizerLarge: {
+          "0%": { opacity: "0.35", height: "46px" },
           "100%": { opacity: "1", height: "78px" },
         },
         listening: {

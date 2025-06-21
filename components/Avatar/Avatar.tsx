@@ -12,12 +12,19 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
             const randomDuration =
               Math.floor(Math.random() * (560 - 420 + 1)) + 420;
             const animations = [
-              "animate-equalizer",
-              "animate-equalizerAlt",
-              "animate-equalizerAltTwo",
+              "animate-equalizeSmall",
+              "animate-equalizerMedium",
+              "animate-equalizerLarge",
             ];
-            const animationClass =
+            /* const animationClass =
               animations[Math.floor(Math.random() * animations.length)];
+              */
+            const animationClass =
+              index < 2
+                ? animations[0]
+                : index > 7
+                ? animations[2]
+                : animations[1];
             return (
               <div
                 key={index}
