@@ -12,7 +12,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
             const randomDuration =
               Math.floor(Math.random() * (560 - 420 + 1)) + 420;
             const animations = [
-              "animate-equalizeSmall",
+              "animate-equalizerSmall",
               "animate-equalizerMedium",
               "animate-equalizerLarge",
             ];
@@ -23,8 +23,8 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               index < 2
                 ? animations[0]
                 : index > 7
-                ? animations[2]
-                : animations[1];
+                ? animations[1]
+                : animations[2];
             return (
               <div
                 key={index}
