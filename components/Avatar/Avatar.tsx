@@ -11,6 +11,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
           Array.from({ length: 10 }).map((_, index) => {
             const randomDuration =
               Math.floor(Math.random() * (560 - 420 + 1)) + 420;
+
             const animations = [
               "animate-equalizerSmall",
               "animate-equalizerMedium",

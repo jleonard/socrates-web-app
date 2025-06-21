@@ -50,11 +50,11 @@ export default {
         },
         equalizerSmall: {
           "0%": { opacity: "0.35", height: "13px" },
-          "100%": { opacity: "1", height: "28px" },
+          "100%": { opacity: "1", height: "32px" },
         },
         equalizerMedium: {
           "0%": { opacity: "0.35", height: "28px" },
-          "100%": { opacity: "1", height: "40px" },
+          "100%": { opacity: "1", height: "56px" },
         },
         equalizerLarge: {
           "0%": { opacity: "0.35", height: "46px" },
