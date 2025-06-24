@@ -38,7 +38,7 @@ const ParentComponent: React.FC = () => {
       });
     },
     onError: (error) => {
-      console.error("Errory:", error);
+      console.error("Error:", error);
     },
   });
 
@@ -53,7 +53,7 @@ const ParentComponent: React.FC = () => {
       });
     } catch (error) {
       // todo - this is an attention error.
-      console.error("Errory: to start conversation:", error);
+      console.error("Error: to start conversation:", error);
     }
   }, [conversation]);
 

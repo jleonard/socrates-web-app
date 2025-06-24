@@ -6,19 +6,10 @@ The frameowrk for this POC is [remix](https://remix.run/docs). It is **not** a p
 
 `http://localhost:5173/app` is where you can run the demo. Note, the port may change.
 
-## Tech choices
+## Getting started
 
-This POC uses the browser's [native speech API](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition). It isn't univerally supported but does work in Chrome.
-
-So far I've found the native speech API has been fast and accurate.
-
-`app/routes/app/web-stt` - this is where the view for the POC is built. The route uses [zustand](https://zustand.docs.pmnd.rs/getting-started/introduction) for state management. All the logic to send text to n8n and handle the response happens here.
-
-`app/routes/app/components/record-button.tsx` - this component is imported into the route above. It manages the native speech API.
-
-`app/routes/app/components/wav-player.tsx` - this component accepts the wav file that comes back from n8n and plays it in the browser.
-
-`app/routes/app/components/voice-bars/tsx` - this is just a presentation component to display audio bars when the player is playing. No important logic in here.
+`app/routes/app` - is the main view where you interact with the elevenlabs agent
+`app/
 
 > Below is the original Remix readme. Other than adding the app folder this is a vanilla Remix project
 
