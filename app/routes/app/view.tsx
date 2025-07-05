@@ -1,16 +1,20 @@
 import React from "react";
 import type { loader } from "./app.loader";
+import { useLoaderData } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { useCallback, useState } from "react";
 import { MainButton } from "components/MainButton/MainButton";
 import { Transcript } from "components/Transcript/Transcript";
 import { Avatar } from "components/Avatar/Avatar";
 import { useTranscriptStore } from "../../stores/transcriptStore";
+import { Circles } from "components/Circles/Circles";
 
 const ParentComponent: React.FC = () => {
   const [attentionConnected, setAttentionConnected] = useState(false);
   const [attentionError, setAttentionError] = useState(false);
   const [attentionThinking, setAttentionThinking] = useState(false);
+
+  const { elevenLabsId } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
@@ -49,7 +53,7 @@ const ParentComponent: React.FC = () => {
 
       // Start the conversation with your agent
       await conversation.startSession({
-        agentId: "vSIN4qZQknqFJJiIdsfW", // Replace with your agent ID
+        agentId: elevenLabsId, // Replace with your agent ID
       });
     } catch (error) {
       // todo - this is an attention error.
@@ -81,16 +85,20 @@ const ParentComponent: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <Avatar
-          mode={
-            !attentionConnected
-              ? "idle"
-              : conversation.isSpeaking
-              ? "speaking"
-              : "listening"
-          }
-        />
+      <div className="fixed w-dvw h-dvh top-0 left-0">
+        <Circles mode="processing"></Circles>
+        <div className="opacity-0">
+          <Avatar
+            className="opacity-0"
+            mode={
+              !attentionConnected
+                ? "idle"
+                : conversation.isSpeaking
+                ? "speaking"
+                : "listening"
+            }
+          />
+        </div>
       </div>
       <div className="opacity-0">
         <Transcript />
