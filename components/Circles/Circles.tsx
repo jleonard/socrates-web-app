@@ -283,7 +283,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               connected: {
                 x: 0,
-                y: [-225, -55, -225],
+                y: [-215, -65, -215],
                 scale: 1.3,
                 transition: {
                   x: {
