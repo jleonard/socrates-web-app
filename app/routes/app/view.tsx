@@ -141,7 +141,7 @@ const ParentComponent: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed w-dvw h-dvh top-0 left-0">
+      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none">
         <Circles mode={avatarState}></Circles>
       </div>
       <div className="opacity-0">
