@@ -28,14 +28,23 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     ease: "easeInOut",
                   },
                   y: {
-                    duration: 4,
+                    duration: 0.6,
                     ease: "easeInOut",
-                    repeat: Infinity,
                   },
                   scale: {
                     duration: 0.6,
                     ease: "easeInOut",
                   },
+                },
+              },
+              preconnect: {
+                x: 0,
+                y: -135, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
+                scale: 0.85,
+                transition: {
+                  x: { duration: 0.1, ease: "easeInOut" },
+                  y: { duration: 0.1, ease: "easeInOut" },
+                  scale: { duration: 0.1, ease: "easeInOut" },
                 },
               },
               connected: {
@@ -106,6 +115,14 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                   },
                 },
               },
+              preconnect: {
+                y: 2, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
+                scale: 0.75,
+                transition: {
+                  y: { duration: 0.3, ease: "easeInOut" },
+                  scale: { duration: 0.3, ease: "easeInOut" },
+                },
+              },
               connected: {
                 x: 0,
                 y: [25, 20, 25],
@@ -148,9 +165,11 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             <div
               className={`
                 absolute rounded-full size-[144px] 
-                transition-colors duration-100 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2
+                 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2
                 ${
-                  mode === "speaking" || mode === "connected"
+                  mode === "speaking" ||
+                  mode == "preconnect" ||
+                  mode === "connected"
                     ? "bg-black"
                     : "bg-paper"
                 }
@@ -192,6 +211,14 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     duration: 5,
                     ease: "easeInOut",
                   },
+                },
+              },
+              preconnect: {
+                y: 112, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
+                scale: 0.75,
+                transition: {
+                  y: { duration: 0.3, ease: "easeInOut" },
+                  scale: { duration: 0.3, ease: "easeInOut" },
                 },
               },
               connected: {
@@ -279,6 +306,14 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     duration: 1.5,
                     ease: "linear",
                   },
+                },
+              },
+              preconnect: {
+                y: -215, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
+                scale: 0.75,
+                transition: {
+                  y: { duration: 0.3, ease: "easeInOut" },
+                  scale: { duration: 0.3, ease: "easeInOut" },
                 },
               },
               connected: {

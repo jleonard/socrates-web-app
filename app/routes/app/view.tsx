@@ -20,7 +20,13 @@ const ParentComponent: React.FC = () => {
     null
   );
 
-  type AvatarState = "idle" | "connected" | "speaking" | "processing" | "error";
+  type AvatarState =
+    | "idle"
+    | "connected"
+    | "speaking"
+    | "processing"
+    | "error"
+    | "preconnect";
 
   const [attentionConnected, setAttentionConnected] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>("idle");
@@ -31,12 +37,13 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log("Connected");
-      setAvatarState("connected");
+      setAvatarState("preconnect");
+      setTimeout(() => {
+        setAvatarState("connected");
+      }, 300); // matches preconnect transition duration
       setAttentionConnected(true);
     },
     onDisconnect: () => {
-      console.log("Disconnected");
       setAvatarState("idle");
       setAttentionConnected(false);
     },

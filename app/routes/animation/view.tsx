@@ -4,7 +4,7 @@ import { Circles } from "components/Circles/Circles";
 
 const Animation: React.FC = () => {
   const [mode, setMode] = useState<
-    "processing" | "idle" | "connected" | "error" | "speaking"
+    "processing" | "idle" | "connected" | "error" | "speaking" | "preconnect"
   >("idle");
 
   return (
@@ -27,7 +27,12 @@ const Animation: React.FC = () => {
           Idle
         </button>
         <button
-          onClick={() => setMode("connected")}
+          onClick={() => {
+            setMode("preconnect");
+            setTimeout(() => {
+              setMode("connected");
+            }, 300);
+          }}
           className="px-4 py-2 bg-green-500 text-white rounded"
         >
           Connected
