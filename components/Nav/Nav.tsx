@@ -9,7 +9,7 @@ export const Nav = () => {
       {/* Backdrop outside nav, under z-50 */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-paper z-10"
+          className="fixed inset-0 bg-paper z-30"
           onClick={() => setIsOpen(false)}
         />
       )}

@@ -5,7 +5,6 @@ import { getSupabaseServerClient } from "~/utils/supabase.server"; // Import hel
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
   await supabase.auth.signOut();
-  //return redirect("/login");
   return {};
 }
 
