@@ -28,6 +28,10 @@ const Animation: React.FC = () => {
         </button>
         <button
           onClick={() => {
+            /* we need a preconnect state for 
+              framer motion to transition the dots between idle
+              and connected without a jump.
+            */
             setMode("preconnect");
             setTimeout(() => {
               setMode("connected");
