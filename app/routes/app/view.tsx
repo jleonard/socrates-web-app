@@ -143,12 +143,12 @@ const ParentComponent: React.FC = () => {
       <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none">
         <Circles mode={avatarState}></Circles>
       </div>
-      <div className="opacity-0">
+      <div className="opacity-0 pointer-events-none">
         <Transcript />
       </div>
 
       <MainButton
-        className="fixed left-1/2 -translate-x-1/2 bottom-20"
+        className="fixed left-1/2 -translate-x-1/2 bottom-14 z-50"
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
