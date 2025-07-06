@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./app.loader";
 import { useLoaderData } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
-import { useCallback, useState } from "react";
 import { MainButton } from "components/MainButton/MainButton";
 import { Transcript } from "components/Transcript/Transcript";
 import { Avatar } from "components/Avatar/Avatar";
@@ -10,9 +9,20 @@ import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 
 const ParentComponent: React.FC = () => {
+  const [error, setError] = useState<string | null>(null);
+
+  // mic access
+  const [micAllowed, setMicAllowed] = useState<boolean | null>(null);
+
+  // user coordinates
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+    null
+  );
+
+  type AvatarState = "idle" | "connected" | "speaking" | "processing" | "error";
+
   const [attentionConnected, setAttentionConnected] = useState(false);
-  const [attentionError, setAttentionError] = useState(false);
-  const [attentionThinking, setAttentionThinking] = useState(false);
+  const [avatarState, setAvatarState] = useState<AvatarState>("idle");
 
   const { elevenLabsId } = useLoaderData<typeof loader>();
 
@@ -21,19 +31,24 @@ const ParentComponent: React.FC = () => {
   const conversation = useConversation({
     onConnect: () => {
       console.log("Connected");
+      setAvatarState("connected");
+      setTimeout(() => {
+        setAvatarState("idle");
+      }, 2000);
       setAttentionConnected(true);
     },
     onDisconnect: () => {
       console.log("Disconnected");
+      setAvatarState("idle");
       setAttentionConnected(false);
     },
     onMessage: (message) => {
       console.log("Message:", message);
       if (message.source === "user") {
-        setAttentionThinking(true);
+        setAvatarState("processing");
       }
       if (message.source === "ai") {
-        setAttentionThinking(false);
+        setAvatarState("speaking");
       }
       addEntry({
         timestamp: new Date(),
@@ -43,6 +58,7 @@ const ParentComponent: React.FC = () => {
     },
     onError: (error) => {
       console.error("Error:", error);
+      setAttentionConnected(false);
     },
   });
 
@@ -73,6 +89,46 @@ const ParentComponent: React.FC = () => {
     }
   };
 
+  const requestMicAccess = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicAllowed(true);
+      // Optional: Do something with the stream
+      stream.getTracks().forEach((track) => track.stop()); // Stop the mic if you're not using it yet
+    } catch (err) {
+      console.error("Microphone access error:", err);
+      setMicAllowed(false);
+      setError("Microphone access denied or unavailable.");
+    }
+  };
+
+  useEffect(() => {
+    requestMicAccess();
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      (err) => {
+        setError("Permission denied or error retrieving location");
+        console.error(err);
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    conversation.isSpeaking
+      ? setAvatarState("speaking")
+      : setAvatarState("idle");
+  }, [conversation.isSpeaking]);
+
   return (
     <>
       <div className="flex flex-col items-center gap-4">
@@ -86,19 +142,7 @@ const ParentComponent: React.FC = () => {
       </div>
 
       <div className="fixed w-dvw h-dvh top-0 left-0">
-        <Circles mode="processing"></Circles>
-        <div className="opacity-0">
-          <Avatar
-            className="opacity-0"
-            mode={
-              !attentionConnected
-                ? "idle"
-                : conversation.isSpeaking
-                ? "speaking"
-                : "listening"
-            }
-          />
-        </div>
+        <Circles mode={avatarState}></Circles>
       </div>
       <div className="opacity-0">
         <Transcript />
