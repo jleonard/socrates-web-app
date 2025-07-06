@@ -131,7 +131,7 @@ const ParentComponent: React.FC = () => {
   return (
     <>
       <div className="flex flex-col items-center gap-4">
-        <div className="fixed bottom-2 right-2 bg-zinc-50 text-slate-500 rounded-sm shadow-lg p-4 flex flex-col pointer-events-none">
+        <div className="fixed bottom-2 right-2 bg-zinc-50 text-slate-500 rounded-sm shadow-lg p-4 flex flex-col pointer-events-none opacity-20">
           <h3>Attention state</h3>
           <p>status: {conversation.status}</p>
           <p>
