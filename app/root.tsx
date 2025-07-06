@@ -4,8 +4,9 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunction } from "@remix-run/node";
 
 import { Nav } from "components/Nav/Nav";
 
@@ -24,7 +25,14 @@ export const links: LinksFunction = () => [
   },
 ];
 
+export const loader: LoaderFunction = () => {
+  return {
+    GA_TRACKING_ID: process.env.GA_TRACKING_ID, // Load from .env
+  };
+};
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { GA_TRACKING_ID } = useLoaderData<typeof loader>();
   return (
     <html lang="en">
       <head>
@@ -32,6 +40,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        {GA_TRACKING_ID && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${GA_TRACKING_ID}', {
+                    page_path: window.location.pathname,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
       </head>
       <body className="px-8 max-w-[1024px] mx-auto">
         <Nav />
