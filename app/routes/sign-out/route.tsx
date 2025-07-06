@@ -5,13 +5,15 @@ import { getSupabaseServerClient } from "~/utils/supabase.server"; // Import hel
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
   await supabase.auth.signOut();
-  return redirect("/login");
+  //return redirect("/login");
+  return {};
 }
 
 export default function AuthCallback() {
   return (
     <div>
-      <h1>Signing out...</h1>
+      <h1>You've been signed out.</h1>
+      <a href="/login">Sign in</a>
     </div>
   );
 }

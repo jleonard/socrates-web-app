@@ -56,7 +56,7 @@ const coreColors = {
   },
   paper: {
     DEFAULT: "#F0EDE4", // base paper color
-    dark: "#E3DFD6",
+    darker: "#E3DFD6",
   },
 };
 

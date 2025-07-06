@@ -32,9 +32,6 @@ const ParentComponent: React.FC = () => {
     onConnect: () => {
       console.log("Connected");
       setAvatarState("connected");
-      setTimeout(() => {
-        setAvatarState("idle");
-      }, 2000);
       setAttentionConnected(true);
     },
     onDisconnect: () => {
@@ -126,13 +123,15 @@ const ParentComponent: React.FC = () => {
   useEffect(() => {
     conversation.isSpeaking
       ? setAvatarState("speaking")
-      : setAvatarState("idle");
+      : conversation.status === "disconnected"
+      ? setAvatarState("idle")
+      : setAvatarState("connected");
   }, [conversation.isSpeaking]);
 
   return (
     <>
       <div className="flex flex-col items-center gap-4">
-        <div className="fixed bottom-2 right-2 bg-zinc-50 text-slate-500 rounded-sm shadow-lg p-4 flex flex-col opacity-0">
+        <div className="fixed bottom-2 right-2 bg-zinc-50 text-slate-500 rounded-sm shadow-lg p-4 flex flex-col">
           <h3>Attention state</h3>
           <p>status: {conversation.status}</p>
           <p>

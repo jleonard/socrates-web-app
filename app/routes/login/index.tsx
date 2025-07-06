@@ -35,8 +35,8 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col max-w-96 mx-auto">
-      <div className="mt-80 pb-28 w-full">
+    <div className="flex flex-col max-w-96 mx-auto items-center">
+      <div className="mt-80 pb-28">
         <GoogleAuthButton
           className="w-full"
           label="Continue with Google"
