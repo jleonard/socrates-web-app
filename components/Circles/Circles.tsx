@@ -39,8 +39,8 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               connected: {
                 x: 0,
-                y: [-145, -155, -145],
-                scale: 1,
+                y: [-135, -145, -135],
+                scale: 0.85,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -107,8 +107,8 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               connected: {
                 x: 0,
-                y: [65, 50, 65],
-                scale: 1,
+                y: [25, 20, 25],
+                scale: 0.75,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -195,8 +195,8 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               connected: {
                 x: 0,
-                y: [185, 175, 185],
-                scale: 1.3,
+                y: [112, 102, 112],
+                scale: 0.8,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -282,7 +282,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               connected: {
                 x: 0,
-                y: [-235, -55, -235],
+                y: [-225, -55, -225],
                 scale: 1.3,
                 transition: {
                   x: {
