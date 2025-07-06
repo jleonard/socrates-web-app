@@ -7,6 +7,7 @@ import {
   useLoaderData,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunction } from "@remix-run/node";
+import { usePageViews } from "./hooks/usePageViews"; // <- your hook
 
 import { Nav } from "components/Nav/Nav";
 
@@ -33,6 +34,9 @@ export const loader: LoaderFunction = () => {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { GA_TRACKING_ID } = useLoaderData<typeof loader>();
+  // ✅ Track route changes with google analytics
+  usePageViews(GA_TRACKING_ID);
+
   return (
     <html lang="en">
       <head>
