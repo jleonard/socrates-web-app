@@ -85,11 +85,13 @@ const ParentComponent: React.FC = () => {
       trackEvent({
         action: "user-started-conversation",
         category: "conversation",
+        label: "main button click",
       });
     } else {
       trackEvent({
         action: "user-stopped-conversation",
         category: "conversation",
+        label: "main button click",
       });
       stopConversation();
     }
