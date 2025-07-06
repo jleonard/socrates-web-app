@@ -195,7 +195,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 scale: 1.3,
                 transition: {
                   x: {
-                    duration: 0.1,
+                    duration: 0.6,
                     ease: "linear",
                   },
                   y: {
