@@ -174,7 +174,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               idle: {
                 x: 0,
-                y: [60, 30, 60],
+                y: [0, 15, 0],
                 scale: 1.2,
                 transition: {
                   x: {
@@ -254,7 +254,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               idle: {
                 x: 0,
-                y: [-100, -70, -100],
+                y: [-100, -80, -100],
                 transition: {
                   x: {
                     duration: 0.6,
