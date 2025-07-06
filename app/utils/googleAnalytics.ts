@@ -13,6 +13,7 @@ export function trackEvent({
     console.warn("gtag not available");
     return;
   }
+  console.log("gtag is ", window.gtag);
 
   window.gtag("event", action, {
     event_category: category,
