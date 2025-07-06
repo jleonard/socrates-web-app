@@ -1,3 +1,7 @@
+interface Window {
+  gtag?: (...args: any[]) => void;
+}
+
 export function trackEvent({
   action,
   category,
