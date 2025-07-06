@@ -20,7 +20,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               processing: {},
               idle: {
                 x: 0,
-                y: 0,
+                y: [0, -5, 0],
                 scale: 1,
                 transition: {
                   x: {
@@ -28,8 +28,9 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     ease: "easeInOut",
                   },
                   y: {
-                    duration: 0.6,
+                    duration: 4,
                     ease: "easeInOut",
+                    repeat: Infinity,
                   },
                   scale: {
                     duration: 0.6,
@@ -91,7 +92,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               processing: { y: "0" },
               idle: {
                 x: 0,
-                y: [0, 30, 0],
+                y: [0, 20, 0],
                 transition: {
                   x: {
                     duration: 0.6,
