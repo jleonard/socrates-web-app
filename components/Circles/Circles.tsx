@@ -61,7 +61,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               speaking: {
                 x: 0,
                 y: -135,
-                scale: [0.95, 1, 0.95, 0.9, 0.95, 1, 0.95],
+                scale: [0.75, 0.8, 0.75, 0.7, 0.75, 0.8, 0.75],
                 transition: {
                   x: {
                     duration: 0.6,
@@ -125,7 +125,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               speaking: {
                 x: 0,
                 y: 65,
-                scale: [0.95, 1, 0.95, 0.9, 0.95, 1, 0.95],
+                scale: [0.75, 0.8, 0.75, 0.7, 0.75, 0.8, 0.75],
                 transition: {
                   x: {
                     duration: 0.6,
@@ -217,7 +217,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               speaking: {
                 x: 0, // Move left once
                 y: 175,
-                scale: [0.95, 1, 0.95, 0.9, 0.95, 1, 0.95],
+                scale: [0.75, 0.8, 0.75, 0.7, 0.75, 0.8, 0.75],
                 transition: {
                   x: {
                     duration: 0.6,

@@ -148,7 +148,7 @@ const ParentComponent: React.FC = () => {
       </div>
 
       <MainButton
-        className="fixed left-1/2 -translate-x-1/2 bottom-14 z-50"
+        className="fixed left-1/2 -translate-x-1/2 bottom-14 z-20"
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
