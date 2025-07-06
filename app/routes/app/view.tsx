@@ -7,6 +7,7 @@ import { Transcript } from "components/Transcript/Transcript";
 import { Avatar } from "components/Avatar/Avatar";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
+import { trackEvent } from "~/utils/googleAnalytics";
 
 const ParentComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +82,15 @@ const ParentComponent: React.FC = () => {
   const handleMainButtonPress = () => {
     if (!attentionConnected) {
       startConversation();
+      trackEvent({
+        action: "user-started-conversation",
+        category: "conversation",
+      });
     } else {
+      trackEvent({
+        action: "user-stopped-conversation",
+        category: "conversation",
+      });
       stopConversation();
     }
   };
