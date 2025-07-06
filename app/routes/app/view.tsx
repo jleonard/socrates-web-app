@@ -90,13 +90,13 @@ const ParentComponent: React.FC = () => {
     if (!attentionConnected) {
       startConversation();
       trackEvent({
-        action: "user-started-conversation",
+        action: "user-conversation-started",
         category: "conversation",
         label: "main button click",
       });
     } else {
       trackEvent({
-        action: "user-stopped-conversation",
+        action: "user-conversation-stopped",
         category: "conversation",
         label: "main button click",
       });
