@@ -16,7 +16,7 @@ const ParentComponent: React.FC = () => {
   const [micAllowed, setMicAllowed] = useState<boolean | null>(null);
 
   // user coordinates
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+  const [coords, setCoords] = useState<{ lat: number; long: number } | null>(
     null
   );
 
@@ -40,7 +40,7 @@ const ParentComponent: React.FC = () => {
       setAvatarState("preconnect");
       setTimeout(() => {
         setAvatarState("connected");
-      }, 300); // matches preconnect transition duration
+      }, 250); // matches preconnect transition duration
       setAttentionConnected(true);
     },
     onDisconnect: () => {
@@ -68,6 +68,8 @@ const ParentComponent: React.FC = () => {
   });
 
   const startConversation = useCallback(async () => {
+    const user_lat = coords?.lat ?? 0;
+    const user_long = coords?.long ?? 0;
     try {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -75,6 +77,7 @@ const ParentComponent: React.FC = () => {
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId, // Replace with your agent ID
+        dynamicVariables: { user_lat, user_long },
       });
     } catch (error) {
       // todo - this is an attention error.
@@ -111,7 +114,6 @@ const ParentComponent: React.FC = () => {
       // Optional: Do something with the stream
       stream.getTracks().forEach((track) => track.stop()); // Stop the mic if you're not using it yet
     } catch (err) {
-      console.error("Microphone access error:", err);
       setMicAllowed(false);
       setError("Microphone access denied or unavailable.");
     }
@@ -128,11 +130,12 @@ const ParentComponent: React.FC = () => {
       (position) => {
         setCoords({
           lat: position.coords.latitude,
-          lon: position.coords.longitude,
+          long: position.coords.longitude,
         });
       },
       (err) => {
         setError("Permission denied or error retrieving location");
+        setCoords({ lat: 0, long: 0 });
         console.error(err);
       }
     );

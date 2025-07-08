@@ -116,11 +116,11 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 },
               },
               preconnect: {
-                y: 2, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
+                y: 25, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
                 scale: 0.75,
                 transition: {
-                  y: { duration: 0.3, ease: "easeInOut" },
-                  scale: { duration: 0.3, ease: "easeInOut" },
+                  y: { duration: 0.1, ease: "easeInOut" },
+                  scale: { duration: 0.1, ease: "easeInOut" },
                 },
               },
               connected: {
@@ -217,8 +217,8 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 y: 112, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
                 scale: 0.75,
                 transition: {
-                  y: { duration: 0.3, ease: "easeInOut" },
-                  scale: { duration: 0.3, ease: "easeInOut" },
+                  y: { duration: 0.1, ease: "easeInOut" },
+                  scale: { duration: 0.1, ease: "easeInOut" },
                 },
               },
               connected: {
@@ -269,7 +269,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               className={`absolute origin-center rounded-full size-12 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2
                 ${mode === "processing" && "top-6"}
                 ${
-                  mode === "speaking" || mode === "idle" || mode === "connected"
+                  mode === "speaking" ||
+                  mode === "idle" ||
+                  mode === "connected" ||
+                  mode === "preconnect"
                     ? "bg-black"
                     : "bg-paper"
                 }`}
@@ -312,8 +315,8 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 y: -215, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
                 scale: 0.75,
                 transition: {
-                  y: { duration: 0.3, ease: "easeInOut" },
-                  scale: { duration: 0.3, ease: "easeInOut" },
+                  y: { duration: 0.1, ease: "easeInOut" },
+                  scale: { duration: 0.1, ease: "easeInOut" },
                 },
               },
               connected: {
