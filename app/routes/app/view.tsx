@@ -30,8 +30,8 @@ const ParentComponent: React.FC = () => {
 
   const [attentionConnected, setAttentionConnected] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>("idle");
-  // get authenticated user
-  const { user, elevenLabsId } = useLoaderData<typeof loader>();
+
+  const { elevenLabsId } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
@@ -55,14 +55,11 @@ const ParentComponent: React.FC = () => {
       if (message.source === "ai") {
         setAvatarState("speaking");
       }
-      // save history (n8n) using user.id
       addEntry({
-          timestamp: new Date(),
-          text: message.message,
-          speaker: message.source,
-        },
-        user.id // <-- user.id authenticated
-      );
+        timestamp: new Date(),
+        text: message.message,
+        speaker: message.source,
+      });
     },
     onError: (error) => {
       console.error("Error:", error);
@@ -76,7 +73,7 @@ const ParentComponent: React.FC = () => {
     try {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId, // Replace with your agent ID
@@ -128,6 +125,7 @@ const ParentComponent: React.FC = () => {
       setError("Geolocation is not supported by your browser");
       return;
     }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCoords({
