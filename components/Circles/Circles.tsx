@@ -17,7 +17,20 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             animate={mode}
             className="animation inset-0 z-10"
             variants={{
-              processing: {},
+              processing: {
+                x: 0,
+                y: 0,
+                transition: {
+                  x: {
+                    duration: 0.6,
+                    ease: "easeInOut",
+                  },
+                  y: {
+                    duration: 0.3,
+                    ease: "easeInOut",
+                  },
+                },
+              },
               idle: {
                 x: 0,
                 y: [0, -5, 0],
