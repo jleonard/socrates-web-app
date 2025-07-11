@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs } from "@remix-run/node";
-
+import { Link } from "@remix-run/react";
 import { getSupabaseBrowserClient } from "~/utils/supabase.client";
 import { useLoaderData } from "@remix-run/react";
 
@@ -36,12 +36,17 @@ export default function Login() {
 
   return (
     <div className="flex flex-col max-w-96 mx-auto items-center">
-      <div className="mt-80 pb-28">
+      <div className="mt-80 pb-28 flex flex-col gap-3 items-center">
         <GoogleAuthButton
           className="w-full"
           label="Continue with Google"
           onClick={handleLogin}
         />
+        <p className="mt-5 text-xs">
+          By signing in you agree to our{" "}
+          <Link to="/terms">Terms &amp; Conditions</Link> and{" "}
+          <Link to="/privacy">Privacy Statement</Link>
+        </p>
       </div>
     </div>
   );
