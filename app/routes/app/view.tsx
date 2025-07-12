@@ -59,6 +59,7 @@ const ParentComponent: React.FC = () => {
         timestamp: new Date(),
         text: message.message,
         speaker: message.source,
+        location: coords ?? undefined,
       });
     },
     onError: (error) => {
