@@ -56,12 +56,15 @@ const ParentComponent: React.FC = () => {
       if (message.source === "ai") {
         setAvatarState("speaking");
       }
-      addEntry({
-        timestamp: new Date(),
-        text: message.message,
-        speaker: message.source,
-        location: coords ?? undefined,
-      });
+      addEntry(
+        {
+          timestamp: new Date(),
+          text: message.message,
+          speaker: message.source,
+          location: coords ?? undefined,
+        },
+        user?.id
+      );
     },
     onError: (error) => {
       console.error("Error:", error);
