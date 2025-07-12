@@ -31,12 +31,13 @@ const ParentComponent: React.FC = () => {
   const [attentionConnected, setAttentionConnected] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>("idle");
 
-  const { elevenLabsId } = useLoaderData<typeof loader>();
+  const { elevenLabsId, user } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
   const conversation = useConversation({
     onConnect: () => {
+      console.log("user::", user);
       setAvatarState("preconnect");
       setTimeout(() => {
         setAvatarState("connected");
