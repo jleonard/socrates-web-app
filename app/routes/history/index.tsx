@@ -82,7 +82,7 @@ const HistoryPage: React.FC = () => {
 
   return (
     <div>
-      <ul className="max-w-[600px]">
+      <ul className="max-w-[600px] pb-9">
         {groupedHistory.map(([date, entries]) => (
           <React.Fragment key={date}>
             <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
