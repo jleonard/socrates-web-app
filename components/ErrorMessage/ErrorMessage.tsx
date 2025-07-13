@@ -1,0 +1,27 @@
+import { useEffect, useState } from "react";
+
+type ErrorMessageProps = {
+  message: string;
+  onClear?: () => void; // optional callback to clear the error externally
+};
+
+export function ErrorMessage({ message, onClear }: ErrorMessageProps) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setVisible(false);
+      if (onClear) onClear();
+    }, 4000);
+
+    return () => clearTimeout(timeout);
+  }, [onClear]);
+
+  if (!visible) return null;
+
+  return (
+    <div className=" bg-red-600 text-white px-4 py-2 rounded shadow-md transition-opacity duration-500">
+      {message}
+    </div>
+  );
+}

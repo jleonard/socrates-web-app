@@ -1,5 +1,5 @@
-import React, { ReactElement, useState } from "react";
-import { CircleUserRound, X, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { CircleUserRound, X } from "lucide-react";
 
 export const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);

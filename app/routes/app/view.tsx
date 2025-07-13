@@ -4,11 +4,11 @@ import { useLoaderData } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { Transcript } from "components/Transcript/Transcript";
-import { Avatar } from "components/Avatar/Avatar";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
+import { ErrorMessage } from "components/ErrorMessage/ErrorMessage";
 
 const ParentComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,6 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log("user::", user);
       setAvatarState("preconnect");
       setTimeout(() => {
         setAvatarState("connected");
@@ -60,7 +59,6 @@ const ParentComponent: React.FC = () => {
       setAttentionConnected(false);
     },
     onMessage: (message) => {
-      console.log("Message:", message);
       if (message.source === "user") {
         setAvatarState("processing");
       }
@@ -78,7 +76,8 @@ const ParentComponent: React.FC = () => {
       );
     },
     onError: (error) => {
-      console.error("Error:", error);
+      // console.error("Error:", error);
+      setError(error);
       setAttentionConnected(false);
     },
   });
@@ -98,6 +97,7 @@ const ParentComponent: React.FC = () => {
     } catch (error) {
       // todo - this is an attention error.
       console.error("Error: to start conversation:", error);
+      setError("Couldn't start the conversation");
     }
   }, [conversation]);
 
@@ -125,13 +125,14 @@ const ParentComponent: React.FC = () => {
 
   const requestMicAccess = async () => {
     try {
+      setError("hey how are you. this is a very long error actually");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicAllowed(true);
       // Optional: Do something with the stream
       stream.getTracks().forEach((track) => track.stop()); // Stop the mic if you're not using it yet
     } catch (err) {
       setMicAllowed(false);
-      setError("Microphone access denied or unavailable.");
+      //setError("Microphone access denied or unavailable.");
     }
   };
 
@@ -150,9 +151,8 @@ const ParentComponent: React.FC = () => {
         });
       },
       (err) => {
-        setError("Permission denied or error retrieving location");
+        //setError("Permission denied or error retrieving location");
         setCoords({ lat: 0, long: 0 });
-        console.error(err);
       }
     );
   }, []);
@@ -183,13 +183,12 @@ const ParentComponent: React.FC = () => {
       <div className="opacity-0 pointer-events-none">
         <Transcript />
       </div>
-
+      {error && <ErrorMessage message={error} />}
       <MainButton
         className="fixed left-1/2 -translate-x-1/2 bottom-14 z-20"
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
-      {!isOnline && <p>You are offline</p>}
     </>
   );
 };
