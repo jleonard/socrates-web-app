@@ -3,6 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { redirect } from "@remix-run/node";
+import ChatMessage from "components/ChatMessage/ChatMessage";
 
 type HistoryItem = Record<string, unknown>;
 
@@ -54,6 +55,8 @@ const HistoryPage: React.FC = () => {
           const message = (item as any).message;
           const timestampStr = message?.timestamp;
           const content = message?.content;
+          const messageType =
+            message?.type && message.type === "ai" ? "incoming" : "outgoing";
 
           // Gracefully skip items with no timestamp
           if (!timestampStr) return null;
@@ -85,19 +88,7 @@ const HistoryPage: React.FC = () => {
                 </li>
               )}
               <li>
-                <span
-                  style={{
-                    color: "#999",
-                    fontSize: "0.9em",
-                    marginRight: "0.5em",
-                  }}
-                >
-                  {timestamp.toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </span>
-                {typeof content === "string" ? content : "[Missing content]"}
+                <ChatMessage messageType={messageType} text={content} />
               </li>
             </React.Fragment>
           );
