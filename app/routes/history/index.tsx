@@ -114,10 +114,10 @@ const HistoryPage: React.FC = () => {
       </ul>
       <Link
         to="/app"
-        className="fixed left-6 bottom-3 z-10 flex flex-row align-middle p-2 bg-black text-white rounded-xs"
+        className="fixed left-6 bottom-3 z-10 flex flex-row items-center p-2 bg-black text-white rounded-xs"
       >
         <ChevronLeft size={20} />
-        Back
+        <span>Back</span>
       </Link>
     </div>
   );
