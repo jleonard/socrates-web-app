@@ -72,6 +72,10 @@ const HistoryPage: React.FC = () => {
                 </li>
               )}
               <li>
+                <span>{currentDate}</span>
+                {typeof item.content === "string" && (
+                  <span>{item.content}</span>
+                )}
                 {typeof item === "object" ? JSON.stringify(item) : String(item)}
               </li>
             </React.Fragment>
