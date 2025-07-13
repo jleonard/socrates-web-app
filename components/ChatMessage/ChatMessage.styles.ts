@@ -1,7 +1,7 @@
 import { tv } from "../../app/utils/tv";
 
 export const chatMessageStyles = tv({
-  base: "max-w-10/12 flex flex-initial rounded-l-lg rounded-r-lg bg-transparent px-5 py-3 text-primary",
+  base: "flex flex-initial rounded-l-lg rounded-r-lg bg-transparent px-5 py-3 text-primary",
   variants: {
     messageType: {
       incoming: [

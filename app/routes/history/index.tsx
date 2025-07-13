@@ -98,8 +98,14 @@ const HistoryPage: React.FC = () => {
                   : "outgoing";
 
               return (
-                <li key={idx}>
-                  <ChatMessage messageType={messageType} text={content} />
+                <li className="flex flex-row" key={idx}>
+                  <ChatMessage
+                    className={
+                      messageType !== "incoming" ? "w-8/12 ml-auto" : ""
+                    }
+                    messageType={messageType}
+                    text={content}
+                  />
                 </li>
               );
             })}
