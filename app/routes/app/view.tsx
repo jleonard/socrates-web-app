@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./app.loader";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { Transcript } from "components/Transcript/Transcript";
@@ -200,6 +200,13 @@ const ParentComponent: React.FC = () => {
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
+      <Link to="/history">
+        <img
+          src="/icons/Bookmark.png"
+          className="size-[46px]"
+          alt="view history"
+        />
+      </Link>
     </>
   );
 };
