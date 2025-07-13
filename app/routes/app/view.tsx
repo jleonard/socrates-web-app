@@ -48,14 +48,16 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
+      /* testing
       setAvatarState("preconnect");
       setTimeout(() => {
         setAvatarState("connected");
       }, 250); // matches preconnect transition duration
+      */
       setAttentionConnected(true);
     },
     onDisconnect: () => {
-      setAvatarState("idle");
+      // test - setAvatarState("idle");
       setAttentionConnected(false);
     },
     onMessage: (message) => {
@@ -76,7 +78,6 @@ const ParentComponent: React.FC = () => {
       );
     },
     onError: (error) => {
-      // console.error("Error:", error);
       setError(error);
       setAttentionConnected(false);
     },
@@ -127,8 +128,7 @@ const ParentComponent: React.FC = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicAllowed(true);
-      // Optional: Do something with the stream
-      stream.getTracks().forEach((track) => track.stop()); // Stop the mic if you're not using it yet
+      stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
       setMicAllowed(false);
       //setError("Microphone access denied or unavailable.");
@@ -163,6 +163,21 @@ const ParentComponent: React.FC = () => {
       ? setAvatarState("idle")
       : setAvatarState("connected");
   }, [conversation.isSpeaking]);
+
+  useEffect(() => {
+    if (conversation.status === "connecting") {
+      setAvatarState("processing");
+    }
+    if (conversation.status === "connected") {
+      setAvatarState("preconnect");
+      setTimeout(() => {
+        setAvatarState("connected");
+      }, 250); // matches preconnect transition duration
+    }
+    if (conversation.status === "disconnected") {
+      setAvatarState("idle");
+    }
+  }, [conversation.status]);
 
   return (
     <>
