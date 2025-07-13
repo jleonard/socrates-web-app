@@ -8,6 +8,7 @@ import { Avatar } from "components/Avatar/Avatar";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
+import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 
 const ParentComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,16 @@ const ParentComponent: React.FC = () => {
   const [coords, setCoords] = useState<{ lat: number; long: number } | null>(
     null
   );
+
+  // check for network availability
+  const isOnline = useNetworkStatus();
+  useEffect(() => {
+    if (!isOnline) {
+      console.warn("You're offline");
+    } else {
+      console.log("You're back online");
+    }
+  }, [isOnline]);
 
   type AvatarState =
     | "idle"
@@ -178,6 +189,7 @@ const ParentComponent: React.FC = () => {
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
+      {!isOnline && <p>You are offline</p>}
     </>
   );
 };
