@@ -47,52 +47,64 @@ const HistoryPage: React.FC = () => {
     return <div>404 not found. Try to login.</div>;
   }
 
+  // Helper: group by date with sorting
+  const groupAndSortHistory = (items: HistoryItem[]) => {
+    const sorted = [...items].sort((a, b) => {
+      const aTime = new Date((a as any).message?.timestamp).getTime();
+      const bTime = new Date((b as any).message?.timestamp).getTime();
+      return aTime - bTime;
+    });
+
+    // Group by formatted date string
+    const groups: Record<string, HistoryItem[]> = {};
+    for (const item of sorted) {
+      const timestampStr = (item as any).message?.timestamp;
+      if (!timestampStr) continue;
+
+      const dateStr = new Date(timestampStr).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      if (!groups[dateStr]) groups[dateStr] = [];
+      groups[dateStr].push(item);
+    }
+
+    // Return array sorted by date descending (newest dates first)
+    return Object.entries(groups).sort(
+      ([dateA], [dateB]) =>
+        new Date(dateB).getTime() - new Date(dateA).getTime()
+    );
+  };
+
+  const groupedHistory = groupAndSortHistory(historial);
+
   return (
     <div>
       <h1>History</h1>
       <ul>
-        {historial.map((item, idx) => {
-          const message = (item as any).message;
-          const timestampStr = message?.timestamp;
-          const content = message?.content;
-          const messageType =
-            message?.type && message.type === "ai" ? "incoming" : "outgoing";
+        {groupedHistory.map(([date, entries]) => (
+          <React.Fragment key={date}>
+            <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
+              {date}
+            </li>
+            {entries.map((item, idx) => {
+              const message = (item as any).message;
+              const content = message?.content;
+              const messageType =
+                message?.type && message.type === "ai"
+                  ? "incoming"
+                  : "outgoing";
 
-          // Gracefully skip items with no timestamp
-          if (!timestampStr) return null;
-
-          const timestamp = new Date(timestampStr);
-          const currentDate = timestamp.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          });
-
-          const prevMessage = (historial[idx - 1] as any)?.message;
-          const prevTimestampStr = prevMessage?.timestamp;
-          const prevDate = prevTimestampStr
-            ? new Date(prevTimestampStr).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : null;
-
-          const showDateHeader = currentDate !== prevDate;
-
-          return (
-            <React.Fragment key={idx}>
-              {showDateHeader && (
-                <li className="mt-4 font-bold border-b border-gray-300 pb-1">
-                  {currentDate}
+              return (
+                <li key={idx}>
+                  <ChatMessage messageType={messageType} text={content} />
                 </li>
-              )}
-              <li>
-                <ChatMessage messageType={messageType} text={content} />
-              </li>
-            </React.Fragment>
-          );
-        })}
+              );
+            })}
+          </React.Fragment>
+        ))}
       </ul>
     </div>
   );
