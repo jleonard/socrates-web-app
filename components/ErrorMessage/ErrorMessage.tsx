@@ -20,7 +20,7 @@ export function ErrorMessage({ message, onClear }: ErrorMessageProps) {
   if (!visible) return null;
 
   return (
-    <div className=" bg-red-600 text-white px-4 py-2 rounded shadow-md transition-opacity duration-500">
+    <div className=" bg-red-200 text-red-800 px-4 py-2 rounded shadow-md transition-opacity duration-500">
       {message}
     </div>
   );

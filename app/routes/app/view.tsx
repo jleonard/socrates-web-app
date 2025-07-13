@@ -183,7 +183,11 @@ const ParentComponent: React.FC = () => {
       <div className="opacity-0 pointer-events-none">
         <Transcript />
       </div>
-      {error && <ErrorMessage message={error} />}
+      {error && (
+        <div className="mt-3">
+          <ErrorMessage message={error} />
+        </div>
+      )}
       <MainButton
         className="fixed left-1/2 -translate-x-1/2 bottom-14 z-20"
         onPress={handleMainButtonPress}
