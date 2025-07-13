@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { redirect } from "@remix-run/node";
 import ChatMessage from "components/ChatMessage/ChatMessage";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 type HistoryItem = Record<string, unknown>;
 
@@ -108,9 +108,9 @@ const HistoryPage: React.FC = () => {
       </ul>
       <Link
         to="/app"
-        className="fixed left-6 bottom-3 z-10 flex flex-row items-center bg-black text-white"
+        className="fixed left-6 bottom-3 z-10 flex flex-row items-center bg-black text-white px-2 py-1"
       >
-        <ChevronRight />
+        <ChevronLeft />
         Back
       </Link>
     </div>
