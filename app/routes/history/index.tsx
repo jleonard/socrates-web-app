@@ -52,8 +52,11 @@ const HistoryPage: React.FC = () => {
       <ul>
         {historial.map((item, idx) => {
           const timestamp = new Date(item.timestamp as string);
-          const currentDate = timestamp.toDateString(); // e.g., "Mon Jul 01 2024"
-
+          const currentDate = timestamp.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
           const prevItem = historial[idx - 1];
           const prevDate = prevItem
             ? new Date(prevItem.timestamp as string).toDateString()
