@@ -125,7 +125,6 @@ const ParentComponent: React.FC = () => {
 
   const requestMicAccess = async () => {
     try {
-      setError("hey how are you. this is a very long error actually");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicAllowed(true);
       // Optional: Do something with the stream
