@@ -51,15 +51,28 @@ const HistoryPage: React.FC = () => {
       <h1>History</h1>
       <ul>
         {historial.map((item, idx) => {
-          const timestamp = new Date(item.timestamp as string);
+          const message = (item as any).message;
+          const timestampStr = message?.timestamp;
+          const content = message?.content;
+
+          // Gracefully skip items with no timestamp
+          if (!timestampStr) return null;
+
+          const timestamp = new Date(timestampStr);
           const currentDate = timestamp.toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
           });
-          const prevItem = historial[idx - 1];
-          const prevDate = prevItem
-            ? new Date(prevItem.timestamp as string).toDateString()
+
+          const prevMessage = (historial[idx - 1] as any)?.message;
+          const prevTimestampStr = prevMessage?.timestamp;
+          const prevDate = prevTimestampStr
+            ? new Date(prevTimestampStr).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
             : null;
 
           const showDateHeader = currentDate !== prevDate;
@@ -72,22 +85,23 @@ const HistoryPage: React.FC = () => {
                 </li>
               )}
               <li>
-                <span>{currentDate}</span>
-                {typeof item.content === "string" && (
-                  <span>{item.content}</span>
-                )}
-                {typeof item === "object" ? JSON.stringify(item) : String(item)}
+                <span
+                  style={{
+                    color: "#999",
+                    fontSize: "0.9em",
+                    marginRight: "0.5em",
+                  }}
+                >
+                  {timestamp.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
+                {typeof content === "string" ? content : "[Missing content]"}
               </li>
             </React.Fragment>
           );
         })}
-      </ul>
-      <ul>
-        {historial.map((item, idx) => (
-          <li key={idx}>
-            {typeof item === "object" ? JSON.stringify(item) : String(item)}
-          </li>
-        ))}
       </ul>
     </div>
   );
