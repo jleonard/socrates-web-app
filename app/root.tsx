@@ -70,7 +70,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        <footer className="fixed left-0 right-0 bottom-1 text-center py-2 text-sm text-gray-500">
+        <footer className="fixed left-0 right-0 bottom-1 text-center py-2 text-sm text-gray-500 bg-paper">
           © {new Date().getFullYear()} ayapi.ai
         </footer>
       </body>
