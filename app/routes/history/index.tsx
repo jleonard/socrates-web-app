@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { redirect } from "@remix-run/node";
 import ChatMessage from "components/ChatMessage/ChatMessage";
+import { ChevronRight } from "lucide-react";
 
 type HistoryItem = Record<string, unknown>;
 
@@ -105,6 +106,13 @@ const HistoryPage: React.FC = () => {
           </React.Fragment>
         ))}
       </ul>
+      <Link
+        to="/app"
+        className="fixed left-6 bottom-3 z-10 flex flex-row items-center bg-black text-white"
+      >
+        <ChevronRight />
+        Back
+      </Link>
     </div>
   );
 };
