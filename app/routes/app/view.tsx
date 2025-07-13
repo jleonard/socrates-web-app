@@ -48,16 +48,9 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
-      /* testing
-      setAvatarState("preconnect");
-      setTimeout(() => {
-        setAvatarState("connected");
-      }, 250); // matches preconnect transition duration
-      */
       setAttentionConnected(true);
     },
     onDisconnect: () => {
-      // test - setAvatarState("idle");
       setAttentionConnected(false);
     },
     onMessage: (message) => {
@@ -157,14 +150,6 @@ const ParentComponent: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    conversation.isSpeaking
-      ? setAvatarState("speaking")
-      : conversation.status === "disconnected"
-      ? setAvatarState("idle")
-      : setAvatarState("connected");
-  }, [conversation.isSpeaking]);
-
-  useEffect(() => {
     if (conversation.status === "connecting") {
       setAvatarState("processing");
     }
@@ -178,6 +163,14 @@ const ParentComponent: React.FC = () => {
       setAvatarState("idle");
     }
   }, [conversation.status]);
+
+  useEffect(() => {
+    conversation.isSpeaking
+      ? setAvatarState("speaking")
+      : conversation.status === "disconnected"
+      ? setAvatarState("idle")
+      : setAvatarState("connected");
+  }, [conversation.isSpeaking]);
 
   return (
     <>

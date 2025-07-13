@@ -28,7 +28,11 @@ const HistoryPage: React.FC = () => {
 
   useEffect(() => {
     if (!userId) return;
-    fetch(`https://leonardalonso.app.n8n.cloud/webhook/f4140ee1-ae3d-487a-8487-028196f983b1?session=${encodeURIComponent(userId)}`)
+    fetch(
+      `https://leonardalonso.app.n8n.cloud/webhook/f4140ee1-ae3d-487a-8487-028196f983b1?session=${encodeURIComponent(
+        userId
+      )}`
+    )
       .then((res) => res.json())
       .then((data) => {
         setHistorial(Array.isArray(data) ? data : []);
@@ -46,6 +50,32 @@ const HistoryPage: React.FC = () => {
     <div>
       <h1>History</h1>
       <ul>
+        {historial.map((item, idx) => {
+          const timestamp = new Date(item.timestamp as string);
+          const currentDate = timestamp.toDateString(); // e.g., "Mon Jul 01 2024"
+
+          const prevItem = historial[idx - 1];
+          const prevDate = prevItem
+            ? new Date(prevItem.timestamp as string).toDateString()
+            : null;
+
+          const showDateHeader = currentDate !== prevDate;
+
+          return (
+            <React.Fragment key={idx}>
+              {showDateHeader && (
+                <li style={{ fontWeight: "bold", marginTop: "1em" }}>
+                  {currentDate}
+                </li>
+              )}
+              <li>
+                {typeof item === "object" ? JSON.stringify(item) : String(item)}
+              </li>
+            </React.Fragment>
+          );
+        })}
+      </ul>
+      <ul>
         {historial.map((item, idx) => (
           <li key={idx}>
             {typeof item === "object" ? JSON.stringify(item) : String(item)}
@@ -56,4 +86,4 @@ const HistoryPage: React.FC = () => {
   );
 };
 
-export default HistoryPage; 
+export default HistoryPage;
