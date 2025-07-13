@@ -83,7 +83,7 @@ const HistoryPage: React.FC = () => {
           return (
             <React.Fragment key={idx}>
               {showDateHeader && (
-                <li style={{ fontWeight: "bold", marginTop: "1em" }}>
+                <li className="mt-4 font-bold border-b border-gray-300 pb-1">
                   {currentDate}
                 </li>
               )}
