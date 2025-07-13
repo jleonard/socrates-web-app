@@ -12,7 +12,7 @@ export const chatMessageStyles = tv({
         "only:rounded-bl-xs only:rounded-tl-lg", // pointed corner on top when message is the only entry in a group
       ],
       outgoing: [
-        "bg-paper-darker",
+        "bg-paper-dark",
         "self-end",
         "rounded-r-xs",
         "first:rounded-br-xs first:rounded-tr-lg", // pointed corner for first message
