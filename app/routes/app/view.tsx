@@ -200,7 +200,7 @@ const ParentComponent: React.FC = () => {
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
-      <Link to="/history" className="absolute bottom-3 left-0 z-10">
+      <Link to="/history" className="absolute left-0 z-10">
         <img
           src="/icons/Bookmark.png"
           className="size-[46px]"
