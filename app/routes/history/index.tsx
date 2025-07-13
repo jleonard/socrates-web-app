@@ -101,7 +101,7 @@ const HistoryPage: React.FC = () => {
                 <li className="flex flex-row" key={idx}>
                   <ChatMessage
                     className={
-                      messageType !== "incoming" ? "w-8/12 ml-auto" : ""
+                      messageType !== "incoming" ? "w-9/12 ml-auto" : ""
                     }
                     messageType={messageType}
                     text={content}
