@@ -4,6 +4,7 @@ import { getSupabaseBrowserClient } from "~/utils/supabase.client";
 import { useLoaderData } from "@remix-run/react";
 
 import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
+import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const env = {
@@ -58,7 +59,10 @@ export default function Login() {
           label="Continue with Google"
           onClick={handleGoogleLogin}
         />
-        <button onClick={handleFacebookLogin}>Continue with Facebook</button>
+        <FacebookAuthButton
+          onClick={handleFacebookLogin}
+          label="Continue with Facebook"
+        ></FacebookAuthButton>
         <p className="mt-5 text-xs">
           By signing in you agree to our{" "}
           <Link to="/terms">Terms &amp; Conditions</Link> and{" "}
