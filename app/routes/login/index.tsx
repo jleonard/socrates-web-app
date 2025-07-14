@@ -18,7 +18,7 @@ export default function Login() {
     env: { SUPABASE_URL: string; SUPABASE_ANON_KEY: string };
   }>();
 
-  const handleLogin = async () => {
+  const handleGoogleLogin = async () => {
     const supabase = getSupabaseBrowserClient(
       env.SUPABASE_URL,
       env.SUPABASE_ANON_KEY
@@ -34,14 +34,31 @@ export default function Login() {
     }
   };
 
+  const handleFacebookLogin = async () => {
+    const supabase = getSupabaseBrowserClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_ANON_KEY
+    );
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo: `${window.location.origin}/login/callback`, // Redirect back to your server
+      },
+    });
+    if (error) {
+      console.error("Login page error:", error?.message);
+    }
+  };
+
   return (
     <div className="flex flex-col max-w-96 mx-auto items-center">
       <div className="mt-80 pb-28 flex flex-col gap-3 items-center">
         <GoogleAuthButton
           className="w-full"
           label="Continue with Google"
-          onClick={handleLogin}
+          onClick={handleGoogleLogin}
         />
+        <button onClick={handleFacebookLogin}>Continue with Facebook</button>
         <p className="mt-5 text-xs">
           By signing in you agree to our{" "}
           <Link to="/terms">Terms &amp; Conditions</Link> and{" "}
