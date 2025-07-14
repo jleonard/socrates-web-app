@@ -9,7 +9,7 @@ import { useTranscriptStore } from "../../stores/transcriptStore";
 
 const Privacy: React.FC = () => {
   return (
-    <div className="mt-8">
+    <div className="mt-8 pb-7">
       <h1 className="text-4xl mt-8">Terms of Service</h1>
       <br />
       <p className="font-bold">Effective Date: 06/01/2025</p>
