@@ -14,7 +14,7 @@ export const Nav = () => {
         />
       )}
 
-      <nav className="sticky top-8 flex flex-col w-full pt-8 z-50 bg-paper">
+      <nav className="sticky top-0 flex flex-col w-full pt-8 z-50 bg-paper">
         {/* Nav Bar */}
         <div className="flex w-full flex-row gap-2">
           <div>
