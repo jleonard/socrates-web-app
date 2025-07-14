@@ -1,15 +1,8 @@
 import React from "react";
-import type { loader } from "./loader";
-import { useConversation } from "@11labs/react";
-import { useCallback, useState } from "react";
-import { MainButton } from "components/MainButton/MainButton";
-import { Transcript } from "components/Transcript/Transcript";
-import { Avatar } from "components/Avatar/Avatar";
-import { useTranscriptStore } from "../../stores/transcriptStore";
 
 const Privacy: React.FC = () => {
   return (
-    <div className="mt-8 pb-7">
+    <div className="mt-8 pb-8">
       <h1 className="text-4xl mt-8">Terms of Service</h1>
       <br />
       <p className="font-bold">Effective Date: 06/01/2025</p>
@@ -85,10 +78,7 @@ const Privacy: React.FC = () => {
       <h2 className="mt-7 mb-4 text-3xl">10. Contact Us</h2>
       <p>
         If you have any questions about these Terms, please contact us at{" "}
-        <a href="mailto:leonardalonsostudio@gmail.com">
-          leonardalonsostudio@gmail.com
-        </a>
-        .
+        <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>.
       </p>
     </div>
   );

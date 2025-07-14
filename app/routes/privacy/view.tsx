@@ -9,7 +9,7 @@ import { useTranscriptStore } from "../../stores/transcriptStore";
 
 const Privacy: React.FC = () => {
   return (
-    <div className="pb-7">
+    <div className="pb-8">
       <h1 className="text-4xl mt-8">Privacy Policy</h1>
       <br />
       <p className="font-bold">
@@ -101,9 +101,7 @@ const Privacy: React.FC = () => {
       </ul>
       <br />
       To exercise these rights, contact us at:{" "}
-      <a href="mailto:leonardalonsostudio@gmail.com">
-        leonardalonsostudio@gmail.com
-      </a>
+      <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>
       <br />
       <br />
       <h2 className="mt-7 mb-4 text-3xl">6. Security</h2>
@@ -115,13 +113,11 @@ const Privacy: React.FC = () => {
       knowingly collect personal information from children.
       <h2 className="mt-7 mb-4 text-3xl">8. Changes to This Policy</h2>
       We may update this Privacy Policy from time to time. When we do, we will
-      revise the “Effective Date” at the top of the page. We encourage you to
+      revise the "Effective Date" at the top of the page. We encourage you to
       review this page periodically.
       <h2 className="mt-7 mb-4 text-3xl">9. Contact Us</h2>
       If you have questions about this Privacy Policy, please contact us at:
-      Email:{" "}
-      <a href="mailto:someone@example.com">leonardalonsostudio@gmail.com</a>
-      Mailing Address: 130 Lenox Ave. Apt 204 New York, NY 10026
+      Email: <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>
     </div>
   );
 };
