@@ -117,7 +117,7 @@ const Privacy: React.FC = () => {
       review this page periodically.
       <h2 className="mt-7 mb-4 text-3xl">9. Contact Us</h2>
       If you have questions about this Privacy Policy, please contact us at:
-      Email: <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>
+      <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>
     </div>
   );
 };
