@@ -12,7 +12,11 @@ export const GoogleAuthButton = React.forwardRef<
   const { className, label = "Continue with Google", ...rest } = props;
 
   return (
-    <button className="gsi-material-button" {...rest}>
+    <button
+      className="gsi-material-button"
+      style={{ width: "364px" }}
+      {...rest}
+    >
       <div className="gsi-material-button-state"></div>
       <div className="gsi-material-button-content-wrapper">
         <div className="gsi-material-button-icon">
@@ -20,7 +24,7 @@ export const GoogleAuthButton = React.forwardRef<
             version="1.1"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 48 48"
-            xmlnsXlink="http://www.w3.org/1999/xlink"
+            {...{ "xmlns:xlink": "http://www.w3.org/1999/xlink" }}
             style={{ display: "block" }}
           >
             <path

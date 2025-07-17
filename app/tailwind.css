@@ -17,14 +17,14 @@ body {
   -webkit-user-select: none;
   -ms-user-select: none;
   -webkit-appearance: none;
-  background-color: #131314;
+  background-color: WHITE;
   background-image: none;
   border: 1px solid #747775;
   -webkit-border-radius: 4px;
   border-radius: 4px;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
-  color: #e3e3e3;
+  color: #1f1f1f;
   cursor: pointer;
   font-family: "Roboto", arial, sans-serif;
   font-size: 14px;
@@ -43,7 +43,6 @@ body {
   width: auto;
   max-width: 400px;
   min-width: min-content;
-  border-color: #8e918f;
 }
 
 .gsi-material-button .gsi-material-button-icon {
@@ -62,14 +61,14 @@ body {
   -webkit-flex-wrap: nowrap;
   flex-wrap: nowrap;
   height: 100%;
-  justify-content: space-between;
+  justify-content: center;
   position: relative;
   width: 100%;
 }
 
 .gsi-material-button .gsi-material-button-contents {
-  -webkit-flex-grow: 1;
-  flex-grow: 1;
+  -webkit-flex-grow: 0;
+  flex-grow: 0;
   font-family: "Roboto", arial, sans-serif;
   font-weight: 500;
   overflow: hidden;
@@ -90,12 +89,8 @@ body {
 
 .gsi-material-button:disabled {
   cursor: default;
-  background-color: #13131461;
-  border-color: #8e918f1f;
-}
-
-.gsi-material-button:disabled .gsi-material-button-state {
-  background-color: #e3e3e31f;
+  background-color: #ffffff61;
+  border-color: #1f1f1f1f;
 }
 
 .gsi-material-button:disabled .gsi-material-button-contents {
@@ -108,7 +103,7 @@ body {
 
 .gsi-material-button:not(:disabled):active .gsi-material-button-state,
 .gsi-material-button:not(:disabled):focus .gsi-material-button-state {
-  background-color: white;
+  background-color: #303030;
   opacity: 12%;
 }
 
@@ -120,6 +115,6 @@ body {
 }
 
 .gsi-material-button:not(:disabled):hover .gsi-material-button-state {
-  background-color: white;
+  background-color: #303030;
   opacity: 8%;
 }

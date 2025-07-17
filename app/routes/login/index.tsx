@@ -2,7 +2,7 @@ import { type LoaderFunctionArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { getSupabaseBrowserClient } from "~/utils/supabase.client";
 import { useLoaderData } from "@remix-run/react";
-
+import { Circles } from "components/Circles/Circles";
 import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
 import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";
 
@@ -52,8 +52,11 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col max-w-96 mx-auto items-center">
-      <div className="mt-80 pb-28 flex flex-col gap-3 items-center">
+    <>
+      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none">
+        <Circles mode="idle"></Circles>
+      </div>
+      <div className="fixed bottom-14 left-1/2 transform -translate-x-1/2 flex flex-col gap-3 max-w-96 items-center">
         <GoogleAuthButton
           className="w-full"
           label="Continue with Google"
@@ -69,6 +72,6 @@ export default function Login() {
           <Link to="/privacy">Privacy Statement</Link>
         </p>
       </div>
-    </div>
+    </>
   );
 }

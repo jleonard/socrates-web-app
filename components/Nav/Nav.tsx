@@ -33,7 +33,11 @@ export const Nav = () => {
             {isOpen ? (
               <X size={32} strokeWidth={2} />
             ) : (
-              <CircleUserRound strokeWidth={2} size={32} />
+              <img
+                src="/icons/User.svg"
+                className="size-[38px]"
+                alt="open nav"
+              />
             )}
           </button>
         </div>
