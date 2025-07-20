@@ -200,7 +200,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 transition: {
                   rotate: {
                     repeat: Infinity,
-                    duration: 2.3,
+                    duration: 1.8,
                     ease: "circInOut",
                   },
                 },
