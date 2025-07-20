@@ -202,7 +202,7 @@ const ParentComponent: React.FC = () => {
       ></MainButton>
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
-        <div className="max-w-[1024px] mx-auto">
+        <div className="max-w-[1024px] mx-auto pb-2">
           <Link to="/history">
             <img
               src="/icons/Bookmark.png"
