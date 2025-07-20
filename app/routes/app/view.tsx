@@ -200,13 +200,18 @@ const ParentComponent: React.FC = () => {
         onPress={handleMainButtonPress}
         active={attentionConnected}
       ></MainButton>
-      <Link to="/history" className="fixed left-6 bottom-3 z-10">
-        <img
-          src="/icons/Bookmark.png"
-          className="size-[46px]"
-          alt="view history"
-        />
-      </Link>
+
+      <div className="fixed bottom-0 left-0 w-full items-center z-10">
+        <div className="max-w-[1024px] mx-auto">
+          <Link to="/history">
+            <img
+              src="/icons/Bookmark.png"
+              className="size-[46px]"
+              alt="view history"
+            />
+          </Link>
+        </div>
+      </div>
     </>
   );
 };
