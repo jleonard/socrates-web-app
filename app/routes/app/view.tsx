@@ -3,7 +3,6 @@ import type { loader } from "./app.loader";
 import { useLoaderData, Link } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { MainButton } from "components/MainButton/MainButton";
-import { Transcript } from "components/Transcript/Transcript";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
@@ -46,6 +45,9 @@ const ParentComponent: React.FC = () => {
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
+  // tracks the response time from the AI
+  let responseTimeComparison: Date | null = null;
+
   const conversation = useConversation({
     onConnect: () => {
       setAttentionConnected(true);
@@ -54,11 +56,21 @@ const ParentComponent: React.FC = () => {
       setAttentionConnected(false);
     },
     onMessage: (message) => {
+      const now = new Date();
+      let responseTime;
       if (message.source === "user") {
         setAvatarState("processing");
+        responseTimeComparison = now;
       }
       if (message.source === "ai") {
         setAvatarState("speaking");
+
+        // set the response time
+        responseTime = responseTimeComparison
+          ? now.getTime() - responseTimeComparison.getTime()
+          : undefined;
+
+        responseTimeComparison = null;
       }
       addEntry(
         {
@@ -66,6 +78,7 @@ const ParentComponent: React.FC = () => {
           text: message.message,
           speaker: message.source,
           location: coords ?? undefined,
+          ...(responseTime !== undefined && { response_time: responseTime }),
         },
         user?.id
       );

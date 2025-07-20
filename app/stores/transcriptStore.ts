@@ -8,6 +8,7 @@ type TranscriptEntry = {
     lat: number;
     long: number;
   };
+  response_time?: number;
 };
 
 type TranscriptStore = {
@@ -29,7 +30,9 @@ export const useTranscriptStore = create<TranscriptStore>((set) => ({
         content: entry.text,
         timestamp: entry.timestamp.toISOString(),
         additional_kwargs: {},
-        response_metadata: {},
+        response_metadata: entry.response_time
+          ? { response_time: entry.response_time }
+          : {},
         location: entry?.location ?? { lat: 0, long: 0 },
       };
       fetch(
