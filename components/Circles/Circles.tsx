@@ -19,7 +19,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               processing: {
                 x: 0,
-                y: 0,
+                y: -100, // moved up from 0,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -33,7 +33,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               idle: {
                 x: 0,
-                y: [0, -5, 0],
+                y: [-100, -115, -100], // moved up from [0, -5, 0],
                 scale: 1,
                 transition: {
                   x: {
@@ -111,10 +111,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             animate={mode}
             className="absolute inset-0 z-20"
             variants={{
-              processing: { y: "0" },
+              processing: { y: -100 }, // moved up from 0
               idle: {
                 x: 0,
-                y: [0, 20, 0],
+                y: [-100, -80, -100], // moved up from [0, 20, 0],
                 transition: {
                   x: {
                     duration: 0.6,
@@ -196,7 +196,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               processing: {
                 rotate: 360,
-                y: 0,
+                y: -100, // moved up from 0
                 transition: {
                   rotate: {
                     repeat: Infinity,
@@ -207,7 +207,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               idle: {
                 x: 0,
-                y: [0, 15, 0],
+                y: [-100, -85, -100], // moved up from [0, 15, 0],
                 scale: 1.2,
                 transition: {
                   x: {
@@ -298,7 +298,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               idle: {
                 x: 0,
-                y: [-100, -80, -100],
+                y: [-200, -180, -200], // moved up from [-100, -80, -100],
                 transition: {
                   x: {
                     duration: 0.6,
@@ -314,7 +314,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               },
               processing: {
                 rotate: -360,
-                y: 0,
+                y: -100, // moved up from 0
                 left: -20,
                 transition: {
                   rotate: {
