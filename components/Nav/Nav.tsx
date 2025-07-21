@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleUserRound, X } from "lucide-react";
+import { CircleUserRound, X, Menu } from "lucide-react";
 
 export const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,11 +33,14 @@ export const Nav = () => {
             {isOpen ? (
               <X size={32} strokeWidth={2} />
             ) : (
-              <img
-                src="/icons/User.svg"
-                className="size-[38px]"
-                alt="open nav"
-              />
+              <>
+                <Menu size={32} strokeWidth={2} />
+                <img
+                  src="/icons/User.svg"
+                  className="size-[38px] hidden"
+                  alt="open nav"
+                />
+              </>
             )}
           </button>
         </div>
