@@ -16,7 +16,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
           <motion.div
             animate={mode}
             className="animation inset-0 z-10"
-            initial="idle"
+            initial={["idle"]}
             variants={{
               processing: {
                 x: 0,
@@ -111,7 +111,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
           <motion.div
             animate={mode}
             className="absolute inset-0 z-20"
-            initial="idle"
+            initial={["idle"]}
             variants={{
               processing: { y: -100 }, // moved up from 0
               idle: {
@@ -195,7 +195,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
           {/* M Circle */}
           <motion.div
             animate={mode}
-            initial="idle"
+            initial={["idle"]}
             variants={{
               processing: {
                 rotate: 360,
@@ -298,7 +298,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
           {/* SM Circle */}
           <motion.div
             animate={mode}
-            initial="idle"
+            initial={["idle"]}
             variants={{
               idle: {
                 x: 0,
