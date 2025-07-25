@@ -118,3 +118,31 @@ body {
   background-color: #303030;
   opacity: 8%;
 }
+
+/* social buttons */
+.social-button {
+  /* appearance */
+  border-radius: 10px;
+  cursor: pointer;
+
+  /* structure */
+  display: flex;
+  gap: 15px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  padding: 15px;
+}
+
+.social-button--facebook {
+  background-color: #1877f2;
+  color: white;
+  font-weight: bold;
+}
+
+.social-button--google {
+  background-color: white;
+  color: rgba(0, 0, 0, 0.54);
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.084), 0 2px 3px 0 rgba(0, 0, 0, 0.168);
+}
