@@ -12,14 +12,6 @@ export const FacebookAuthButton = React.forwardRef<
   return (
     <>
       <button
-        {...rest}
-        className="flex items-center gap-3 bg-[#1877F2] text-white font-medium px-4 py-2 rounded-md shadow hover:bg-[#166fe0] transition"
-      >
-        <FaFacebookF size={20} className="text-white" />
-        <span>{label}</span>
-      </button>
-
-      <button
         style={{ width: "364px" }}
         className="social-button social-button--facebook"
         {...rest}
