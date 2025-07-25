@@ -55,8 +55,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const statusUrl = `https://pilot.ayapi.ai/gdpr/status?code=${confirmationCode}`;
 
-    // Store confirmationCode/status if you want to support lookups
-
     return {
       url: statusUrl,
       confirmation_code: confirmationCode,
