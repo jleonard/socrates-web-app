@@ -92,14 +92,15 @@ const ParentComponent: React.FC = () => {
   const startConversation = useCallback(async () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
+    const user_session = user.id;
     try {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Start the conversation with your agent
       await conversation.startSession({
-        agentId: elevenLabsId, // Replace with your agent ID
-        dynamicVariables: { user_lat, user_long },
+        agentId: elevenLabsId,
+        dynamicVariables: { user_lat, user_long, user_session },
       });
     } catch (error) {
       // todo - this is an attention error.
