@@ -93,6 +93,11 @@ const ParentComponent: React.FC = () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
     const user_session = user.id;
+    const conversation_id = crypto
+      .randomUUID()
+      .split("-")
+      .slice(0, 2)
+      .join("-");
     try {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -100,7 +105,12 @@ const ParentComponent: React.FC = () => {
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId,
-        dynamicVariables: { user_lat, user_long, user_session },
+        dynamicVariables: {
+          user_lat,
+          user_long,
+          user_session,
+          conversation_id,
+        },
       });
     } catch (error) {
       // todo - this is an attention error.
