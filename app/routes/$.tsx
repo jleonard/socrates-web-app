@@ -5,7 +5,7 @@ export default function NotFound() {
   const error = useRouteError();
 
   const containerClasses =
-    "flex flex-col items-center justify-center text-center pt-6";
+    "flex flex-col items-center justify-center text-center pt-12";
 
   const headingClasses = "text-4xl font-bold text-gray-800 sm:text-5xl mb-4";
 
