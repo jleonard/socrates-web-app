@@ -5,7 +5,7 @@ export default function NotFound() {
   const error = useRouteError();
 
   const containerClasses =
-    "flex flex-col items-center justify-center text-center";
+    "flex flex-col items-center justify-center text-center pt-6";
 
   const headingClasses = "text-4xl font-bold text-gray-800 sm:text-5xl mb-4";
 
@@ -25,9 +25,7 @@ export default function NotFound() {
   return (
     <div className={containerClasses}>
       <h1 className={headingClasses}>An unexpected error occurred.</h1>
-      <p className={paragraphClasses}>
-        Please try again later or contact support.
-      </p>
+      <p className={paragraphClasses}>Please try again.</p>
     </div>
   );
 }
