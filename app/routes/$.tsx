@@ -14,9 +14,9 @@ export default function NotFound() {
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
       <div className={containerClasses}>
-        <h1 className={headingClasses}>404 – Page Not Found</h1>
+        <h1 className={headingClasses}>404 - Page Not Found</h1>
         <p className={paragraphClasses}>
-          Sorry, the page you’re looking for doesn’t exist or has been moved.
+          Sorry, the page you're looking for doesn't exist or has been moved.
         </p>
       </div>
     );
