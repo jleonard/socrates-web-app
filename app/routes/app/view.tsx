@@ -175,7 +175,7 @@ const ParentComponent: React.FC = () => {
 
   useEffect(() => {
     if (conversation.status === "connecting") {
-      setAvatarState("processing");
+      setAvatarState("idle");
     }
     if (conversation.status === "connected") {
       setAvatarState("preconnect");
