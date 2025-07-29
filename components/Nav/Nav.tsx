@@ -64,9 +64,13 @@ export const Nav = () => {
                 </li>
                 <li className="py-3 border-b-slate-600">
                   {user ? (
-                    <Link to="/sign-out">Sign Out</Link>
+                    <Link to="/sign-out" onClick={() => setIsOpen(false)}>
+                      Sign Out
+                    </Link>
                   ) : (
-                    <Link to="/login">Sign In</Link>
+                    <Link to="/login" onClick={() => setIsOpen(false)}>
+                      Sign In
+                    </Link>
                   )}
                 </li>
               </ul>
