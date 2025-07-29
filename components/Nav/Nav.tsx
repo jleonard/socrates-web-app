@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { CircleUserRound, X, Menu } from "lucide-react";
+import { X, Menu } from "lucide-react";
+import { Link, useMatches } from "@remix-run/react";
 
 export const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const matches = useMatches();
+
+  type WithUser = { user?: unknown };
+
+  const user = matches.map((m) => m.data as WithUser).find((m) => m.user)?.user;
 
   return (
     <>
@@ -51,13 +57,17 @@ export const Nav = () => {
             <div className="flex py-4 w-full z-50">
               <ul className="space-y-2 w-full">
                 <li className="py-3 border-b-slate-600 border-b">
-                  <a href="/privacy">Privacy Policy</a>
+                  <Link to="/privacy">Privacy Policy</Link>
                 </li>
                 <li className="py-3 border-b-slate-600 border-b">
-                  <a href="/terms">Terms &amp; Conditions</a>
+                  <Link to="/terms">Terms &amp; Conditions</Link>
                 </li>
                 <li className="py-3 border-b-slate-600">
-                  <a href="/sign-out">Sign Out</a>
+                  {user ? (
+                    <Link to="/sign-out">Sign Out</Link>
+                  ) : (
+                    <Link to="/login">Sign In</Link>
+                  )}
                 </li>
               </ul>
             </div>
