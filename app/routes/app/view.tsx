@@ -144,9 +144,9 @@ const ParentComponent: React.FC = () => {
 
   const requestMicAccess = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicAllowed(true);
-      stream.getTracks().forEach((track) => track.stop());
+      //stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
       setMicAllowed(false);
     }
