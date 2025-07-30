@@ -100,7 +100,8 @@ const ParentComponent: React.FC = () => {
       .join("-");
     try {
       // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      await requestMicAccess();
+      //await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Start the conversation with your agent
       await conversation.startSession({
@@ -148,12 +149,11 @@ const ParentComponent: React.FC = () => {
       stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
       setMicAllowed(false);
-      //setError("Microphone access denied or unavailable.");
     }
   };
 
   useEffect(() => {
-    requestMicAccess();
+    //requestMicAccess();
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser");
       return;
