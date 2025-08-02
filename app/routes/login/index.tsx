@@ -57,7 +57,7 @@ export default function Login() {
         <Circles mode="idle"></Circles>
       </div>
       <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-3 max-w-96 items-center">
-        <h2 className="font-thin text-3xl text-gray-800 text-center mb-8">
+        <h2 className="font-thin text-3xl text-gray-800 text-center mb-7">
           Your AI Companion for
           <br />
           Cultural Exploration
@@ -71,7 +71,7 @@ export default function Login() {
           onClick={handleFacebookLogin}
           label="Continue with Facebook"
         ></FacebookAuthButton>
-        <p className="mt-5 text-xs">
+        <p className="mt-4 text-xs">
           By signing in you agree to our{" "}
           <Link to="/terms">Terms &amp; Conditions</Link> and{" "}
           <Link to="/privacy">Privacy Statement</Link>
