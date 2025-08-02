@@ -6,6 +6,8 @@ export type MainButtonBaseProps = {
 
   /** Disabled state will remove focus and show disabled state styles. */
   active?: boolean;
+
+  loading?: boolean;
 };
 
 export type MainButtonProps = ReactAriaButtonProps & MainButtonBaseProps;

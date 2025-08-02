@@ -41,6 +41,9 @@ const ParentComponent: React.FC = () => {
   const [attentionConnected, setAttentionConnected] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>("idle");
 
+  // this is used to render the spinner in the main button when elevenlabs is connecting.
+  const [avatarConnecting, setConnectingState] = useState(false);
+
   const { elevenLabsId, user } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
@@ -176,6 +179,9 @@ const ParentComponent: React.FC = () => {
   useEffect(() => {
     if (conversation.status === "connecting") {
       setAvatarState("idle");
+      setConnectingState(true);
+    } else {
+      setConnectingState(false);
     }
     if (conversation.status === "connected") {
       setAvatarState("preconnect");
