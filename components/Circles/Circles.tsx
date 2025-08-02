@@ -206,7 +206,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               processing: {
                 rotate: 360,
-                y: -100, // moved up from 0
+                y: -90, // moved up from 0
                 transition: {
                   rotate: {
                     repeat: Infinity,
