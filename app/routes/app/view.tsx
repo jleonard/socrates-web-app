@@ -42,7 +42,7 @@ const ParentComponent: React.FC = () => {
     | "preconnect";
 
   const [attentionConnected, setAttentionConnected] = useState(false);
-  const [avatarState, setAvatarState] = useState<AvatarState>("idle");
+  const [avatarState, setAvatarState] = useState<AvatarState>("processing"); // idle
 
   // this is used to render the spinner in the main button when elevenlabs is connecting.
   const [avatarConnecting, setConnectingState] = useState(false);
@@ -189,7 +189,7 @@ const ParentComponent: React.FC = () => {
     if (conversation.status === "connected") {
       setAvatarState("preconnect");
       setTimeout(() => {
-        setAvatarState("processing"); // connected
+        setAvatarState("connected"); // connected
       }, 250); // matches preconnect transition duration
     }
     if (conversation.status === "disconnected") {
