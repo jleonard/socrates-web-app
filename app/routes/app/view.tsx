@@ -189,7 +189,7 @@ const ParentComponent: React.FC = () => {
     if (conversation.status === "connected") {
       setAvatarState("preconnect");
       setTimeout(() => {
-        setAvatarState("connected");
+        setAvatarState("processing"); // connected
       }, 250); // matches preconnect transition duration
     }
     if (conversation.status === "disconnected") {
