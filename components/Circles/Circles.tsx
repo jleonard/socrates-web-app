@@ -214,6 +214,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     duration: 1.8,
                     ease: "circInOut",
                   },
+                  y: { duration: 0.1, ease: "easeInOut" },
                   scale: { duration: 0.1, ease: "easeInOut" },
                 },
               },
