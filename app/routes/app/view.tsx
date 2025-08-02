@@ -193,7 +193,7 @@ const ParentComponent: React.FC = () => {
       }, 250); // matches preconnect transition duration
     }
     if (conversation.status === "disconnected") {
-      setAvatarState("idle");
+      setAvatarState("processing"); // idle
     }
   }, [conversation.status]);
 
