@@ -20,7 +20,7 @@ export function EBMMessage({
     const timeout = setTimeout(() => {
       setVisible(false);
       if (onClear) onClear();
-    }, 4000);
+    }, 7000);
 
     return () => clearTimeout(timeout);
   }, [onClear]);
@@ -29,8 +29,8 @@ export function EBMMessage({
 
   const baseClasses =
     "px-4 py-2 rounded shadow-md transition-opacity duration-500 flex flex-row gap-2 items-center";
-  const errorClasses = "bg-yellow-100 text-yellow-900";
-  const infoClasses = "bg-blue-100 text-blue-900";
+  const errorClasses = "bg-red-100 text-red-900";
+  const infoClasses = "bg-yellow-100 text-yellow-900";
   const colorClasses = variant === "error" ? errorClasses : infoClasses;
 
   return (
