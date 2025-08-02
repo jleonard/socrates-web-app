@@ -219,7 +219,6 @@ const ParentComponent: React.FC = () => {
 
       {!hasInternet && (
         <div className="mt-3">
-          Hey
           <EBMMessage variant="warning" message="You're offline." />
         </div>
       )}
