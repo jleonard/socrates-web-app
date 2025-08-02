@@ -201,7 +201,7 @@ const ParentComponent: React.FC = () => {
     conversation.isSpeaking
       ? setAvatarState("speaking")
       : conversation.status === "disconnected"
-      ? setAvatarState("idle") // undo with idle
+      ? setAvatarState("processing") // undo with idle
       : setAvatarState("connected");
   }, [conversation.isSpeaking]);
 
