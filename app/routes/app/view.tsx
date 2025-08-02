@@ -20,9 +20,12 @@ const ParentComponent: React.FC = () => {
     null
   );
 
+  const [hasInternet, setHasInternet] = useState(true);
+
   // check for network availability
   const isOnline = useNetworkStatus();
   useEffect(() => {
+    setHasInternet(isOnline);
     if (!isOnline) {
       console.warn("You're offline");
     } else {
@@ -216,6 +219,7 @@ const ParentComponent: React.FC = () => {
 
       {!isOnline && (
         <div className="mt-3">
+          Hey
           <EBMMessage variant="info" message="You're offline." />
         </div>
       )}
