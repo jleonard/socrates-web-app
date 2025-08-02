@@ -57,18 +57,30 @@ export const Nav = () => {
             <div className="flex py-4 w-full z-50">
               <ul className="space-y-2 w-full">
                 <li className="py-3 border-b-slate-600 border-b">
-                  <Link to="/privacy">Privacy Policy</Link>
+                  <Link className="block w-full" to="/privacy">
+                    Privacy Policy
+                  </Link>
                 </li>
                 <li className="py-3 border-b-slate-600 border-b">
-                  <Link to="/terms">Terms &amp; Conditions</Link>
+                  <Link className="block w-full" to="/terms">
+                    Terms &amp; Conditions
+                  </Link>
                 </li>
                 <li className="py-3 border-b-slate-600">
                   {user ? (
-                    <Link to="/sign-out" onClick={() => setIsOpen(false)}>
+                    <Link
+                      className="block w-full"
+                      to="/sign-out"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Sign Out
                     </Link>
                   ) : (
-                    <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Link
+                      className="block w-full"
+                      to="/login"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Sign In
                     </Link>
                   )}
