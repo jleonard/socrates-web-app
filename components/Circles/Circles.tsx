@@ -113,11 +113,17 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             className="absolute inset-0 z-20"
             initial={["idle"]}
             variants={{
-              processing: { y: -100 }, // moved up from 0
+              processing: {
+                y: -100,
+                scale: 0.95,
+                transition: {
+                  scale: { duration: 0.1, ease: "easeInOut" },
+                },
+              }, // moved up from 0
               idle: {
                 x: 0,
                 y: [-100, -80, -100], // moved up from [0, 20, 0],
-                scale: 0.75,
+                scale: 1,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -129,7 +135,6 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     duration: 4,
                     ease: "easeInOut",
                   },
-                  scale: { duration: 0.1, ease: "easeInOut" },
                 },
               },
               preconnect: {
