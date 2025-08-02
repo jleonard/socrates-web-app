@@ -217,7 +217,7 @@ const ParentComponent: React.FC = () => {
         </div>
       )}
 
-      {!isOnline && (
+      {!hasInternet && (
         <div className="mt-3">
           Hey
           <EBMMessage variant="warning" message="You're offline." />
