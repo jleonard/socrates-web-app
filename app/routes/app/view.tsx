@@ -7,7 +7,7 @@ import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
-import { ErrorMessage } from "components/ErrorMessage/ErrorMessage";
+import { EBMMessage } from "components/EBMMessage/EBMMessage";
 
 const ParentComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -210,9 +210,16 @@ const ParentComponent: React.FC = () => {
 
       {error && (
         <div className="mt-3">
-          <ErrorMessage message={error} />
+          <EBMMessage variant="error" message={error} />
         </div>
       )}
+
+      {!isOnline && (
+        <div className="mt-3">
+          <EBMMessage variant="info" message="You're offline." />
+        </div>
+      )}
+
       <MainButton
         className="fixed left-1/2 -translate-x-1/2 bottom-14 z-20"
         onPress={handleMainButtonPress}
