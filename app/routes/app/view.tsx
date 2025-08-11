@@ -61,6 +61,7 @@ const ParentComponent: React.FC = () => {
     onDisconnect: () => {
       setAttentionConnected(false);
     },
+
     onMessage: (message) => {
       const now = new Date();
       let responseTime;
@@ -172,10 +173,23 @@ const ParentComponent: React.FC = () => {
           long: position.coords.longitude,
         });
       },
-      (err) => {
-        //setError("Permission denied or error retrieving location");
-        setCoords({ lat: 0, long: 0 });
-      }
+              (err) => {
+          // En desarrollo local, usar coordenadas del MET para testing
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            setCoords({
+              lat: 40.7794, // MET Museum, NYC
+              long: -73.9632
+            });
+          } else {
+            // En producción, no establecer coordenadas
+            setCoords(null);
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutos
+        }
     );
   }, []);
 
