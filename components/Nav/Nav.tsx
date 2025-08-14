@@ -8,15 +8,26 @@ export const Nav = () => {
 
   type WithUser = { user?: unknown };
 
-  const user = matches.map((m) => m.data as WithUser).find((m) => m.user)?.user;
+  const user = matches
+    .map((m) => m.data as WithUser | null)
+    .filter((data): data is WithUser => data !== null && data !== undefined)
+    .find((m) => m.user)?.user;
 
   return (
     <>
       {/* Backdrop outside nav, under z-50 */}
       {isOpen && (
-        <div
+        <button
+          type="button"
           className="fixed inset-0 bg-paper z-30"
+          aria-label="Close navigation menu"
+          tabIndex={0}
           onClick={() => setIsOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              setIsOpen(false);
+            }
+          }}
         />
       )}
 

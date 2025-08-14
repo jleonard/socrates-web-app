@@ -33,7 +33,16 @@ export const loader: LoaderFunction = () => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { GA_TRACKING_ID } = useLoaderData<typeof loader>();
+  // Handle the case where useLoaderData might fail in error boundaries
+  let GA_TRACKING_ID: string | undefined;
+  try {
+    const data = useLoaderData<typeof loader>();
+    GA_TRACKING_ID = data?.GA_TRACKING_ID;
+  } catch (error) {
+    // If useLoaderData fails (e.g., in error boundary), use undefined
+    GA_TRACKING_ID = undefined;
+  }
+  
   // ✅ Track route changes with google analytics
   usePageViews(GA_TRACKING_ID);
 

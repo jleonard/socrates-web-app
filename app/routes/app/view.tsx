@@ -31,6 +31,7 @@ const ParentComponent: React.FC = () => {
     } else {
       console.log("You're back online");
     }
+
   }, [isOnline]);
 
   type AvatarState =
@@ -218,6 +219,8 @@ const ParentComponent: React.FC = () => {
       ? setAvatarState("idle")
       : setAvatarState("connected");
   }, [conversation.isSpeaking]);
+
+  
 
   return (
     <>
