@@ -35,7 +35,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ onAllow, onClose }) => {
           </div>
 
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Enable Location Access.
+            Enable Location Access
           </h3>
 
           <p className="text-gray-600 mb-6">
