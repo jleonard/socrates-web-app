@@ -285,7 +285,6 @@ const ParentComponent: React.FC = () => {
           user_lat,
           user_long,
           user_session,
-          user_name: userName,
           current_location: currentPlace,
           conversation_id,
         },
