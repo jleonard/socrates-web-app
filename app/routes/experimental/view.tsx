@@ -507,7 +507,7 @@ const ParentComponent: React.FC = () => {
       ></MainButton>
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
-        experimental v1
+        <span>x v1</span>
         <div className="max-w-[1024px] mx-auto pb-2 px-8">
           <Link to="/history">
             <img
