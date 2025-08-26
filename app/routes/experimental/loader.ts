@@ -15,7 +15,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return Response.json({
     pageTitle: "ayapi",
     user: user,
-    n8nEndpoint: process.env.N8N_URL!,
+    n8nEndpoint:
+      "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7",
     elevenLabsId: "agent_7401k3kkgfyxen4a5a1xy5dphw5e",
   });
 }

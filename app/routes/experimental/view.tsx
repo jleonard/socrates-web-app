@@ -273,11 +273,6 @@ const ParentComponent: React.FC = () => {
       await requestMicAccess();
       //await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Get conversation context first
-      const userName =
-        user?.user_metadata?.first_name || user?.user_metadata?.name;
-      const context = await getContextForElevenLabs(user.id, userName);
-
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId,
