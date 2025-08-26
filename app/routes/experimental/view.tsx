@@ -288,13 +288,6 @@ const ParentComponent: React.FC = () => {
           user_name: userName,
           current_location: currentPlace,
           conversation_id,
-          // Context variables for ElevenLabs
-          session_type: context.session_type,
-          conversation_context:
-            context.conversation_history || "No previous context",
-          greeting_instruction: context.greeting,
-          system_instruction:
-            context.context_message || "No special instructions",
         },
       });
 
