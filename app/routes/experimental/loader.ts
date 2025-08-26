@@ -16,7 +16,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     pageTitle: "ayapi",
     user: user,
     n8nEndpoint:
-      "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7",
+      "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
     elevenLabsId: "agent_7401k3kkgfyxen4a5a1xy5dphw5e",
   });
 }
