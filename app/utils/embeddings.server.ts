@@ -4,7 +4,7 @@
 
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 export const EMBEDDING_DIM = 1536; // matches text-embedding-3-small
 
 export async function getEmbedding(text: string): Promise<Float32Array> {
