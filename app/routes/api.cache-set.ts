@@ -7,6 +7,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const answer = typeof body.answer === "string" ? body.answer : "";
   const tool = typeof body.tool === "string" ? body.tool : "ragmet";
 
+  console.log("input :: ", body.answer, answer);
+
   const ttlSeconds =
     typeof body.ttlSeconds === "number" ? body.ttlSeconds : undefined;
 
