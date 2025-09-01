@@ -263,6 +263,7 @@ const ParentComponent: React.FC = () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
     const user_session = user.id;
+    console.log("user session is : ", user.id);
     const conversation_id = crypto
       .randomUUID()
       .split("-")
