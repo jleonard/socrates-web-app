@@ -503,7 +503,7 @@ const ParentComponent: React.FC = () => {
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md">
-          x5
+          x6
         </span>
         <div className="max-w-[1024px] mx-auto pb-2 px-8">
           <Link to="/history">
