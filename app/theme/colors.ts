@@ -57,7 +57,7 @@ const coreColors = {
   paper: {
     DEFAULT: "#F0EDE4", // base paper color
     dark: "#E3DFD6",
-    800: "#DFD9CD",
+    "800": "#DFD9CD",
   },
 };
 
@@ -94,7 +94,7 @@ export const surfaceColors = {
   paper: {
     DEFAULT: coreColors.paper,
     dark: coreColors.paper["dark"],
-    background: coreColors.paper[800],
+    background: coreColors.paper["800"],
   },
   emphasis: {
     DEFAULT: coreColors.blue["500"],
