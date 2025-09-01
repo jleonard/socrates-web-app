@@ -12,7 +12,7 @@ export async function getRedis() {
       socket: {
         host: process.env.REDIS_URL,
         port: parseInt(process.env.REDIS_PORT!),
-        tls: true, // Redis Cloud requires TLS for rediss://
+        tls: false, // Redis Cloud requires TLS for rediss://
       },
       username: "default", // default user
       password: process.env.REDIS_PASSWORD,
