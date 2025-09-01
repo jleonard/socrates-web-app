@@ -42,7 +42,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // If useLoaderData fails (e.g., in error boundary), use undefined
     GA_TRACKING_ID = undefined;
   }
-  
+
   // ✅ Track route changes with google analytics
   usePageViews(GA_TRACKING_ID);
 
@@ -79,7 +79,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        <footer className="fixed left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper">
+        <footer className="fixed left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper-800">
           © {new Date().getFullYear()} ayapi.ai
         </footer>
       </body>

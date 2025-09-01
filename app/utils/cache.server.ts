@@ -92,8 +92,6 @@ export async function storeCache(
   const emb = float32ToBuffer(await getEmbedding(query));
   const id = `ay:${Buffer.from(`${tool}|${query}`).toString("base64url")}`;
 
-  console.log("setting:: ", query, answer);
-
   await redis.hSet(id, {
     embedding: emb,
     answer,
