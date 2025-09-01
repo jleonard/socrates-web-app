@@ -82,8 +82,8 @@ export async function searchCache(query: string, threshold = 0.86) {
 
 export async function storeCache(
   query: string,
-  tool: string,
   answer: string,
+  tool: string,
   ttlSeconds?: number
 ) {
   const redis = await getRedis();
