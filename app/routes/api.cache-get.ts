@@ -10,9 +10,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const cached = await searchCache(query);
+  console.log(cached);
 
   if (cached) {
-    return json(cached.answer);
+    return json({ cached: true, output: cached.answer });
   } else {
     return json({ cached: false });
   }

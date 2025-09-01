@@ -5,6 +5,7 @@ import {
   EMBEDDING_DIM,
 } from "./embeddings.server";
 import { SCHEMA_FIELD_TYPE } from "redis";
+import { BiQuestionMark } from "react-icons/bi";
 
 interface SearchResult {
   documents: {
@@ -90,6 +91,8 @@ export async function storeCache(
 
   const emb = float32ToBuffer(await getEmbedding(query));
   const id = `ay:${Buffer.from(`${tool}|${query}`).toString("base64url")}`;
+
+  console.log("setting:: ", query, answer);
 
   await redis.hSet(id, {
     embedding: emb,
