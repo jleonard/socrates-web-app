@@ -4,7 +4,7 @@
 
 html,
 body {
-  @apply bg-paper;
+  @apply bg-paper-background;
 
   @media (prefers-color-scheme: dark) {
     /* color-scheme: dark; */
