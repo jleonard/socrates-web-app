@@ -4,6 +4,7 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
+import { useSessionStore } from "~/stores/sessionStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
@@ -202,6 +203,7 @@ const ParentComponent: React.FC = () => {
   const { elevenLabsId, user } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
+  const sessionId = useSessionStore((s) => s.sessionId);
 
   // check for network availability
   const isOnline = useNetworkStatus();
@@ -262,8 +264,7 @@ const ParentComponent: React.FC = () => {
   const startConversation = useCallback(async () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
-    const user_session = user.id;
-    console.log("user session is : ", user.id);
+    const user_session = `${user.id}-${sessionId}`;
     const conversation_id = crypto
       .randomUUID()
       .split("-")
