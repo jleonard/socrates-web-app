@@ -4,7 +4,6 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
-import { useSessionStore } from "~/stores/sessionStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
@@ -200,10 +199,9 @@ const ParentComponent: React.FC = () => {
   // this is used to render the spinner in the main button when elevenlabs is connecting.
   const [avatarConnecting, setConnectingState] = useState(false);
 
-  const { elevenLabsId, user } = useLoaderData<typeof loader>();
+  const { elevenLabsId, sessionId, user } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
-  const sessionId = useSessionStore((s) => s.sessionId);
 
   // check for network availability
   const isOnline = useNetworkStatus();
