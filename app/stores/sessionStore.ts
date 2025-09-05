@@ -27,6 +27,7 @@ const saved = localStorage.getItem("sessionData");
 if (saved) {
   const { sessionId, createdAt } = JSON.parse(saved);
   if (Date.now() - createdAt < 48 * 60 * 60 * 1000) {
+    // sessions are 48 hours
     useSessionStore.setState({ sessionId, createdAt });
   } else {
     useSessionStore.getState().refreshSession();
