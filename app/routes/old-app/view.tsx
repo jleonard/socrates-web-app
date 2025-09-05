@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import type { loader } from "./loader";
+import type { loader } from "./app.loader";
 import { useLoaderData, Link } from "@remix-run/react";
 import { useConversation } from "@11labs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
-import { useSessionStore } from "~/stores/sessionStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
@@ -203,7 +202,6 @@ const ParentComponent: React.FC = () => {
   const { elevenLabsId, user } = useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
-  const sessionId = useSessionStore((s) => s.sessionId);
 
   // check for network availability
   const isOnline = useNetworkStatus();
@@ -264,7 +262,7 @@ const ParentComponent: React.FC = () => {
   const startConversation = useCallback(async () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
-    const user_session = `${user.id}-${sessionId}`;
+    const user_session = user.id;
     const conversation_id = crypto
       .randomUUID()
       .split("-")
@@ -275,6 +273,11 @@ const ParentComponent: React.FC = () => {
       await requestMicAccess();
       //await navigator.mediaDevices.getUserMedia({ audio: true });
 
+      // Get conversation context first
+      const userName =
+        user?.user_metadata?.first_name || user?.user_metadata?.name;
+      const context = await getContextForElevenLabs(user.id, userName);
+
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId,
@@ -282,8 +285,16 @@ const ParentComponent: React.FC = () => {
           user_lat,
           user_long,
           user_session,
+          user_name: userName,
           current_location: currentPlace,
           conversation_id,
+          // Context variables for ElevenLabs
+          session_type: context.session_type,
+          conversation_context:
+            context.conversation_history || "No previous context",
+          greeting_instruction: context.greeting,
+          system_instruction:
+            context.context_message || "No special instructions",
         },
       });
 
