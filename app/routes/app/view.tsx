@@ -276,6 +276,7 @@ const ParentComponent: React.FC = () => {
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId,
+        connectionType: "webrtc",
         dynamicVariables: {
           user_lat,
           user_long,
