@@ -262,7 +262,7 @@ const ParentComponent: React.FC = () => {
   const startConversation = useCallback(async () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
-    const user_session = `${user.id}-${sessionId}`;
+    const user_session = `${user.id}__${sessionId}`;
     const conversation_id = crypto
       .randomUUID()
       .split("-")
