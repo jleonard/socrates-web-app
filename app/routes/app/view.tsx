@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./loader";
 import { useLoaderData, Link } from "@remix-run/react";
-import { useConversation } from "@11labs/react";
+import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
