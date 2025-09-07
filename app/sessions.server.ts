@@ -11,7 +11,7 @@ export const sessionStorage = createCookieSessionStorage({
     sameSite: "lax",
     secrets: [process.env.SESSION_SECRET ?? "dev-secret"], // keep secret in env
     secure: process.env.NODE_ENV === "production",
-    maxAge: 48 * 60 * 60, // 48 hours in seconds
+    maxAge: 24 * 60 * 60, // 24 hours in seconds
   },
 });
 
