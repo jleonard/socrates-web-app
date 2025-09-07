@@ -19,7 +19,7 @@ export const Nav = () => {
       {isOpen && (
         <button
           type="button"
-          className="fixed inset-0 bg-paper z-30"
+          className="fixed inset-0 bg-paper-background z-30"
           aria-label="Close navigation menu"
           tabIndex={0}
           onClick={() => setIsOpen(false)}
