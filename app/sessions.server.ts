@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 // cookie config
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
-    name: "__session",
+    name: "__remix-session",
     httpOnly: true,
     path: "/",
     sameSite: "lax",
