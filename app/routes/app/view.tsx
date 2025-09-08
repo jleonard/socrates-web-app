@@ -518,6 +518,7 @@ const ParentComponent: React.FC = () => {
           conversation status:{" "}
           <span className="text-green-400">{conversation.status}</span>
         </span>
+        <br />
         <span>
           avatar state: <span className="text-green-400">{avatarState}</span>
         </span>
