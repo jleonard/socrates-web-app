@@ -5,7 +5,6 @@ import {
   EMBEDDING_DIM,
 } from "./embeddings.server";
 import { SCHEMA_FIELD_TYPE } from "redis";
-import { BiQuestionMark } from "react-icons/bi";
 
 interface SearchResult {
   documents: {
