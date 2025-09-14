@@ -512,7 +512,7 @@ const ParentComponent: React.FC = () => {
           </Link>
         </div>
       </div>
-
+      {/*
       <div className="fixed bottom-2 right-2 w-32 z-40 pointer-events-none bg-black text-white p-2 rounded-sm">
         <span>
           conversation status:{" "}
@@ -522,7 +522,7 @@ const ParentComponent: React.FC = () => {
         <span>
           avatar state: <span className="text-green-400">{avatarState}</span>
         </span>
-      </div>
+      </div>*/}
     </>
   );
 };
