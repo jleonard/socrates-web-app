@@ -516,11 +516,11 @@ const ParentComponent: React.FC = () => {
       </span>
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
-        <div className="max-w-[1024px] mx-auto pb-2 px-8">
+        <div className="max-w-[1024px] mx-auto pb-4 px-8">
           <Link to="/history">
             <img
-              src="/icons/Bookmark.png"
-              className="size-[46px]"
+              src="/icons/Bookmark.svg"
+              className="size-[38px]"
               alt="view history"
             />
           </Link>

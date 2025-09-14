@@ -517,7 +517,7 @@ const ParentComponent: React.FC = () => {
         <div className="max-w-[1024px] mx-auto pb-2 px-8">
           <Link to="/history">
             <img
-              src="/icons/Bookmark.png"
+              src="/icons/Bookmark.svg"
               className="size-[46px]"
               alt="view history"
             />

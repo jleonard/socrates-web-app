@@ -36,7 +36,7 @@ export const Nav = () => {
         onClick={() => {
           setIsOpen((prev) => !prev);
         }}
-        className="fixed bottom-9 right-4 z-40"
+        className="fixed bottom-4 right-4 z-40"
       >
         {/* Swap icon if needed */}
         {isOpen ? (
