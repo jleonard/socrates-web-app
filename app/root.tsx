@@ -75,11 +75,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </head>
       <body className="px-8 max-w-[1024px] mx-auto relative">
-        <Nav />
         {children}
+        <Nav />
         <ScrollRestoration />
         <Scripts />
-        <footer className="fixed left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper-background">
+        <footer className="hidden fixed left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper-background">
           © {new Date().getFullYear()} ayapi.ai
         </footer>
       </body>

@@ -196,6 +196,16 @@ const ParentComponent: React.FC = () => {
   // controls the avatar animation state
   const [avatarState, setAvatarState] = useState<AvatarState>("idle");
 
+  // used to set the text under the button
+  const stateText: Record<AvatarState, string | null> = {
+    idle: "Start",
+    connected: "Ask away",
+    speaking: "Talking",
+    processing: "Just a moment",
+    error: null, // or "Error" if you want to show something
+    preconnect: "Just a moment", // or some other string
+  };
+
   // this is used to render the spinner in the main button when elevenlabs is connecting.
   const [avatarConnecting, setConnectingState] = useState(false);
 
@@ -495,11 +505,15 @@ const ParentComponent: React.FC = () => {
       )}
 
       <MainButton
-        className="fixed left-1/2 -translate-x-1/2 bottom-14 z-20"
+        className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
         onPress={handleMainButtonPress}
         active={attentionConnected}
         loading={avatarConnecting}
       ></MainButton>
+
+      <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
+        {stateText[avatarState]}
+      </span>
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
         <div className="max-w-[1024px] mx-auto pb-2 px-8">

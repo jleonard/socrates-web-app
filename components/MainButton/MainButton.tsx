@@ -20,20 +20,22 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
     } = props;
 
     return (
-      <ReactAriaButton
-        ref={ref}
-        className={MainButtonStyles({ active, className })}
-        {...rest}
-      >
-        <>
-          {loading && <LoaderCircle className="animate-spin" size={24} />}
-          {!loading && active && <img className="size-[24px]" src={XIcon} />}
-          {!loading && !active && (
-            <img className="size-[36px]" src={MicrophoneIcon} />
-          )}
-          {children}
-        </>
-      </ReactAriaButton>
+      <>
+        <ReactAriaButton
+          ref={ref}
+          className={MainButtonStyles({ active, className })}
+          {...rest}
+        >
+          <>
+            {loading && <LoaderCircle className="animate-spin" size={24} />}
+            {!loading && active && <img className="size-[24px]" src={XIcon} />}
+            {!loading && !active && (
+              <img className="size-[36px]" src={MicrophoneIcon} />
+            )}
+            {children}
+          </>
+        </ReactAriaButton>
+      </>
     );
   }
 );

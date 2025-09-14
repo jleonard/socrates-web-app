@@ -15,7 +15,7 @@ export const Nav = () => {
 
   return (
     <>
-      {/* Backdrop outside nav, under z-50 */}
+      {/* Backdrop outside nav, under z-40 */}
       {isOpen && (
         <button
           type="button"
@@ -31,41 +31,35 @@ export const Nav = () => {
         />
       )}
 
-      <nav className="sticky top-0 flex flex-col w-full pt-8 z-50 bg-paper-background">
-        {/* Nav Bar */}
-        <div className="flex w-full flex-row gap-2">
-          <div>
-            <a href="/app">
-              <img className="w-24" src="/ayapi.png" alt="Ayapi" />
-            </a>
-          </div>
+      {/* Toggle icon */}
+      <button
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+        }}
+        className="fixed bottom-9 right-4 z-40"
+      >
+        {/* Swap icon if needed */}
+        {isOpen ? (
+          <X size={32} strokeWidth={2} />
+        ) : (
+          <>
+            <Menu size={32} strokeWidth={2} />
+          </>
+        )}
+      </button>
 
-          <button
-            onClick={() => {
-              console.log("cick"), setIsOpen((prev) => !prev);
-            }}
-            className="ml-auto"
-          >
-            {/* Swap icon if needed */}
-            {isOpen ? (
-              <X size={32} strokeWidth={2} />
-            ) : (
-              <>
-                <Menu size={32} strokeWidth={2} />
-                <img
-                  src="/icons/User.svg"
-                  className="size-[38px] hidden"
-                  alt="open nav"
-                />
-              </>
-            )}
-          </button>
+      <nav className="sticky top-0 flex flex-col w-full pt-14 z-40 bg-paper-background">
+        {/* Nav Bar */}
+        <div className="flex w-full flex-row gap-2 justify-center items-center">
+          <a href="/app">
+            <img className="w-44" src="/ayapi.svg" alt="ayapi ai" />
+          </a>
         </div>
 
         {isOpen && (
           <>
             {/* Your menu on top of the overlay */}
-            <div className="flex py-4 w-full z-50">
+            <div className="flex py-4 w-full z-40">
               <ul className="space-y-2 w-full">
                 <li className="py-3 border-b-slate-600 border-b">
                   <Link className="block w-full" to="/privacy">
