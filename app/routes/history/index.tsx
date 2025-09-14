@@ -82,7 +82,7 @@ const HistoryPage: React.FC = () => {
   const groupedHistory = groupAndSortHistory(historial);
 
   return (
-    <div>
+    <>
       <ul className="max-w-[600px] pb-9 flex flex-col gap-3">
         {groupedHistory.map(([date, entries]) => (
           <React.Fragment key={date}>
@@ -112,15 +112,17 @@ const HistoryPage: React.FC = () => {
           </React.Fragment>
         ))}
       </ul>
-      <div className="fixed bottom-0 left-0 py-2 px-2 z-10 bg-paper w-full flex">
-        <Link
-          to="/app"
-          className="left-6 bottom-3 z-10 flex flex-row items-center py-2 px-5 bg-black text-white rounded-full"
-        >
-          <span>Back</span>
-        </Link>
+      <div className="fixed bottom-0 left-0 py-2 z-10 bg-paper w-full flex justify-center">
+        <div className="px-8 max-w-[1024px] w-full mx-auto relative">
+          <Link
+            to="/app"
+            className="inline-flex flex-row items-center py-2 px-5 bg-black text-white rounded-full"
+          >
+            <span>Back</span>
+          </Link>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
