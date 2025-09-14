@@ -511,7 +511,7 @@ const ParentComponent: React.FC = () => {
         loading={avatarConnecting}
       ></MainButton>
 
-      <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
+      <span className="hidden fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
         {stateText[avatarState]}
       </span>
 
