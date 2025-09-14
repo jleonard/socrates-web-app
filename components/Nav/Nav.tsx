@@ -48,7 +48,7 @@ export const Nav = () => {
         )}
       </button>
 
-      <nav className="sticky top-0 flex flex-col w-full pt-14 z-40 bg-paper-background">
+      <nav className="sticky top-0 flex flex-col w-full pt-14 pb-4 z-40 bg-paper-background">
         {/* Nav Bar */}
         <div className="flex w-full flex-row gap-2 justify-center items-center">
           <a href="/app">

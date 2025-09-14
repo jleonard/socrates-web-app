@@ -4,6 +4,7 @@
 
 html,
 body {
+  font-family: "Montserrat", sans-serif;
   @apply bg-paper-background;
 
   @media (prefers-color-scheme: dark) {
