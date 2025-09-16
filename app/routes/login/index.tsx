@@ -57,7 +57,7 @@ export default function Login() {
         <Circles mode="idle"></Circles>
       </div>
       <div className="fixed bottom-7 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 max-w-96 items-center">
-        <h2 className="font-thin text-2xl text-gray-800 text-center mb-5">
+        <h2 className="text-2xl text-gray-800 text-center mb-4">
           Your AI Companion for
           <br />
           Cultural Exploration
