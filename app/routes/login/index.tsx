@@ -71,7 +71,7 @@ export default function Login() {
           onClick={handleFacebookLogin}
           label="Continue with Facebook"
         ></FacebookAuthButton>
-        <p className="mt-3 text-xs">
+        <p className="mt-3 text-xs text-center">
           By signing in you agree to our{" "}
           <Link to="/terms">Terms &amp; Conditions</Link> and{" "}
           <Link to="/privacy">Privacy Statement</Link>
