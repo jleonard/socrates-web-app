@@ -85,7 +85,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </>
         )}
       </head>
-      <body className="px-8 max-w-[1024px] mx-auto relative">
+      <body className="px-8 max-w-[1024px] h-screen mx-auto relative border-2 border-red-400 overflow-hidden">
         <Nav />
         {children}
         <ScrollRestoration />

@@ -4,7 +4,6 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { redirect } from "@remix-run/node";
 import ChatMessage from "components/ChatMessage/ChatMessage";
-import { ChevronLeft } from "lucide-react";
 
 type HistoryItem = Record<string, unknown>;
 
@@ -83,35 +82,38 @@ const HistoryPage: React.FC = () => {
 
   return (
     <>
-      <ul className="max-w-[600px] pb-9 flex flex-col gap-3">
-        {groupedHistory.map(([date, entries]) => (
-          <React.Fragment key={date}>
-            <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
-              {date}
-            </li>
-            {entries.map((item, idx) => {
-              const message = (item as any).message;
-              const content = message?.content;
-              const messageType =
-                message?.type && message.type === "ai"
-                  ? "incoming"
-                  : "outgoing";
+      <section className="h-full overflow-auto scrollbar-hide">
+        <ul className="max-w-[600px] pb-56 flex flex-1 flex-col gap-3 overflow-scroll">
+          {groupedHistory.map(([date, entries]) => (
+            <React.Fragment key={date}>
+              <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
+                {date}
+              </li>
+              {entries.map((item, idx) => {
+                const message = (item as any).message;
+                const content = message?.content;
+                const messageType =
+                  message?.type && message.type === "ai"
+                    ? "incoming"
+                    : "outgoing";
 
-              return (
-                <li className="flex flex-row" key={idx}>
-                  <ChatMessage
-                    className={
-                      messageType !== "incoming" ? "w-10/12 ml-auto" : ""
-                    }
-                    messageType={messageType}
-                    text={content}
-                  />
-                </li>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </ul>
+                return (
+                  <li className="flex flex-row" key={idx}>
+                    <ChatMessage
+                      className={
+                        messageType !== "incoming" ? "w-10/12 ml-auto" : ""
+                      }
+                      messageType={messageType}
+                      text={content}
+                    />
+                  </li>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </ul>
+      </section>
+
       <div className="fixed bottom-0 left-0 py-2 z-10 bg-paper w-full flex justify-center">
         <div className="px-8 max-w-[1024px] w-full mx-auto relative">
           <Link

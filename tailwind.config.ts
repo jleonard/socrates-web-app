@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import scrollbarHide from "tailwind-scrollbar-hide";
 
 import {
   actionColors,
@@ -115,5 +116,5 @@ export default {
       // => @media (min-width: 1536px) { ... }
     },
   },
-  plugins: [],
+  plugins: [scrollbarHide],
 } satisfies Config;
