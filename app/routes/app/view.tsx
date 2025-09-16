@@ -282,7 +282,7 @@ const ParentComponent: React.FC = () => {
 
   return (
     <>
-      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-12">
+      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14">
         {/* <Circles mode={conversation.isSpeaking ? "speaking" : avatarState} /> */}
         <Circles mode={avatarState}></Circles>
       </div>
