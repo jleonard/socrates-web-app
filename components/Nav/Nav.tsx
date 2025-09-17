@@ -36,14 +36,14 @@ export const Nav = () => {
         onClick={() => {
           setIsOpen((prev) => !prev);
         }}
-        className="absolute bottom-3 right-0 z-40"
+        className="absolute bottom-6 right-0 z-40"
       >
         {/* Swap icon if needed */}
         {isOpen ? (
-          <X size={32} strokeWidth={2} />
+          <X size={38} strokeWidth={2} />
         ) : (
           <>
-            <Menu size={32} strokeWidth={2} />
+            <Menu size={38} strokeWidth={2} />
           </>
         )}
       </button>
