@@ -88,11 +88,11 @@ const ParentComponent: React.FC = () => {
       const now = new Date();
       let responseTime;
       if (message.source === "user") {
-        setAvatarState("processing");
+        // setAvatarState("processing"); testing
         responseTimeComparison = now;
       }
       if (message.source === "ai") {
-        setAvatarState("speaking");
+        // setAvatarState("speaking"); testing
 
         // set the response time
         responseTime = responseTimeComparison
@@ -251,6 +251,7 @@ const ParentComponent: React.FC = () => {
     setShowLocationModal(true);
   }, []);
 
+  /*
   useEffect(() => {
     if (conversation.status === "connecting") {
       setAvatarState("idle");
@@ -279,11 +280,67 @@ const ParentComponent: React.FC = () => {
       ? setAvatarState("idle")
       : setAvatarState("connected");
   }, [conversation.isSpeaking, conversation.status]);
+  */
+
+  useEffect(() => {
+    let previousState = avatarState;
+
+    console.log(
+      "useEffect ",
+      "isSpeaking: ",
+      conversation.isSpeaking,
+      "status: ",
+      conversation.status,
+      "previousState: ",
+      previousState
+    );
+
+    // if speaking => speaking
+    if (conversation.isSpeaking) {
+      setAvatarState("speaking");
+      console.log("should set to speaking");
+      return;
+    }
+
+    // if is connected but was idle
+    if (conversation.status === "connected" && previousState === "idle") {
+      console.log("should set to preconnect and then connect");
+      setAvatarState("preconnect");
+      setTimeout(() => {
+        setAvatarState("connected");
+      }, 250); // matches preconnect transition duration
+      return;
+    }
+
+    // if !speaking && connected => connected
+    if (
+      !conversation.isSpeaking &&
+      previousState === "speaking" &&
+      conversation.status === "connected"
+    ) {
+      console.log("should set to connected after speaking");
+      setAvatarState("connected");
+      return;
+    }
+
+    // if disconnected => idle
+    if (conversation.status === "disconnected") {
+      console.log("should set to idle");
+      setAvatarState("idle");
+    }
+  }, [conversation.isSpeaking, conversation.status]);
+
+  useEffect(() => {
+    if (conversation.status === "connecting") {
+      setConnectingState(true);
+    } else {
+      setConnectingState(false);
+    }
+  }, [conversation.status]);
 
   return (
     <>
       <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14">
-        {/* <Circles mode={conversation.isSpeaking ? "speaking" : avatarState} /> */}
         <Circles mode={avatarState}></Circles>
       </div>
 
