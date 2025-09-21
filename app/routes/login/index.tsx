@@ -73,8 +73,13 @@ export default function Login() {
         ></FacebookAuthButton>
         <p className="mt-3 text-xs text-center">
           By signing in you agree to our{" "}
-          <Link to="/terms">Terms &amp; Conditions</Link> and{" "}
-          <Link to="/privacy">Privacy Statement</Link>
+          <Link className="underline" to="/terms">
+            Terms &amp; Conditions
+          </Link>{" "}
+          and{" "}
+          <Link className="underline" to="/privacy">
+            Privacy Statement
+          </Link>
         </p>
       </div>
     </>

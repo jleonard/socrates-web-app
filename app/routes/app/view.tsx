@@ -47,12 +47,12 @@ const ParentComponent: React.FC = () => {
 
   // used to set the text under the button
   const stateText: Record<AvatarState, string | null> = {
-    idle: "Start",
+    idle: "Press to talk",
     connected: "Ask away",
     speaking: "Talking",
     processing: "Just a moment",
     error: null, // or "Error" if you want to show something
-    preconnect: "Just a moment", // or some other string
+    preconnect: "Connecting", // or some other string
   };
 
   // this is used to render the spinner in the main button when elevenlabs is connecting.
@@ -285,26 +285,14 @@ const ParentComponent: React.FC = () => {
   useEffect(() => {
     let previousState = avatarState;
 
-    console.log(
-      "useEffect ",
-      "isSpeaking: ",
-      conversation.isSpeaking,
-      "status: ",
-      conversation.status,
-      "previousState: ",
-      previousState
-    );
-
     // if speaking => speaking
     if (conversation.isSpeaking) {
       setAvatarState("speaking");
-      console.log("should set to speaking");
       return;
     }
 
     // if is connected but was idle
     if (conversation.status === "connected" && previousState === "idle") {
-      console.log("should set to preconnect and then connect");
       setAvatarState("preconnect");
       setTimeout(() => {
         setAvatarState("connected");
@@ -318,14 +306,12 @@ const ParentComponent: React.FC = () => {
       previousState === "speaking" &&
       conversation.status === "connected"
     ) {
-      console.log("should set to connected after speaking");
       setAvatarState("connected");
       return;
     }
 
     // if disconnected => idle
     if (conversation.status === "disconnected") {
-      console.log("should set to idle");
       setAvatarState("idle");
     }
   }, [conversation.isSpeaking, conversation.status]);
@@ -371,8 +357,8 @@ const ParentComponent: React.FC = () => {
         loading={avatarConnecting}
       ></MainButton>
 
-      <span className="hidden fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-        {stateText[avatarState]}
+      <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
+        {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
       </span>
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
