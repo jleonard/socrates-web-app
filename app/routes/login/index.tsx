@@ -53,7 +53,7 @@ export default function Login() {
 
   return (
     <>
-      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none">
+      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14">
         <Circles mode="idle"></Circles>
       </div>
       <div className="fixed bottom-7 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 max-w-96 items-center">

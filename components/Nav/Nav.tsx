@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { X, Menu } from "lucide-react";
-import { Link, useMatches } from "@remix-run/react";
+import { Link, useMatches, useLocation } from "@remix-run/react";
 
 export const Nav = () => {
+  const location = useLocation();
+  const path = location.pathname;
+
   const [isOpen, setIsOpen] = useState(false);
   const matches = useMatches();
 
@@ -32,21 +35,23 @@ export const Nav = () => {
       )}
 
       {/* Toggle icon */}
-      <button
-        onClick={() => {
-          setIsOpen((prev) => !prev);
-        }}
-        className="absolute bottom-6 right-0 z-40"
-      >
-        {/* Swap icon if needed */}
-        {isOpen ? (
-          <X size={38} strokeWidth={2} />
-        ) : (
-          <>
-            <Menu size={38} strokeWidth={2} />
-          </>
-        )}
-      </button>
+      {path !== "/login" && (
+        <button
+          onClick={() => {
+            setIsOpen((prev) => !prev);
+          }}
+          className="absolute bottom-5 right-8 z-40"
+        >
+          {/* Swap icon if needed */}
+          {isOpen ? (
+            <X size={38} strokeWidth={2} />
+          ) : (
+            <>
+              <Menu size={38} strokeWidth={3} />
+            </>
+          )}
+        </button>
+      )}
 
       <nav className="sticky top-0 flex flex-col w-full pt-14 pb-4 z-40 bg-paper-background">
         {/* Nav Bar */}
