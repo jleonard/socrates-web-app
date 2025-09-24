@@ -8,6 +8,14 @@ export type MainButtonBaseProps = {
   active?: boolean;
 
   loading?: boolean;
+
+  mode?:
+    | "speaking"
+    | "connected"
+    | "processing"
+    | "idle"
+    | "error"
+    | "preconnect";
 };
 
 export type MainButtonProps = ReactAriaButtonProps & MainButtonBaseProps;

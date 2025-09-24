@@ -15,6 +15,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       className,
       active = false,
       loading = false,
+      mode,
       children,
       ...rest
     } = props;
@@ -23,15 +24,19 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       <>
         <ReactAriaButton
           ref={ref}
-          className={MainButtonStyles({ active, className })}
+          className={MainButtonStyles({ active, mode, className })}
           {...rest}
         >
           <>
             {loading && <LoaderCircle className="animate-spin" size={24} />}
-            {!loading && active && <img className="size-[24px]" src={XIcon} />}
-            {!loading && !active && (
+            {!loading && active && mode === "connected" && (
               <img className="size-[36px]" src={MicrophoneIcon} />
             )}
+            {!loading && active && mode !== "connected" && (
+              <img className="size-[24px]" src={XIcon} />
+            )}
+
+            {!loading && !active && <span className="font-bold">Talk</span>}
             {children}
           </>
         </ReactAriaButton>

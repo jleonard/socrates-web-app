@@ -112,6 +112,10 @@ const ParentComponent: React.FC = () => {
         user?.id
       );
     },
+    onModeChange: (mode) => {
+      // "speaking" || "listening"
+      console.log("mode change ", mode);
+    },
     onError: (error) => {
       setError(error);
       setAttentionConnected(false);
@@ -355,6 +359,7 @@ const ParentComponent: React.FC = () => {
         onPress={handleMainButtonPress}
         active={attentionConnected}
         loading={avatarConnecting}
+        mode={avatarState}
       ></MainButton>
 
       <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">

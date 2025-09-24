@@ -7,12 +7,20 @@ export const MainButtonStyles = tv({
     "size-[72px]",
     //"w-full max-w-[700px] p-0",
     "rounded-full",
-    "transition-[height]",
+    "transition-colors duration-300 ease-in-out",
   ],
   variants: {
     active: {
       true: "",
       false: "",
+    },
+    mode: {
+      speaking: "",
+      processing: "",
+      idle: "",
+      preconnect: "",
+      connected: "bg-green-600",
+      error: "",
     },
   },
 });
