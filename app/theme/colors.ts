@@ -91,6 +91,7 @@ export const surfaceColors = {
   quaternary: coreColors.grey["800"],
   handle: coreColors.grey["700"],
   inverse: coreColors.granite["1100"],
+  "ayapi-grey": "#1F1F1F",
   paper: {
     DEFAULT: coreColors.paper,
     dark: coreColors.paper["dark"],

@@ -14,10 +14,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/login");
   }
 
+  // Upsert profile data on every load
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        user_id: user.id,
+        email: user.email,
+        last_seen: new Date(),
+      },
+      { onConflict: "user_id" }
+    )
+    .select()
+    .single();
+
+  if (error) {
+    console.log("sb error: ", error);
+  }
+
   return Response.json(
     {
       pageTitle: "ayapi",
       user: user,
+      user_profile: error ? {} : profile,
       sessionId,
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",

@@ -58,7 +58,8 @@ const ParentComponent: React.FC = () => {
   // this is used to render the spinner in the main button when elevenlabs is connecting.
   const [avatarConnecting, setConnectingState] = useState(false);
 
-  const { elevenLabsId, sessionId, user } = useLoaderData<typeof loader>();
+  const { elevenLabsId, sessionId, user, user_profile } =
+    useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
@@ -247,6 +248,8 @@ const ParentComponent: React.FC = () => {
 
   // Effect to show location modal on mount
   useEffect(() => {
+    console.log("user: ", user);
+    console.log("profile: ", user_profile);
     // Mostrar el modal de permisos de ubicación al cargar la app
     setShowLocationModal(true);
   }, []);
