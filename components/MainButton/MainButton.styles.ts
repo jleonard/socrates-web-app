@@ -7,7 +7,7 @@ export const MainButtonStyles = tv({
     "size-[72px]",
     //"w-full max-w-[700px] p-0",
     "rounded-full",
-    "transition-colors duration-300 ease-in-out",
+    "transition-colors duration-500 ease-in-out",
   ],
   variants: {
     active: {
@@ -15,12 +15,10 @@ export const MainButtonStyles = tv({
       false: "",
     },
     mode: {
+      connecting: "",
       speaking: "",
-      processing: "",
-      idle: "",
-      preconnect: "",
-      connected: "bg-green-600",
-      error: "",
+      disconnected: "",
+      listening: "bg-green-600 delay-100",
     },
   },
 });

@@ -3,22 +3,18 @@ import type { loader } from "./loader";
 import { useLoaderData, Link } from "@remix-run/react";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
+import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
+import { CircleMode } from "components/Circles/Circles.types";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { EBMMessage } from "components/EBMMessage/EBMMessage";
 import LocationModal from "components/LocationModal/LocationModal";
 
-const ParentComponent: React.FC = () => {
-  type AvatarState =
-    | "idle"
-    | "connected"
-    | "speaking"
-    | "processing"
-    | "error"
-    | "preconnect";
+import { AvatarConnection, AvatarMode } from "types/avatar";
 
+const ParentComponent: React.FC = () => {
   // used for errors that should be presented to the user
   const [error, setError] = useState<string | null>(null);
 
@@ -40,23 +36,12 @@ const ParentComponent: React.FC = () => {
     "pending" | "granted" | "denied"
   >("pending");
 
-  const [attentionConnected, setAttentionConnected] = useState(false);
+  // NEW
+  const [avatarConnection, setAvatarConnection] =
+    useState<AvatarConnection>("disconnected");
 
-  // controls the avatar animation state
-  const [avatarState, setAvatarState] = useState<AvatarState>("idle");
-
-  // used to set the text under the button
-  const stateText: Record<AvatarState, string | null> = {
-    idle: "Press to talk",
-    connected: "Ask away",
-    speaking: "Talking",
-    processing: "Just a moment",
-    error: null, // or "Error" if you want to show something
-    preconnect: "Connecting", // or some other string
-  };
-
-  // this is used to render the spinner in the main button when elevenlabs is connecting.
-  const [avatarConnecting, setConnectingState] = useState(false);
+  const [buttonMode, setButtonMode] = useState<MainButtonModes>("disconnected");
+  const [circleMode, setCircleMode] = useState<CircleMode>("idle");
 
   const { elevenLabsId, sessionId, user } = useLoaderData<typeof loader>();
 
@@ -78,10 +63,17 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
-      setAttentionConnected(true);
+      console.log("onConnect()");
+      setButtonMode("listening");
+      setCircleMode("preconnect");
+      setTimeout(() => {
+        setCircleMode("connected");
+      }, 250); // matches preconnect transition duration
     },
     onDisconnect: () => {
-      setAttentionConnected(false);
+      console.log("onDisconnect()");
+      setCircleMode("idle");
+      setButtonMode("disconnected");
     },
 
     onMessage: (message) => {
@@ -112,13 +104,20 @@ const ParentComponent: React.FC = () => {
         user?.id
       );
     },
-    onModeChange: (mode) => {
-      // "speaking" || "listening"
-      console.log("mode change ", mode);
+    onModeChange: (modeObj) => {
+      console.log("onModeChange(", modeObj.mode, ")");
+      if (modeObj.mode === "listening") {
+        setCircleMode("connected");
+        setButtonMode("listening");
+      }
+      if (modeObj.mode === "speaking") {
+        setCircleMode("speaking");
+        setButtonMode("speaking");
+      }
     },
     onError: (error) => {
+      console.log("error: ", error);
       setError(error);
-      setAttentionConnected(false);
     },
   });
 
@@ -162,7 +161,10 @@ const ParentComponent: React.FC = () => {
   }, [conversation]);
 
   const handleMainButtonPress = () => {
-    if (!attentionConnected) {
+    if (
+      avatarConnection === "disconnected" ||
+      avatarConnection === "disconnecting"
+    ) {
       startConversation();
       trackEvent({
         action: "user-conversation-started",
@@ -255,83 +257,22 @@ const ParentComponent: React.FC = () => {
     setShowLocationModal(true);
   }, []);
 
-  /*
   useEffect(() => {
-    if (conversation.status === "connecting") {
-      setAvatarState("idle");
-      setConnectingState(true);
-    } else {
-      setConnectingState(false);
-    }
-    if (conversation.status === "connected") {
-      setAvatarState("preconnect");
-      setTimeout(() => {
-        setAvatarState("connected");
-      }, 250); // matches preconnect transition duration
-    }
-    if (conversation.status === "disconnected") {
-      conversation.status;
-      setAvatarState("idle");
-    }
+    setAvatarConnection(conversation.status);
   }, [conversation.status]);
 
-  // try to eliminate this
-
   useEffect(() => {
-    conversation.isSpeaking
-      ? setAvatarState("speaking")
-      : conversation.status === "disconnected"
-      ? setAvatarState("idle")
-      : setAvatarState("connected");
-  }, [conversation.isSpeaking, conversation.status]);
-  */
-
-  useEffect(() => {
-    let previousState = avatarState;
-
-    // if speaking => speaking
-    if (conversation.isSpeaking) {
-      setAvatarState("speaking");
-      return;
+    if (avatarConnection === "connecting") {
+      // CONNECTING
+      setCircleMode("processing");
+      setButtonMode("connecting");
     }
-
-    // if is connected but was idle
-    if (conversation.status === "connected" && previousState === "idle") {
-      setAvatarState("preconnect");
-      setTimeout(() => {
-        setAvatarState("connected");
-      }, 250); // matches preconnect transition duration
-      return;
-    }
-
-    // if !speaking && connected => connected
-    if (
-      !conversation.isSpeaking &&
-      previousState === "speaking" &&
-      conversation.status === "connected"
-    ) {
-      setAvatarState("connected");
-      return;
-    }
-
-    // if disconnected => idle
-    if (conversation.status === "disconnected") {
-      setAvatarState("idle");
-    }
-  }, [conversation.isSpeaking, conversation.status]);
-
-  useEffect(() => {
-    if (conversation.status === "connecting") {
-      setConnectingState(true);
-    } else {
-      setConnectingState(false);
-    }
-  }, [conversation.status]);
+  }, [avatarConnection]);
 
   return (
     <>
       <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14">
-        <Circles mode={avatarState}></Circles>
+        <Circles mode={circleMode}></Circles>
       </div>
 
       {error && (
@@ -357,14 +298,8 @@ const ParentComponent: React.FC = () => {
       <MainButton
         className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
         onPress={handleMainButtonPress}
-        active={attentionConnected}
-        loading={avatarConnecting}
-        mode={avatarState}
+        mode={buttonMode}
       ></MainButton>
-
-      <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-        {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
-      </span>
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
         <div className="max-w-[1024px] mx-auto pb-4 px-8">
