@@ -1,17 +1,14 @@
 # Socrates web app POC
 
-The frameowrk for this POC is [remix](https://remix.run/docs). It is **not** a production ready project :( , so far it's just been used to quickly test with the n8n project.
+## The Promo Code Flow
 
-`yarn dev` will run the project.
+Promo codes are used to track sign-ups from events, locations etc. The promo code is built into the query string as `promo`.
 
-`http://localhost:5173/app` is where you can run the demo. Note, the port may change.
+**How promo codes are captured**
 
-## Getting started
-
-`app/routes/app` - is the main view where you interact with the elevenlabs agent
-`app/
-
-> Below is the original Remix readme. Other than adding the app folder this is a vanilla Remix project
+1. Promo codes are captured in the root.tsx file and saved to localstorage.
+2. After the user logs in and hits the `/app` the hook `useSyncPromo` is called.
+3. The hook checks for a promo code in local storage and sets it on the user's profile if so.
 
 ---
 
@@ -55,3 +52,5 @@ Make sure to deploy the output of `npm run build`
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+
+---

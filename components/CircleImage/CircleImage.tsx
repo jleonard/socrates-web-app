@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 
 import { CircleImageProps } from "./CircleImage.types";
+import clsx from "clsx";
 
 export const CircleImage = forwardRef<HTMLDivElement, CircleImageProps>(
   ({ img, className, ...rest }, ref) => {
@@ -8,13 +9,16 @@ export const CircleImage = forwardRef<HTMLDivElement, CircleImageProps>(
       <div
         ref={ref}
         {...rest}
-        className="absolute -top-40 left-1/2 transform -translate-x-1/2 w-[700px] h-[700px] bg-pink-600 rounded-full"
+        className={clsx(
+          "w-[570px] h-[570px] overflow-hidden rounded-full",
+          className
+        )}
       >
         {img && (
           <img
             src={img}
             alt=""
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-center translate-y-[60px] scale-125"
           />
         )}
       </div>

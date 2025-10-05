@@ -9,8 +9,17 @@ import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { EBMMessage } from "components/EBMMessage/EBMMessage";
 import LocationModal from "components/LocationModal/LocationModal";
+import { useSyncPromo } from "~/hooks/useSyncPromo";
+import { createBrowserClient } from "@supabase/ssr";
 
 const ParentComponent: React.FC = () => {
+  const { elevenLabsId, sessionId, user, user_profile, env } =
+    useLoaderData<typeof loader>();
+
+  // associate any promo code to the user's account
+  const supabase = createBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+  useSyncPromo(supabase, user_profile.user_id);
+
   type AvatarState =
     | "idle"
     | "connected"
@@ -57,9 +66,6 @@ const ParentComponent: React.FC = () => {
 
   // this is used to render the spinner in the main button when elevenlabs is connecting.
   const [avatarConnecting, setConnectingState] = useState(false);
-
-  const { elevenLabsId, sessionId, user, user_profile } =
-    useLoaderData<typeof loader>();
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
@@ -248,42 +254,9 @@ const ParentComponent: React.FC = () => {
 
   // Effect to show location modal on mount
   useEffect(() => {
-    console.log("user: ", user);
-    console.log("profile: ", user_profile);
     // Mostrar el modal de permisos de ubicación al cargar la app
     setShowLocationModal(true);
   }, []);
-
-  /*
-  useEffect(() => {
-    if (conversation.status === "connecting") {
-      setAvatarState("idle");
-      setConnectingState(true);
-    } else {
-      setConnectingState(false);
-    }
-    if (conversation.status === "connected") {
-      setAvatarState("preconnect");
-      setTimeout(() => {
-        setAvatarState("connected");
-      }, 250); // matches preconnect transition duration
-    }
-    if (conversation.status === "disconnected") {
-      conversation.status;
-      setAvatarState("idle");
-    }
-  }, [conversation.status]);
-
-  // try to eliminate this
-
-  useEffect(() => {
-    conversation.isSpeaking
-      ? setAvatarState("speaking")
-      : conversation.status === "disconnected"
-      ? setAvatarState("idle")
-      : setAvatarState("connected");
-  }, [conversation.isSpeaking, conversation.status]);
-  */
 
   useEffect(() => {
     let previousState = avatarState;

@@ -28,6 +28,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .select()
     .single();
 
+  // if you haven't onboarded, go do it
+  if (!profile.has_onboarded) {
+    return redirect("/welcome");
+  }
+
   if (error) {
     console.log("sb error: ", error);
   }
@@ -41,6 +46,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: process.env.ELEVENLABS_AGENT!,
+      env: {
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      },
     },
     {
       headers: {

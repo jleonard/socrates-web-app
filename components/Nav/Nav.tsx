@@ -3,6 +3,8 @@ import { X, Menu } from "lucide-react";
 import { Link, useMatches, useLocation } from "@remix-run/react";
 import clsx from "clsx";
 
+import { isDarkPage } from "~/hooks/useBackgroundClass";
+
 export const Nav = () => {
   const location = useLocation();
   const path = location.pathname;
@@ -17,7 +19,7 @@ export const Nav = () => {
     .filter((data): data is WithUser => data !== null && data !== undefined)
     .find((m) => m.user)?.user;
 
-  const logoSrc = path === "/login" ? "/ayapi-white.svg" : "/ayapi.svg";
+  const logoSrc = isDarkPage() ? "/ayapi-white.svg" : "/ayapi.svg";
 
   return (
     <>
@@ -38,7 +40,7 @@ export const Nav = () => {
       )}
 
       {/* Toggle icon */}
-      {path !== "/login" && (
+      {path !== "/login" && path !== "/welcome" && (
         <button
           onClick={() => {
             setIsOpen((prev) => !prev);
@@ -58,8 +60,8 @@ export const Nav = () => {
 
       <nav
         className={clsx(
-          "sticky top-0 flex flex-col w-full pt-14 pb-4 z-40",
-          path === "/login" ? "bg-transparent" : "bg-paper-background"
+          "sticky top-0 flex flex-col w-full pt-10 pb-4 z-40",
+          isDarkPage() ? "bg-transparent" : "bg-paper-background"
         )}
       >
         {/* Nav Bar */}

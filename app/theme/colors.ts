@@ -92,6 +92,7 @@ export const surfaceColors = {
   handle: coreColors.grey["700"],
   inverse: coreColors.granite["1100"],
   "ayapi-grey": "#1F1F1F",
+  "ayapi-pink": "#FF2F92",
   paper: {
     DEFAULT: coreColors.paper,
     dark: coreColors.paper["dark"],

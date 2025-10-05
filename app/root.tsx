@@ -5,9 +5,12 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
 } from "@remix-run/react";
+import { useEffect } from "react";
 import type { LinksFunction, LoaderFunction } from "@remix-run/node";
-import { usePageViews } from "./hooks/usePageViews"; // <- your hook
+import { usePageViews } from "./hooks/usePageViews";
+import { useBackgroundClass } from "./hooks/useBackgroundClass";
 
 import { Nav } from "components/Nav/Nav";
 
@@ -45,6 +48,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   // ✅ Track route changes with google analytics
   usePageViews(GA_TRACKING_ID);
+
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const promoCode = params.get("promo");
+    if (promoCode) {
+      localStorage.setItem("promo", promoCode);
+    }
+  }, [location.search]);
 
   return (
     <html lang="en">
@@ -85,14 +97,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </>
         )}
       </head>
-      <body className="px-8 max-w-[1024px] h-dvh mx-auto relative overflow-hidden">
-        <Nav />
-        {children}
-        <ScrollRestoration />
-        <Scripts />
-        <footer className="hidden fixed left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper-background">
-          © {new Date().getFullYear()} ayapi.ai
-        </footer>
+      {/* px-8 max-w-[1024px] border border-red-600 w-screen h-screen mx-auto my-0 relative overflow-hidden overflow-x-clip z-0 ${useBackgroundClass()}` */}
+      <body className={`m-0 overflow-hidden ${useBackgroundClass()}`}>
+        <div
+          className={`px-8 max-w-[1024px] w-screen h-screen h-svh mx-auto my-0 relative overflow-hidden overflow-x-clip overflow-y-clip z-0 pb-safe`}
+        >
+          <Nav />
+          {children}
+          <ScrollRestoration />
+          <Scripts />
+          <footer className="hidden absolute left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper-background">
+            © {new Date().getFullYear()} ayapi.ai
+          </footer>
+        </div>
       </body>
     </html>
   );

@@ -1,11 +1,4 @@
 import React from "react";
-import type { loader } from "./loader";
-import { useConversation } from "@11labs/react";
-import { useCallback, useState } from "react";
-import { MainButton } from "components/MainButton/MainButton";
-import { Transcript } from "components/Transcript/Transcript";
-import { Avatar } from "components/Avatar/Avatar";
-import { useTranscriptStore } from "../../stores/transcriptStore";
 
 const Privacy: React.FC = () => {
   return (

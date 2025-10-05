@@ -2,7 +2,6 @@ import { type LoaderFunctionArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { getSupabaseBrowserClient } from "~/utils/supabase.client";
 import { useLoaderData } from "@remix-run/react";
-import { Circles } from "components/Circles/Circles";
 import { CircleImage } from "components/CircleImage/CircleImage";
 import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
 import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";
@@ -54,15 +53,18 @@ export default function Login() {
 
   return (
     <>
-      <div className="hidden fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-12">
-        <Circles mode="idle"></Circles>
-      </div>
+      <CircleImage
+        className="hidden absolute -top-40 left-1/2 transform -translate-x-1/2"
+        img="/images/login.png"
+      />
 
-      <div className="w-dvw h-dvh fixed top-0 left-0 bg-ayapi-grey"></div>
-      <CircleImage />
+      <img
+        className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover h-full"
+        src="/images/UI/text-2x.png"
+      />
 
-      <div className="fixed bottom-7 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 max-w-96 items-center">
-        <h2 className="text-2xl font-regular text-white text-center mb-4">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-96 items-center">
+        <h2 className="text-2xl font-regular text-center mb-7">
           Your AI Companion for
           <br />
           Cultural Exploration
@@ -76,7 +78,7 @@ export default function Login() {
           onClick={handleFacebookLogin}
           label="Continue with Facebook"
         ></FacebookAuthButton>
-        <p className="mt-3 text-xs text-center text-white">
+        <p className="mt-3 text-xs text-center ">
           By signing up with Google or Facebook you agree to our <br />
           <Link className="underline" to="/terms">
             Terms &amp; Conditions
