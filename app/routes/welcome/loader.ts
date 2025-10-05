@@ -8,16 +8,14 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  /*
   if (!user) {
     return redirect("/login");
   }
-  
+
   const { error } = await supabase
     .from("profiles")
     .update({ has_onboarded: true })
     .eq("user_id", user.id);
-    */
 
   return Response.json({
     pageTitle: "ayapi",
