@@ -3,7 +3,7 @@ import { X, Menu } from "lucide-react";
 import { Link, useMatches, useLocation } from "@remix-run/react";
 import clsx from "clsx";
 
-import { isDarkPage } from "~/hooks/useBackgroundClass";
+import { isDarkPage, isHiddenNavPage } from "~/hooks/useBackgroundClass";
 
 export const Nav = () => {
   const location = useLocation();
@@ -40,7 +40,7 @@ export const Nav = () => {
       )}
 
       {/* Toggle icon */}
-      {path !== "/login" && path !== "/welcome" && (
+      {!isHiddenNavPage() && (
         <button
           onClick={() => {
             setIsOpen((prev) => !prev);
