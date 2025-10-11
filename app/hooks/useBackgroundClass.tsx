@@ -4,7 +4,12 @@ export function isHiddenNavPage() {
   const location = useLocation();
   const path = location.pathname;
 
-  const hiddenNavPage = ["/login", "/welcome", "/promo/day-pass"];
+  const hiddenNavPage = [
+    "/login",
+    "/welcome",
+    "/promo/day-pass",
+    "/expiration",
+  ];
 
   return hiddenNavPage.includes(path);
 }
@@ -13,7 +18,7 @@ export function isDarkPage() {
   const location = useLocation();
   const path = location.pathname;
 
-  const darkPages = ["/login", "/welcome", "/promo/day-pass"];
+  const darkPages = ["/login", "/welcome", "/promo/day-pass", "/expiration"];
 
   return darkPages.includes(path);
 }

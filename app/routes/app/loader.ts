@@ -1,6 +1,7 @@
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
+import { userHasAccess } from "~/server/access.manager.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
@@ -13,6 +14,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!user) {
     return redirect("/login");
   }
+
+  const access = await userHasAccess(user.id, supabase);
+  if (!access) {
+    return redirect("/expiration");
+  }
+  console.log("loader access ", access);
 
   // Upsert profile data on every load
   const { data: profile, error } = await supabase
@@ -42,6 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       pageTitle: "ayapi",
       user: user,
       user_profile: error ? {} : profile,
+      access,
       sessionId,
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",

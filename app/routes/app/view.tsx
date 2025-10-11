@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./loader";
-import { useLoaderData, Link } from "@remix-run/react";
+import {
+  useLoaderData,
+  Link,
+  useSubmit,
+  useRevalidator,
+} from "@remix-run/react";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
@@ -11,10 +16,17 @@ import { EBMMessage } from "components/EBMMessage/EBMMessage";
 import LocationModal from "components/LocationModal/LocationModal";
 import { useSyncPromo } from "~/hooks/useSyncPromo";
 import { createBrowserClient } from "@supabase/ssr";
+import { DebugPanel } from "components/DebugPanel/DebugPanel";
 
 const ParentComponent: React.FC = () => {
-  const { elevenLabsId, sessionId, user, user_profile, env } =
+  const { access, elevenLabsId, sessionId, user, user_profile, env } =
     useLoaderData<typeof loader>();
+
+  // this is used to post to the action
+  const submit = useSubmit();
+  // this is used to refresh the page when we want
+  // to call the loader again
+  const revalidator = useRevalidator();
 
   // associate any promo code to the user's account
   const supabase = createBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
@@ -95,12 +107,9 @@ const ParentComponent: React.FC = () => {
       const now = new Date();
       let responseTime;
       if (message.source === "user") {
-        // setAvatarState("processing"); testing
         responseTimeComparison = now;
       }
       if (message.source === "ai") {
-        // setAvatarState("speaking"); testing
-
         // set the response time
         responseTime = responseTimeComparison
           ? now.getTime() - responseTimeComparison.getTime()
@@ -155,7 +164,6 @@ const ParentComponent: React.FC = () => {
       // El contexto ya está enviado via dynamicVariables por ahora
     } catch (error) {
       // todo - this is an attention error.
-      console.error("Error: to start conversation:", error);
       setError("Couldn't start the conversation");
     }
   }, [conversation, user, coords, elevenLabsId]);
@@ -172,6 +180,13 @@ const ParentComponent: React.FC = () => {
         category: "conversation",
         label: "press to connect",
       });
+      // if the access doesn't have an expiration, set it
+      if (!access?.expiration) {
+        console.log("setting an expiration date ", access);
+        const formData = new FormData();
+        formData.append("access_id", access.access_id);
+        submit(formData, { method: "post" });
+      }
     } else {
       trackEvent({
         action: "user-conversation-ended",
@@ -179,6 +194,10 @@ const ParentComponent: React.FC = () => {
         label: "press to disconnect",
       });
       stopConversation();
+      if (access.expiration > Date.now()) {
+        console.log("expired! revalidate ", access);
+        revalidator.revalidate();
+      }
     }
   };
 
@@ -317,6 +336,8 @@ const ParentComponent: React.FC = () => {
           <EBMMessage variant="warning" message="You're offline." />
         </div>
       )}
+
+      <DebugPanel access={access} />
 
       {/* Location Permission Modal */}
       {showLocationModal && (
