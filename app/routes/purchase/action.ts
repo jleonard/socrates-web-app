@@ -1,22 +1,47 @@
 import { Stripe } from "stripe";
 import { redirect, json } from "@remix-run/node";
+import { products, productKeys } from "~/server/product.manager.server";
+import { getSupabaseServerClient } from "~/utils/supabase.server";
+import { getSessionId, sessionStorage } from "~/sessions.server";
 
 export async function action({ request }: { request: Request }) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-06-20",
+    apiVersion: "2025-09-30.clover",
   });
+
+  const { supabase } = getSupabaseServerClient(request);
+  //const { session, sessionId } = await getSessionId(request);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/login");
+  }
 
   try {
     const body = await request.json();
+
     const {
-      priceId,
-      mode = "payment",
+      productCode,
       successPath = "/success",
       cancelPath = "/cancel",
     } = body;
 
-    if (!priceId) {
-      return json({ error: "Missing priceId" }, { status: 400 });
+    /* front end didn't pass day or week */
+    if (!productKeys.includes(productCode as any)) {
+      return json(
+        { error: `Invalid product code: ${productCode}` },
+        { status: 400 }
+      );
+    }
+
+    const productId = products[productCode as keyof typeof products];
+
+    /* might be an env var not set in product.manager.server */
+    if (!productId) {
+      return json({ error: "Missing product id" }, { status: 400 });
     }
 
     const DOMAIN = process.env.BASE_URL;
@@ -25,10 +50,11 @@ export async function action({ request }: { request: Request }) {
       mode: "payment",
       line_items: [
         {
-          price: priceId,
+          price: productId,
           quantity: 1,
         },
       ],
+      client_reference_id: user.id,
       success_url: `${DOMAIN}${successPath}`,
       cancel_url: `${DOMAIN}${cancelPath}`,
     });
