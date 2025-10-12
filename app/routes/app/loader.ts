@@ -19,8 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("loader access ", access);
   // none means this user never had access
   if (access?.category === "none") {
-    // @TODO - this user can't navigate to the app.
-    // @TODO - need a business decision.
+    return redirect("/purchase");
   }
 
   // Upsert profile data on every load

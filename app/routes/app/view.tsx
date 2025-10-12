@@ -5,6 +5,7 @@ import {
   Link,
   useSubmit,
   useRevalidator,
+  useNavigate,
 } from "@remix-run/react";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
@@ -28,6 +29,8 @@ const ParentComponent: React.FC = () => {
   // this is used to refresh the page when we want
   // to call the loader again
   const revalidator = useRevalidator();
+
+  const navigate = useNavigate();
 
   // associate any promo code to the user's account
   const supabase = createBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
@@ -348,7 +351,7 @@ const ParentComponent: React.FC = () => {
         />
       )}
 
-      {access?.category === "active" || access?.category === "unused" ? (
+      {access?.category !== "expired" ? (
         <>
           <MainButton
             className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
@@ -364,21 +367,16 @@ const ParentComponent: React.FC = () => {
         <>
           <PurchaseButton
             className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            onClick={() => navigate("/purchase/")}
             cta={
-              access?.category === "expired" ? (
-                <>
-                  <span className="font-bold text-lg block">
-                    Enjoyed Ayapi?
-                  </span>
-                  <span>Unlock more time to continue exploring</span>
-                </>
-              ) : (
-                "Get access"
-              )
+              <>
+                <span className="font-bold text-lg block">Enjoyed Ayapi?</span>
+                <span>Unlock more time to continue exploring</span>
+              </>
             }
           />
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-            <span className="font-bold">$5</span> Day Pass ·
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-4 z-20 text-center">
+            <span className="font-bold">$5</span> Day Pass{"  "}·{"  "}
             <span className="font-bold">$15</span> Week Pass <br /> No
             subscription
           </span>
