@@ -7,6 +7,36 @@ import {
 import { serialize } from "cookie";
 import type { Session } from "@supabase/supabase-js";
 
+export function getSupabaseServiceRoleClient(request: Request) {
+  const headers = new Headers();
+
+  const supabase = createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        flowType: "pkce", // Enable PKCE flow
+        detectSessionInUrl: true, // Detect the session automatically after redirect
+      },
+      cookies: {
+        getAll() {
+          return parseCookieHeader(request.headers.get("Cookie") ?? "");
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            headers.append(
+              "Set-Cookie",
+              serializeCookieHeader(name, value, options)
+            )
+          );
+        },
+      },
+    }
+  );
+
+  return { supabase, headers };
+}
+
 export function getSupabaseServerClient(request: Request) {
   const headers = new Headers();
 

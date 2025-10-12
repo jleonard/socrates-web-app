@@ -1,0 +1,115 @@
+// app/routes/webhooks/stripe.ts
+import type { ActionFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import Stripe from "stripe";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-09-30.clover",
+});
+
+export const action: ActionFunction = async ({ request }) => {
+  const sig = request.headers.get("stripe-signature");
+  const body = await request.text();
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      body,
+      sig!,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (err: any) {
+    console.error("⚠️ Webhook signature verification failed.", err.message);
+    return json({ error: "Invalid signature" }, { status: 400 });
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    // Your internal user ID
+    const userId = session.client_reference_id;
+
+    // Product purchased
+    const productCode = session.metadata?.productCode;
+    const productHours = session.metadata?.productHours;
+
+    if (!userId || !productCode) {
+      console.warn("Missing userId or productCode in session metadata");
+      return json({ error: "Missing metadata" }, { status: 400 });
+    }
+
+    try {
+      // Initialize Supabase server admin client
+      const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient(request);
+
+      // Create an access record
+      const { data: accessRecord, error: accessError } = await supabaseAdmin
+        .from("access")
+        .insert({
+          user_id: userId,
+          product_code: productCode,
+          hours: productHours,
+        })
+        .select()
+        .single();
+
+      // @todo - user made a purchase but there was an issue creating the access record
+      if (accessError) {
+        console.error(
+          "Supabase error: access record error on purchase webhook: ",
+          accessError.code,
+          accessError.message
+        );
+      }
+
+      // now let's create a purchase record
+      const stripe_session_id = session.id;
+      const stripe_payment_intent = session.payment_intent;
+      const user_id = userId;
+      const stripe_product_code = productCode;
+      const product_hours = productHours;
+      const stripe_payment_status = session.status;
+      const stripe_amount_total = session.amount_total;
+      const stripe_currency = session.currency;
+      const access_id = accessRecord?.access_id ?? 0;
+
+      const { data: purchase, error: purchaseRecordError } = await supabaseAdmin
+        .from("purchases")
+        .insert({
+          user_id: userId,
+          access_id: accessRecord?.access_id ?? 0,
+          stripe_payment_intent: session.payment_intent,
+          stripe_session_id: session.id,
+          stripe_product_code: productCode,
+          stripe_amount_total: session.amount_total,
+          stripe_currency: session.currency,
+          stripe_payment_status: session.payment_status,
+          product_hours: productHours,
+        })
+        .select()
+        .single();
+
+      // @todo - user made a purchase but we didn't create an access record
+      if (purchaseRecordError) {
+        console.error(
+          "Supbase error: purchase record error on purchase webhook : ",
+          purchaseRecordError.code,
+          purchaseRecordError.message
+        );
+      }
+
+      if (accessError || purchaseRecordError) {
+        return json({ error: "db error" }, { status: 500 });
+      }
+    } catch (err: any) {
+      console.error("Unexpected error updating access:", err.message);
+      return json({ error: err.message }, { status: 500 });
+    }
+  } else {
+    console.log(`Unhandled Stripe event type: ${event.type}`);
+  }
+
+  return json({ received: true });
+};

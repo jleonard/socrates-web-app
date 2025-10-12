@@ -37,10 +37,10 @@ export async function action({ request }: { request: Request }) {
       );
     }
 
-    const productId = products[productCode as keyof typeof products];
+    const product = products[productCode as keyof typeof products];
 
     /* might be an env var not set in product.manager.server */
-    if (!productId) {
+    if (!product) {
       return json({ error: "Missing product id" }, { status: 400 });
     }
 
@@ -50,13 +50,17 @@ export async function action({ request }: { request: Request }) {
       mode: "payment",
       line_items: [
         {
-          price: productId,
+          price: product.code,
           quantity: 1,
         },
       ],
       client_reference_id: user.id,
       success_url: `${DOMAIN}${successPath}`,
       cancel_url: `${DOMAIN}${cancelPath}`,
+      metadata: {
+        productCode: product.code,
+        productHours: product.hours,
+      },
     });
 
     return redirect(session.url!, 303);
