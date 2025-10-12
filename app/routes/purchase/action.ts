@@ -2,7 +2,6 @@ import { Stripe } from "stripe";
 import { redirect, json } from "@remix-run/node";
 import { products, productKeys } from "~/server/product.manager.server";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
-import { getSessionId, sessionStorage } from "~/sessions.server";
 
 export async function action({ request }: { request: Request }) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -21,13 +20,9 @@ export async function action({ request }: { request: Request }) {
   }
 
   try {
-    const body = await request.json();
+    const body = await request.formData();
 
-    const {
-      productCode,
-      successPath = "/success",
-      cancelPath = "/cancel",
-    } = body;
+    const productCode = body.get("productCode");
 
     /* front end didn't pass day or week */
     if (!productKeys.includes(productCode as any)) {
@@ -43,6 +38,7 @@ export async function action({ request }: { request: Request }) {
     if (!product) {
       return json({ error: "Missing product id" }, { status: 400 });
     }
+    console.log("product: ", product);
 
     const DOMAIN = process.env.BASE_URL;
 
@@ -55,8 +51,8 @@ export async function action({ request }: { request: Request }) {
         },
       ],
       client_reference_id: user.id,
-      success_url: `${DOMAIN}${successPath}`,
-      cancel_url: `${DOMAIN}${cancelPath}`,
+      success_url: `${DOMAIN}/confirmation/${productCode}`,
+      cancel_url: `${DOMAIN}/purchase`,
       metadata: {
         productCode: product.code,
         productHours: product.hours,

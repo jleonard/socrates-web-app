@@ -75,6 +75,7 @@ export const textColors = {
   success: coreColors.green["700"],
   warning: coreColors.orange["400"],
   critical: coreColors.red["400"],
+  "ayapi-pink": "#FF2F92",
 };
 
 export const linkColors = {

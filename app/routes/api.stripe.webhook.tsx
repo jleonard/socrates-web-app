@@ -65,16 +65,6 @@ export const action: ActionFunction = async ({ request }) => {
       }
 
       // now let's create a purchase record
-      const stripe_session_id = session.id;
-      const stripe_payment_intent = session.payment_intent;
-      const user_id = userId;
-      const stripe_product_code = productCode;
-      const product_hours = productHours;
-      const stripe_payment_status = session.status;
-      const stripe_amount_total = session.amount_total;
-      const stripe_currency = session.currency;
-      const access_id = accessRecord?.access_id ?? 0;
-
       const { data: purchase, error: purchaseRecordError } = await supabaseAdmin
         .from("purchases")
         .insert({
