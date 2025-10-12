@@ -47,6 +47,7 @@ export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
     .single();
 
   if (access) {
+    access.category = "active";
     return access;
   }
 
@@ -61,8 +62,37 @@ export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
     .maybeSingle();
 
   if (unusedAccess) {
+    unusedAccess.category = "unused";
     return unusedAccess;
   }
 
-  return false;
+  // 03. Check for prior access
+  const { data: priorAccess, error: priorAccessError } = await supabase
+    .from("access")
+    .select()
+    .eq("user_id", user_id)
+    .order("expiration", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (priorAccess && !priorAccessError) {
+    priorAccess.category = "expired";
+    return priorAccess;
+  }
+
+  // 04. Give this user 20 minutes of free access.
+  // the default hours on an access record is 20min
+  const { data: newAccess, error: newAccessError } = await supabase
+    .from("access")
+    .insert({ user_id, promo_code: "trial" })
+    .select()
+    .single();
+
+  if (newAccess && !newAccessError) {
+    newAccess.category = "trial";
+    return newAccess;
+  }
+
+  // this really shouldn't happen.
+  return { category: "none" };
 }

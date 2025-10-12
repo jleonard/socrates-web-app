@@ -8,7 +8,10 @@
 import { useEffect } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 
+import { useRevalidator } from "@remix-run/react";
+
 export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
+  const revalidator = useRevalidator();
   useEffect(() => {
     async function updatePromo() {
       if (!user_id) return;
@@ -16,19 +19,20 @@ export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
       const promoCode = localStorage.getItem("promo");
       if (!promoCode) return;
 
-      console.log("has promo code ", promoCode, user_id);
+      // console.log("has promo code ", promoCode, user_id);
 
       // check if there's an existing access record for this user with this promo code
       const { data: existing, error: existingError } = await supabase
         .from("access")
         .select()
-        .eq("user_id", String(user_id).trim())
+        .eq("user_id", user_id)
         .eq("promo_code", promoCode.trim())
+        .limit(1)
         .maybeSingle();
 
-      console.log("has existing promo ", existing, existingError);
+      // console.log("has existing promo ", existing, existingError);
 
-      if (!existing) {
+      if (!existing && !existingError) {
         // get the source data for the promo code
         const { data: promo, error: promoError } = await supabase
           .from("promos")
@@ -41,11 +45,12 @@ export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
           const { error: accessError } = await supabase.from("access").insert({
             user_id,
             promo_code: promo.code,
-            duration: promo?.duration,
+            hours: promo?.hours,
           });
 
           if (!accessError) {
             localStorage.removeItem("promo");
+            revalidator.revalidate();
           }
         }
       }

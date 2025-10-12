@@ -8,6 +8,7 @@ import {
 } from "@remix-run/react";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
+import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
@@ -194,7 +195,7 @@ const ParentComponent: React.FC = () => {
         label: "press to disconnect",
       });
       stopConversation();
-      if (access.expiration > Date.now()) {
+      if (access?.expiration > Date.now()) {
         console.log("expired! revalidate ", access);
         revalidator.revalidate();
       }
@@ -347,16 +348,42 @@ const ParentComponent: React.FC = () => {
         />
       )}
 
-      <MainButton
-        className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
-        onPress={handleMainButtonPress}
-        active={attentionConnected}
-        loading={avatarConnecting}
-      ></MainButton>
-
-      <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-        {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
-      </span>
+      {access?.category === "active" || access?.category === "unused" ? (
+        <>
+          <MainButton
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            onPress={handleMainButtonPress}
+            active={attentionConnected}
+            loading={avatarConnecting}
+          />
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
+            {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
+          </span>
+        </>
+      ) : (
+        <>
+          <PurchaseButton
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            cta={
+              access?.category === "expired" ? (
+                <>
+                  <span className="font-bold text-lg block">
+                    Enjoyed Ayapi?
+                  </span>
+                  <span>Unlock more time to continue exploring</span>
+                </>
+              ) : (
+                "Get access"
+              )
+            }
+          />
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
+            <span className="font-bold">$5</span> Day Pass ·
+            <span className="font-bold">$15</span> Week Pass <br /> No
+            subscription
+          </span>
+        </>
+      )}
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
         <div className="max-w-[1024px] mx-auto pb-4 px-8">

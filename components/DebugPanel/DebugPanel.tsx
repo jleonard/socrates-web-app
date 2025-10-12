@@ -1,13 +1,14 @@
 import { format } from "date-fns";
 
 type DebugPanelProps = {
-  access?: { expiration: Date | null };
+  access?: { expiration: Date | null; category: string };
 };
 
 export function DebugPanel({ access }: DebugPanelProps) {
   return (
     <div>
       <div>
+        <span className="font-bold block">{access?.category}</span>
         Access expires:{" "}
         {(() => {
           if (!access) {

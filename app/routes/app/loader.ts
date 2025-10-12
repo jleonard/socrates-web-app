@@ -16,10 +16,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const access = await userHasAccess(user.id, supabase);
-  if (!access) {
-    return redirect("/expiration");
-  }
   console.log("loader access ", access);
+  // none means this user never had access
+  if (access?.category === "none") {
+    // @TODO - this user can't navigate to the app.
+    // @TODO - need a business decision.
+  }
 
   // Upsert profile data on every load
   const { data: profile, error } = await supabase
