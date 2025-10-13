@@ -367,14 +367,16 @@ const ParentComponent: React.FC = () => {
         <>
           <PurchaseButton
             className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
-            onClick={() => navigate("/purchase/")}
+            onClick={() => navigate("/purchase")}
             cta={
               <>
                 <span className="font-bold text-lg block">Enjoyed Ayapi?</span>
                 <span>Unlock more time to continue exploring</span>
               </>
             }
-          />
+          >
+            <span className="font-bold">Unlock</span>
+          </PurchaseButton>
           <span className="fixed left-1/2 -translate-x-1/2 bottom-4 z-20 text-center">
             <span className="font-bold">$5</span> Day Pass{"  "}·{"  "}
             <span className="font-bold">$15</span> Week Pass <br /> No

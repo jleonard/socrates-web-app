@@ -8,9 +8,9 @@ export default function Purchase() {
 
   return (
     <>
-      <CircleImage
-        className="absolute -top-40 left-1/2 transform -translate-x-1/2"
-        img="/images/login.png"
+      <img
+        className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover h-full"
+        src="/images/purchase.png"
       />
 
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-4 w-full max-w-96">
@@ -40,7 +40,7 @@ export default function Purchase() {
             </div>
           </button>
         </Form>
-
+        <div className="w-full border-t border-white border-t-[0.5px]"></div>{" "}
         {/* Week Pass */}
         <Form method="post" className="w-full">
           <input type="hidden" name="productCode" value="week" />
