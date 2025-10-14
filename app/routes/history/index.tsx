@@ -114,7 +114,7 @@ const HistoryPage: React.FC = () => {
         </ul>
       </section>
 
-      <div className="fixed bottom-0 left-0 py-2 z-10 bg-paper w-full flex justify-center">
+      <div className="fixed bottom-0 left-0 py-2 z-10 bg-paper-background w-full flex justify-center">
         <div className="px-8 max-w-[1024px] w-full mx-auto relative">
           <Link
             to="/app"

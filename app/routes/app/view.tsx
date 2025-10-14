@@ -341,8 +341,6 @@ const ParentComponent: React.FC = () => {
         </div>
       )}
 
-      <DebugPanel access={access} />
-
       {/* Location Permission Modal */}
       {showLocationModal && (
         <LocationModal
