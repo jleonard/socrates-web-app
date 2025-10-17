@@ -16,7 +16,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const access = await userHasAccess(user.id, supabase);
-  console.log("loader access ", access);
   // none means this user never had access
   if (access?.category === "none") {
     return redirect("/purchase");

@@ -14,7 +14,7 @@ export const PurchaseButton = React.forwardRef<
 
   return (
     <>
-      <div className={clsx("rounded-full size-[253px] bg-white", className)}>
+      <div className={clsx("rounded-full size-[245px] bg-white", className)}>
         <span className="absolute w-4/6 flex flex-col text-center items-center justify-center left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           {cta}
         </span>

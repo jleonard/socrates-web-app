@@ -332,9 +332,6 @@ const ParentComponent: React.FC = () => {
             onPress={handleMainButtonPress}
             mode={buttonMode}
           ></MainButton>
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-            {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
-          </span>
         </>
       ) : (
         <>
@@ -350,8 +347,9 @@ const ParentComponent: React.FC = () => {
           >
             <span className="font-bold">Unlock</span>
           </PurchaseButton>
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-4 z-20 text-center">
-            <span className="font-bold">$5</span> Day Pass{"  "}·{"  "}
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-2 z-20 text-center text-sm">
+            <span className="font-bold">$5</span> Day Pass{"  "}
+            <br />
             <span className="font-bold">$15</span> Week Pass <br /> No
             subscription
           </span>
