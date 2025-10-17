@@ -1,14 +1,24 @@
 # Socrates web app POC
 
-## The Promo Code Flow
+## Promo Code Logic
 
 Promo codes are used to track sign-ups from events, locations etc. The promo code is built into the query string as `promo`.
 
 **How promo codes are captured**
 
-1. Promo codes are captured in the root.tsx file and saved to localstorage.
-2. After the user logs in and hits the `/app` the hook `useSyncPromo` is called.
-3. The hook checks for a promo code in local storage and sets it on the user's profile if so.
+1. When the user hits the app with a `promo` value in the query string.
+2. Then the `root.tsx` file will save it to localstorage so we can wait to process it until we have a `user`
+3. After the user logs in and hits `/app` then `useSyncPromo` is called.
+4. The hook checks for a promo code in localstorage and preps an `access` record for the user if its there.
+
+## Access Logic
+
+- The `app/` loader will check with `access.manager.server` to determine if the user can access the view.
+- The loader passes an `access` property to the front end
+- When a conversation starts...
+- - If the front end `access` doesn't have an expiration date, then set it by adding the access record's `hours` to the current date.
+- When a conversation ends...
+- - We check to see if the current date is beyond the `access` expiration. If expired NEED business decision on how to update the UI
 
 ---
 

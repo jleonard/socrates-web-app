@@ -1,8 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./loader";
-import { useLoaderData, Link } from "@remix-run/react";
+import {
+  useLoaderData,
+  Link,
+  useSubmit,
+  useRevalidator,
+  useNavigate,
+} from "@remix-run/react";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
+import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { Circles } from "components/Circles/Circles";
 import { trackEvent } from "~/utils/googleAnalytics";
@@ -11,10 +18,19 @@ import { EBMMessage } from "components/EBMMessage/EBMMessage";
 import LocationModal from "components/LocationModal/LocationModal";
 import { useSyncPromo } from "~/hooks/useSyncPromo";
 import { createBrowserClient } from "@supabase/ssr";
+import { DebugPanel } from "components/DebugPanel/DebugPanel";
 
 const ParentComponent: React.FC = () => {
-  const { elevenLabsId, sessionId, user, user_profile, env } =
+  const { access, elevenLabsId, sessionId, user, user_profile, env } =
     useLoaderData<typeof loader>();
+
+  // this is used to post to the action
+  const submit = useSubmit();
+  // this is used to refresh the page when we want
+  // to call the loader again
+  const revalidator = useRevalidator();
+
+  const navigate = useNavigate();
 
   // associate any promo code to the user's account
   const supabase = createBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
@@ -95,12 +111,9 @@ const ParentComponent: React.FC = () => {
       const now = new Date();
       let responseTime;
       if (message.source === "user") {
-        // setAvatarState("processing"); testing
         responseTimeComparison = now;
       }
       if (message.source === "ai") {
-        // setAvatarState("speaking"); testing
-
         // set the response time
         responseTime = responseTimeComparison
           ? now.getTime() - responseTimeComparison.getTime()
@@ -155,7 +168,6 @@ const ParentComponent: React.FC = () => {
       // El contexto ya está enviado via dynamicVariables por ahora
     } catch (error) {
       // todo - this is an attention error.
-      console.error("Error: to start conversation:", error);
       setError("Couldn't start the conversation");
     }
   }, [conversation, user, coords, elevenLabsId]);
@@ -172,6 +184,13 @@ const ParentComponent: React.FC = () => {
         category: "conversation",
         label: "press to connect",
       });
+      // if the access doesn't have an expiration, set it
+      if (!access?.expiration) {
+        console.log("setting an expiration date ", access);
+        const formData = new FormData();
+        formData.append("access_id", access.access_id);
+        submit(formData, { method: "post" });
+      }
     } else {
       trackEvent({
         action: "user-conversation-ended",
@@ -179,6 +198,10 @@ const ParentComponent: React.FC = () => {
         label: "press to disconnect",
       });
       stopConversation();
+      if (access?.expiration > Date.now()) {
+        console.log("expired! revalidate ", access);
+        revalidator.revalidate();
+      }
     }
   };
 
@@ -326,16 +349,39 @@ const ParentComponent: React.FC = () => {
         />
       )}
 
-      <MainButton
-        className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
-        onPress={handleMainButtonPress}
-        active={attentionConnected}
-        loading={avatarConnecting}
-      ></MainButton>
-
-      <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-        {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
-      </span>
+      {access?.category !== "expired" ? (
+        <>
+          <MainButton
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            onPress={handleMainButtonPress}
+            active={attentionConnected}
+            loading={avatarConnecting}
+          />
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
+            {avatarConnecting === true ? "Connecting" : stateText[avatarState]}
+          </span>
+        </>
+      ) : (
+        <>
+          <PurchaseButton
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            onClick={() => navigate("/purchase")}
+            cta={
+              <>
+                <span className="font-bold text-lg block">Enjoyed Ayapi?</span>
+                <span>Unlock more time to continue exploring</span>
+              </>
+            }
+          >
+            <span className="font-bold">Unlock</span>
+          </PurchaseButton>
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-4 z-20 text-center">
+            <span className="font-bold">$5</span> Day Pass{"  "}·{"  "}
+            <span className="font-bold">$15</span> Week Pass <br /> No
+            subscription
+          </span>
+        </>
+      )}
 
       <div className="fixed bottom-0 left-0 w-full items-center z-10">
         <div className="max-w-[1024px] mx-auto pb-4 px-8">
