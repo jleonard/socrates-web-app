@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Exchange the code for a session
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    console.error("Error exchanging code for session:", error.message);
+    // console.error("Error exchanging code for session:", error.message);
     return redirect("/auth/error");
   }
 
