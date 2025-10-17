@@ -5,21 +5,27 @@
  * we use promo query strings when users sign up at an event, from a postcard etc.
  * promo tells us where the user learned about us
  */
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { useRevalidator } from "@remix-run/react";
 
 export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
+  const hasRunRef = useRef(false);
+
   const revalidator = useRevalidator();
   useEffect(() => {
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
     async function updatePromo() {
+      console.log("useSyncPromo");
       if (!user_id) return;
 
       const promoCode = localStorage.getItem("promo");
+
       if (!promoCode) return;
 
-      // console.log("has promo code ", promoCode, user_id);
+      console.log("has promo code ", promoCode, user_id);
 
       // check if there's an existing access record for this user with this promo code
       const { data: existing, error: existingError } = await supabase
@@ -30,7 +36,7 @@ export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
         .limit(1)
         .maybeSingle();
 
-      // console.log("has existing promo ", existing, existingError);
+      console.log("has existing promo ", existing, existingError);
 
       if (!existing && !existingError) {
         // get the source data for the promo code

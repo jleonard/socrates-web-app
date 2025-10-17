@@ -52,7 +52,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const promoCode = params.get("promo");
+    let promoCode = params.get("promo");
+
+    console.log("code: ", promoCode, location.search);
+
+    if (!promoCode && location.search) {
+      // remove the leading "?" and use the entire string
+      promoCode = location.search.substring(1);
+      promoCode = promoCode.split("&")[0];
+    }
+
     if (promoCode) {
       localStorage.setItem("promo", promoCode);
     }
