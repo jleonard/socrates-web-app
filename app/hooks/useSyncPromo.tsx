@@ -36,7 +36,7 @@ export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
         .limit(1)
         .maybeSingle();
 
-      console.log("has existing promo ", existing, existingError);
+      // console.log("has existing promo ", existing, existingError);
 
       if (!existing && !existingError) {
         // get the source data for the promo code

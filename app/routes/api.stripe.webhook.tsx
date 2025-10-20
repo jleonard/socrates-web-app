@@ -22,6 +22,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } catch (err: any) {
     console.error("⚠️ Webhook signature verification failed.", err.message);
+    // todo sentry
     return json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -56,6 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
         .single();
 
       // @todo - user made a purchase but there was an issue creating the access record
+      // todo sentry
       if (accessError) {
         console.error(
           "Supabase error: access record error on purchase webhook: ",
@@ -82,6 +84,7 @@ export const action: ActionFunction = async ({ request }) => {
         .single();
 
       // @todo - user made a purchase but we didn't create an access record
+      // todo sentry
       if (purchaseRecordError) {
         console.error(
           "Supbase error: purchase record error on purchase webhook : ",

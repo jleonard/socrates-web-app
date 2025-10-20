@@ -40,6 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/welcome");
   }
 
+  // @todo sentry
   if (error) {
     console.log("sb error: ", error);
   }

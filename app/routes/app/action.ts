@@ -15,6 +15,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const { data, error } = await setAccessExpiration(String(accessId), request);
 
+  // todo sentry
   if (error) {
     console.error("Error updating expiration:", error);
     throw new Response("Failed to update expiration", { status: 500 });
