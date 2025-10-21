@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { data, type LoaderFunctionArgs } from "@remix-run/node";
 import { searchCache } from "~/utils/cache.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -6,15 +6,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const query = url.searchParams.get("query")?.trim();
 
   if (!query) {
-    return json({ error: "query parameter is required" }, { status: 400 });
+    return data({ error: "query parameter is required" }, { status: 400 });
   }
 
   const cached = await searchCache(query);
   console.log(cached);
 
   if (cached) {
-    return json({ cached: true, output: cached.answer });
+    return { cached: true, output: cached.answer };
   } else {
-    return json({ cached: false });
+    return { cached: false };
   }
 }

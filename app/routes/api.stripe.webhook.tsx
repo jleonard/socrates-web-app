@@ -1,6 +1,6 @@
 // app/routes/webhooks/stripe.ts
 import type { ActionFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { data } from "@remix-run/node";
 import Stripe from "stripe";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
@@ -23,7 +23,7 @@ export const action: ActionFunction = async ({ request }) => {
   } catch (err: any) {
     console.error("⚠️ Webhook signature verification failed.", err.message);
     // todo sentry
-    return json({ error: "Invalid signature" }, { status: 400 });
+    return data({ error: "Invalid signature" }, { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
@@ -38,7 +38,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!userId || !productCode) {
       console.warn("Missing userId or productCode in session metadata");
-      return json({ error: "Missing metadata" }, { status: 400 });
+      return data({ error: "Missing metadata" }, { status: 400 });
     }
 
     try {
@@ -94,15 +94,15 @@ export const action: ActionFunction = async ({ request }) => {
       }
 
       if (accessError || purchaseRecordError) {
-        return json({ error: "db error" }, { status: 500 });
+        return data({ error: "db error" }, { status: 500 });
       }
     } catch (err: any) {
       console.error("Unexpected error updating access:", err.message);
-      return json({ error: err.message }, { status: 500 });
+      return data({ error: err.message }, { status: 500 });
     }
   } else {
     console.log(`Unhandled Stripe event type: ${event.type}`);
   }
 
-  return json({ received: true });
+  return { received: true };
 };

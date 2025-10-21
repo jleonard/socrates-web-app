@@ -1,4 +1,4 @@
-import { json, type ActionFunctionArgs } from "@remix-run/node";
+import { data, type ActionFunctionArgs } from "@remix-run/node";
 import { storeCache } from "~/utils/cache.server";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -13,10 +13,10 @@ export async function action({ request }: ActionFunctionArgs) {
     typeof body.ttlSeconds === "number" ? body.ttlSeconds : undefined;
 
   if (!query || !answer) {
-    return json({ error: "query and answer are required" }, { status: 400 });
+    return data({ error: "query and answer are required" }, { status: 400 });
   }
 
   await storeCache(query, answer, tool, ttlSeconds);
 
-  return json({ success: true });
+  return { success: true };
 }

@@ -1,5 +1,5 @@
 import { Stripe } from "stripe";
-import { redirect, json } from "@remix-run/node";
+import { redirect, data } from "@remix-run/node";
 import { products, productKeys } from "~/server/product.manager.server";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
@@ -26,7 +26,7 @@ export async function action({ request }: { request: Request }) {
 
     /* front end didn't pass day or week */
     if (!productKeys.includes(productCode as any)) {
-      return json(
+      return data(
         { error: `Invalid product code: ${productCode}` },
         { status: 400 }
       );
@@ -36,7 +36,7 @@ export async function action({ request }: { request: Request }) {
 
     /* might be an env var not set in product.manager.server */
     if (!product) {
-      return json({ error: "Missing product id" }, { status: 400 });
+      return data({ error: "Missing product id" }, { status: 400 });
     }
     console.log("product: ", product);
 
@@ -62,6 +62,6 @@ export async function action({ request }: { request: Request }) {
     return redirect(session.url!, 303);
   } catch (err: any) {
     console.error(err);
-    return json({ error: err.message }, { status: 500 });
+    return data({ error: err.message }, { status: 500 });
   }
 }

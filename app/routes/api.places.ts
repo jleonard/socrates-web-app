@@ -1,37 +1,48 @@
-import { ActionFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, data } from "@remix-run/node";
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACE_API_KEY;
 
 // Tipos de lugares culturalmente relevantes
 const CULTURAL_TYPES = [
-  'museum', 'art_gallery', 'tourist_attraction', 'church', 'synagogue', 
-  'mosque', 'temple', 'library', 'theater', 'amusement_park', 'park'
+  "museum",
+  "art_gallery",
+  "tourist_attraction",
+  "church",
+  "synagogue",
+  "mosque",
+  "temple",
+  "library",
+  "theater",
+  "amusement_park",
+  "park",
 ];
 
 // Tipos que podrían ser barrios
-const NEIGHBORHOOD_TYPES = [
-  'locality', 'sublocality', 'sublocality_level_1'
-];
+const NEIGHBORHOOD_TYPES = ["locality", "sublocality", "sublocality_level_1"];
 
 // Tipos de ciudad
-const CITY_TYPES = [
-  'locality', 'administrative_area_level_1', 'country'
-];
+const CITY_TYPES = ["locality", "administrative_area_level_1", "country"];
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, { status: 405 });
+    return data({ error: "Method not allowed" }, { status: 405 });
   }
 
   try {
     if (!GOOGLE_API_KEY) {
-      return json({ error: "Google Places API key not configured" }, { status: 500 });
+      return data(
+        { error: "Google Places API key not configured" },
+        { status: 500 }
+      );
     }
 
     const { lat, lng } = await request.json();
-    
+
     if (!lat || !lng) {
-      return json({ error: "Latitude and longitude are required" }, { status: 400 });
+      return data(
+        { error: "Latitude and longitude are required" },
+        { status: 400 }
+      );
     }
 
     // 1. Primero, obtener información de geocoding
@@ -53,10 +64,13 @@ export async function action({ request }: ActionFunctionArgs) {
     // 3. Priorizar lugares culturales
     if (placesData.results && placesData.results.length > 0) {
       for (const place of placesData.results) {
-        if (place.types && CULTURAL_TYPES.some(type => place.types.includes(type))) {
+        if (
+          place.types &&
+          CULTURAL_TYPES.some((type) => place.types.includes(type))
+        ) {
           placeInfo = {
             name: place.name,
-            type: 'cultural' as const
+            type: "cultural" as const,
           };
           break;
         }
@@ -67,10 +81,13 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!placeInfo && geocodingData.results) {
       for (const result of geocodingData.results) {
         for (const component of result.address_components) {
-          if (component.types && NEIGHBORHOOD_TYPES.some(type => component.types.includes(type))) {
+          if (
+            component.types &&
+            NEIGHBORHOOD_TYPES.some((type) => component.types.includes(type))
+          ) {
             placeInfo = {
               name: component.long_name,
-              type: 'neighborhood' as const
+              type: "neighborhood" as const,
             };
             break;
           }
@@ -83,10 +100,13 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!placeInfo && geocodingData.results) {
       for (const result of geocodingData.results) {
         for (const component of result.address_components) {
-          if (component.types && CITY_TYPES.some(type => component.types.includes(type))) {
+          if (
+            component.types &&
+            CITY_TYPES.some((type) => component.types.includes(type))
+          ) {
             placeInfo = {
               name: component.long_name,
-              type: 'city' as const
+              type: "city" as const,
             };
             break;
           }
@@ -95,9 +115,8 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     }
 
-    return json({ placeInfo });
-
+    return { placeInfo };
   } catch (error) {
-    return json({ error: "Internal server error" }, { status: 500 });
+    return data({ error: "Internal server error" }, { status: 500 });
   }
-} 
+}
