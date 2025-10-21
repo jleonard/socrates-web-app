@@ -13,9 +13,9 @@
   "dependencies": {
     "@11labs/react": "^0.2.0",
     "@elevenlabs/react": "^0.6.1",
-    "@remix-run/node": "^2.15.0",
-    "@remix-run/react": "^2.15.0",
-    "@remix-run/serve": "^2.15.0",
+    "@remix-run/node": "^2.17.1",
+    "@remix-run/react": "^2.17.1",
+    "@remix-run/serve": "^2.17.1",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "clsx": "^2.1.1",
@@ -38,7 +38,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.15.0",
+    "@remix-run/dev": "^2.17.1",
     "@types/dom-speech-recognition": "^0.0.4",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
