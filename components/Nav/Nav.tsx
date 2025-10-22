@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Menu } from "lucide-react";
-import { Link, useMatches, useLocation } from "@remix-run/react";
+import { Link, useMatches, useLocation } from "react-router";
 import clsx from "clsx";
 
 import { isDarkPage, isHiddenNavPage } from "~/hooks/useBackgroundClass";

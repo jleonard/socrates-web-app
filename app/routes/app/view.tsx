@@ -1,12 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./loader";
-import {
-  useLoaderData,
-  Link,
-  useSubmit,
-  useRevalidator,
-  useNavigate,
-} from "@remix-run/react";
+import { useLoaderData, Link, useSubmit, useRevalidator, useNavigate } from "react-router";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";

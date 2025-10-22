@@ -8,7 +8,7 @@
 import { useEffect, useRef } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { useRevalidator } from "@remix-run/react";
+import { useRevalidator } from "react-router";
 
 export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
   const hasRunRef = useRef(false);

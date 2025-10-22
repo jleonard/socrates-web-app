@@ -9,3 +9,5 @@ node_modules
 /.tmp
 
 SCRATCHPAD.md
+
+.react-router/

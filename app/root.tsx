@@ -6,9 +6,9 @@ import {
   ScrollRestoration,
   useLoaderData,
   useLocation,
-} from "@remix-run/react";
+} from "react-router";
 import { useEffect } from "react";
-import type { LinksFunction, LoaderFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunction } from "react-router";
 import { usePageViews } from "./hooks/usePageViews";
 import { useBackgroundClass } from "./hooks/useBackgroundClass";
 

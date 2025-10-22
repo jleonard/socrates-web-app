@@ -1,5 +1,5 @@
 // app/routes/$.tsx
-import { useRouteError, isRouteErrorResponse } from "@remix-run/react";
+import { useRouteError, isRouteErrorResponse } from "react-router";
 
 export default function NotFound() {
   const error = useRouteError();

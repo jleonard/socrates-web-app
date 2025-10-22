@@ -1,7 +1,7 @@
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "react-router";
 import { CircleImage } from "components/CircleImage/CircleImage";
 import type { loader } from "./loader";
-import { Form } from "@remix-run/react";
+import { Form } from "react-router";
 
 export default function Purchase() {
   const { products } = useLoaderData<typeof loader>();

@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, data } from "@remix-run/node";
+import { ActionFunctionArgs, data } from "react-router";
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACE_API_KEY;
 

@@ -1,5 +1,5 @@
 import { Stripe } from "stripe";
-import { redirect, data } from "@remix-run/node";
+import { redirect, data } from "react-router";
 import { products, productKeys } from "~/server/product.manager.server";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 

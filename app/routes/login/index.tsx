@@ -1,7 +1,7 @@
-import { type LoaderFunctionArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { type LoaderFunctionArgs } from "react-router";
+import { Link } from "react-router";
 import { getSupabaseBrowserClient } from "~/utils/supabase.client";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "react-router";
 import { CircleImage } from "components/CircleImage/CircleImage";
 import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
 import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";

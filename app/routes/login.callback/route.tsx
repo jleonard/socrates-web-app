@@ -1,5 +1,5 @@
 // app/routes/auth/callback.tsx
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 import { parseCookieHeader } from "@supabase/ssr";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { sessionStorage } from "~/sessions.server"; // your Remix session

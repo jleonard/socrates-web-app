@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "@remix-run/react";
+import { Link } from "react-router";
 import { Carousel } from "components/Carousel/Carousel";
 
 const Welcome: React.FC = () => {

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useLoaderData, Link } from "@remix-run/react";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData, Link } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
-import { redirect } from "@remix-run/node";
+import { redirect } from "react-router";
 import ChatMessage from "components/ChatMessage/ChatMessage";
 
 type HistoryItem = Record<string, unknown>;

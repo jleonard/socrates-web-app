@@ -1,4 +1,4 @@
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs } from "react-router";
 
 export async function action({ request }: ActionFunctionArgs) {
   const { setAccessExpiration } = await import(

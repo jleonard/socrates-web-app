@@ -1,4 +1,4 @@
-import { data, type LoaderFunctionArgs } from "@remix-run/node";
+import { data, type LoaderFunctionArgs } from "react-router";
 import { searchCache } from "~/utils/cache.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {

@@ -1,6 +1,6 @@
 // app/routes/webhooks/stripe.ts
-import type { ActionFunction } from "@remix-run/node";
-import { data } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
+import { data } from "react-router";
 import Stripe from "stripe";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 

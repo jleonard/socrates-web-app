@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {

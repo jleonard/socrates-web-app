@@ -1,4 +1,4 @@
-import { data, type ActionFunctionArgs } from "@remix-run/node";
+import { data, type ActionFunctionArgs } from "react-router";
 import { storeCache } from "~/utils/cache.server";
 
 export async function action({ request }: ActionFunctionArgs) {
