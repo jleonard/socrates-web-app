@@ -1,5 +1,8 @@
 import { create } from "zustand";
 
+const N8N_SAVE_HISTORY_ENDPOINT =
+  "https://leonardalonso.app.n8n.cloud/webhook/3337cc34-c558-4355-86f3-b4d52cfc670b";
+
 type TranscriptEntry = {
   timestamp: Date;
   text: string;
@@ -67,18 +70,15 @@ export const useTranscriptStore = create<TranscriptStore>((set) => ({
               };
 
               // Enviar a n8n con información del lugar
-              fetch(
-                "https://leonardalonso.app.n8n.cloud/webhook/3337cc34-c558-4355-86f3-b4d52cfc670b",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    session: userId,
-                    user_id: userId,
-                    message: messageWithPlace,
-                  }),
-                }
-              ).catch((e) => {
+              fetch(N8N_SAVE_HISTORY_ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  session: userId,
+                  user_id: userId,
+                  message: messageWithPlace,
+                }),
+              }).catch((e) => {
                 console.error(
                   "Error enviando transcripción con lugar a n8n:",
                   e
@@ -100,18 +100,15 @@ export const useTranscriptStore = create<TranscriptStore>((set) => ({
                 },
               };
 
-              fetch(
-                "https://leonardalonso.app.n8n.cloud/webhook/3337cc34-c558-4355-86f3-b4d52cfc670b",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    session: userId,
-                    user_id: userId,
-                    message: messageWithoutPlace,
-                  }),
-                }
-              ).catch((e) => {
+              fetch(N8N_SAVE_HISTORY_ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  session: userId,
+                  user_id: userId,
+                  message: messageWithoutPlace,
+                }),
+              }).catch((e) => {
                 console.error(
                   "Error enviando transcripción sin lugar a n8n:",
                   e
@@ -135,18 +132,15 @@ export const useTranscriptStore = create<TranscriptStore>((set) => ({
               },
             };
 
-            fetch(
-              "https://leonardalonso.app.n8n.cloud/webhook/3337cc34-c558-4355-86f3-b4d52cfc670b",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  session: userId,
-                  user_id: userId,
-                  message: messageWithoutPlace,
-                }),
-              }
-            ).catch((e) => {
+            fetch(N8N_SAVE_HISTORY_ENDPOINT, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                session: userId,
+                user_id: userId,
+                message: messageWithoutPlace,
+              }),
+            }).catch((e) => {
               console.error("Error enviando transcripción (error) a n8n:", e);
             });
           });
@@ -166,18 +160,15 @@ export const useTranscriptStore = create<TranscriptStore>((set) => ({
           }),
         };
 
-        fetch(
-          "https://leonardalonso.app.n8n.cloud/webhook/3337cc34-c558-4355-86f3-b4d52cfc670b",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              session: userId,
-              user_id: userId,
-              message,
-            }),
-          }
-        ).catch((e) => {
+        fetch(N8N_SAVE_HISTORY_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session: userId,
+            user_id: userId,
+            message,
+          }),
+        }).catch((e) => {
           console.error("Error enviando transcripción a n8n:", e);
         });
       }
