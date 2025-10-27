@@ -62,7 +62,8 @@ export const action: ActionFunction = async ({ request }) => {
         console.error(
           "Supabase error: access record error on purchase webhook: ",
           accessError.code,
-          accessError.message
+          accessError.message,
+          userId
         );
       }
 
