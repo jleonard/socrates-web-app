@@ -3,6 +3,7 @@ import type { ActionFunction } from "react-router";
 import { data } from "react-router";
 import Stripe from "stripe";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
+import { validate as isUUID } from "uuid";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -31,6 +32,10 @@ export const action: ActionFunction = async ({ request }) => {
 
     // Your internal user ID
     const userId = session.client_reference_id;
+
+    if (!isUUID(userId)) {
+      throw new Error(`Invalid UUID: ${userId}`);
+    }
 
     // Product purchased
     const productCode = session.metadata?.productCode;
