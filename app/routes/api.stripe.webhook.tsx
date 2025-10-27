@@ -37,6 +37,8 @@ export const action: ActionFunction = async ({ request }) => {
       throw new Error(`Invalid UUID: ${userId}`);
     }
 
+    console.log("user id is ", userId);
+
     // Product purchased
     const productCode = session.metadata?.productCode;
     const productHours = session.metadata?.productHours;
