@@ -48,6 +48,12 @@ export const action: ActionFunction = async ({ request }) => {
       return data({ error: "Missing metadata" }, { status: 400 });
     }
 
+    console.log("Inserting access record with:", {
+      user_id: userId,
+      product_code: productCode,
+      product_hours: productHours,
+    });
+
     try {
       // Initialize Supabase server admin client
       const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient(request);
