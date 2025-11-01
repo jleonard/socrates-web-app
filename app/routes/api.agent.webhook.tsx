@@ -2,13 +2,15 @@ import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
 import { prompt } from "~/utils/system.prompt";
+import { queryPinecone, debugPinecone } from "~/utils/pinecone";
 
 const redis = await getRedis();
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
-const MAX_MESSAGES = 20;
+const MAX_MESSAGES = 10;
 
 export const action: ActionFunction = async ({ request }) => {
+  /* debugPinecone(); */
   try {
     if (request.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
@@ -33,12 +35,25 @@ export const action: ActionFunction = async ({ request }) => {
     // --- 3️⃣ Keep last N messages ---
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
+    // --- 3.5️⃣ Query Pinecone RAG ---
+    const { context, avgScore } = await queryPinecone(query);
+
     // --- 4️⃣ Prepare messages for OpenAI ---
     const systemMessage = {
       role: "system",
       content: prompt,
     };
-    const messages = [systemMessage, ...trimmedHistory];
+
+    const ragMessage = {
+      role: "system",
+      content:
+        avgScore > 0.7
+          ? `Relevant art history context (confidence ${avgScore.toFixed(2)}):\n${context}`
+          : `No strong RAG context found (confidence ${avgScore.toFixed(2)}). 
+If the RAG context seems incomplete, rely on your own art history expertise.`,
+    };
+
+    const messages = [systemMessage, ragMessage, ...trimmedHistory];
 
     // --- 5️⃣ Create a streaming response ---
     const stream = new ReadableStream({
