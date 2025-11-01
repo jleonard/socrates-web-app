@@ -2,6 +2,7 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import { userHasAccess } from "~/server/access.manager.server";
+import { upsertUserProfile } from "~/server/user.last-seen.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
@@ -22,6 +23,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // Upsert profile data on every load
+  const { data: profile, error } = await upsertUserProfile(
+    { user_id: user.id, email: user.email },
+    request
+  );
+  /*
   const { data: profile, error } = await supabase
     .from("profiles")
     .upsert(
@@ -34,6 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     )
     .select()
     .single();
+    */
 
   // if you haven't onboarded, go do it
   if (!profile.has_onboarded) {

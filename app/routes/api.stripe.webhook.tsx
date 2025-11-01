@@ -3,6 +3,7 @@ import type { ActionFunction } from "react-router";
 import { data } from "react-router";
 import Stripe from "stripe";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
+import { validate as isUUID } from "uuid";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -32,6 +33,12 @@ export const action: ActionFunction = async ({ request }) => {
     // Your internal user ID
     const userId = session.client_reference_id;
 
+    if (!isUUID(userId)) {
+      throw new Error(`Invalid UUID: ${userId}`);
+    }
+
+    console.log("user id is ", userId);
+
     // Product purchased
     const productCode = session.metadata?.productCode;
     const productHours = session.metadata?.productHours;
@@ -40,6 +47,12 @@ export const action: ActionFunction = async ({ request }) => {
       console.warn("Missing userId or productCode in session metadata");
       return data({ error: "Missing metadata" }, { status: 400 });
     }
+
+    console.log("Inserting access record with:", {
+      user_id: userId,
+      product_code: productCode,
+      product_hours: productHours,
+    });
 
     try {
       // Initialize Supabase server admin client
@@ -62,7 +75,8 @@ export const action: ActionFunction = async ({ request }) => {
         console.error(
           "Supabase error: access record error on purchase webhook: ",
           accessError.code,
-          accessError.message
+          accessError.message,
+          userId
         );
       }
 
