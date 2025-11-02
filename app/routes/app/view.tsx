@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import type { loader } from "./loader";
-import { useLoaderData, Link, useSubmit, useRevalidator, useNavigate } from "react-router";
+import {
+  useLoaderData,
+  Link,
+  useSubmit,
+  useRevalidator,
+  useNavigate,
+} from "react-router";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
@@ -16,6 +22,8 @@ import LocationModal from "components/LocationModal/LocationModal";
 import { AvatarConnection, AvatarMode } from "types/avatar";
 import { useSyncPromo } from "~/hooks/useSyncPromo";
 import { createBrowserClient } from "@supabase/ssr";
+
+import { Stopwatch } from "components/Stopwatch/Stopwatch";
 import { DebugPanel } from "components/DebugPanel/DebugPanel";
 
 const ParentComponent: React.FC = () => {
@@ -360,6 +368,10 @@ const ParentComponent: React.FC = () => {
             />
           </Link>
         </div>
+      </div>
+
+      <div className="fixed bottom-5 right-5 z-50">
+        <Stopwatch />
       </div>
       {/*
       <div className="fixed bottom-2 right-2 w-32 z-40 pointer-events-none bg-black text-white p-2 rounded-sm">
