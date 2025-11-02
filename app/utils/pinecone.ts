@@ -6,6 +6,8 @@ const pc = new Pinecone({
 });
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
+export const PINECONE_SCORE = 0.62;
+
 export async function queryPinecone(query: string): Promise<{
   context: string;
   avgScore: number;
@@ -31,8 +33,18 @@ export async function queryPinecone(query: string): Promise<{
 
   if (!results.matches?.length) return { context: "", avgScore: 0 };
 
+  results.matches.forEach((m, i) => {
+    console.log(`🧠 Match ${i + 1}`);
+    console.log("Score:", m.score);
+    console.log("Text:", m.metadata?.text);
+    console.log("Metadata:", m.metadata);
+    console.log("-----");
+  });
+
   // 3️⃣ Filter & assemble results
-  const filtered = results.matches.filter((m) => m.score && m.score > 0.7);
+  const filtered = results.matches.filter(
+    (m) => m.score && m.score > PINECONE_SCORE
+  );
   const avgScore =
     filtered.reduce((sum, m) => sum + (m.score || 0), 0) /
     (filtered.length || 1);

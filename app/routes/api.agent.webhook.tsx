@@ -1,16 +1,16 @@
 import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
-import { prompt } from "~/utils/system.prompt";
-import { queryPinecone, debugPinecone } from "~/utils/pinecone";
+import { factPrompt } from "~/utils/system.prompt";
+import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
+import { fetchWikipedia } from "~/utils/wikipedia.tool";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
-
 const MAX_MESSAGES = 10;
 
 export const action: ActionFunction = async ({ request }) => {
   const redis = await getRedis();
-  /* debugPinecone(); */
+
   try {
     if (request.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({ request }) => {
     const memoryJson = await redis.get(memoryKey);
     const chatHistory = memoryJson ? JSON.parse(memoryJson) : [];
 
-    // --- 2️⃣ Add the new user message ---
+    // --- 2️⃣ Add new user message ---
     chatHistory.push({ role: "user", content: query });
 
     // --- 3️⃣ Keep last N messages ---
@@ -37,33 +37,50 @@ export const action: ActionFunction = async ({ request }) => {
 
     // --- 3.5️⃣ Query Pinecone RAG ---
     const { context, avgScore } = await queryPinecone(query);
+    console.log("avgScore:", avgScore);
 
-    // --- 4️⃣ Prepare messages for OpenAI ---
-    const systemMessage = {
-      role: "system",
-      content: prompt,
-    };
+    // --- 3.75️⃣ Wikipedia fallback ---
+    let wikiSummary: string | null = null;
+    if (avgScore <= PINECONE_SCORE) {
+      wikiSummary = await fetchWikipedia(query);
+      console.log("Wikipedia summary:", wikiSummary);
+    }
 
-    const ragMessage = {
-      role: "system",
-      content:
-        avgScore > 0.7
-          ? `Relevant art history context (confidence ${avgScore.toFixed(2)}):\n${context}`
-          : `No strong RAG context found (confidence ${avgScore.toFixed(2)}). 
-If the RAG context seems incomplete, rely on your own art history expertise.`,
-    };
+    // --- 4️⃣ Prepare RAG / fallback message ---
+    let ragContent: string;
+
+    if (avgScore > PINECONE_SCORE && context) {
+      // Strong RAG context
+      ragContent = `Verified RAG context (confidence ${avgScore.toFixed(
+        2
+      )}):\n${context}`;
+    } else if (wikiSummary) {
+      // Wikipedia fallback only if it exists
+      ragContent = `Wikipedia summary for "${query}":\n${wikiSummary}`;
+    } else {
+      // No verified context → GPT must **indicate uncertainty**
+      ragContent = `No verified context found. 
+Do **not** invent names, dates, or attributions. 
+If you are unsure, respond exactly: "I do not have verified information about this."`;
+    }
+
+    const systemMessage = { role: "system", content: factPrompt };
+    const ragMessage = { role: "system", content: ragContent };
 
     const messages = [systemMessage, ragMessage, ...trimmedHistory];
+    console.log("Messages sent to OpenAI:", messages);
 
-    // --- 5️⃣ Create a streaming response ---
+    // --- 5️⃣ Streaming response ---
     const stream = new ReadableStream({
       async start(controller) {
         let replyText = "";
 
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: "gpt-4",
           messages,
           stream: true,
+          temperature: 0, // deterministic
+          top_p: 1,
         });
 
         try {
@@ -71,11 +88,13 @@ If the RAG context seems incomplete, rely on your own art history expertise.`,
             const content = chunk.choices[0]?.delta?.content;
             if (content) {
               replyText += content;
-              controller.enqueue(content); // send each token
+              controller.enqueue(content);
             }
           }
 
-          // --- 6️⃣ Save chat history after full reply ---
+          replyText = replyText.trim();
+
+          // --- 6️⃣ Save chat history ---
           trimmedHistory.push({ role: "assistant", content: replyText });
           await redis.set(memoryKey, JSON.stringify(trimmedHistory), {
             EX: 24 * 60 * 60,

@@ -285,8 +285,8 @@ const ParentComponent: React.FC = () => {
 
   // Effect to show location modal on mount
   useEffect(() => {
-    // Mostrar el modal de permisos de ubicación al cargar la app
-    setShowLocationModal(true);
+    // @todo - turn back on when ready
+    setShowLocationModal(false);
   }, []);
 
   useEffect(() => {
@@ -370,7 +370,7 @@ const ParentComponent: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-5 right-5 z-50">
+      <div className="fixed bottom-5 right-5 z-50 hidden">
         <Stopwatch />
       </div>
       {/*
