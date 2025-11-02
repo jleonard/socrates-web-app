@@ -4,12 +4,12 @@ import OpenAI from "openai";
 import { prompt } from "~/utils/system.prompt";
 import { queryPinecone, debugPinecone } from "~/utils/pinecone";
 
-const redis = await getRedis();
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
 const MAX_MESSAGES = 10;
 
 export const action: ActionFunction = async ({ request }) => {
+  const redis = await getRedis();
   /* debugPinecone(); */
   try {
     if (request.method !== "POST") {
