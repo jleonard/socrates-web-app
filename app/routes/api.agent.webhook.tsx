@@ -37,12 +37,14 @@ export const action: ActionFunction = async ({ request }) => {
 
     // --- 3.5️⃣ Query Pinecone RAG ---
     const { context, avgScore } = await queryPinecone(query);
+    const wikiPromise = fetchWikipedia(query);
     console.log("avgScore:", avgScore);
 
     // --- 3.75️⃣ Wikipedia fallback ---
     let wikiSummary: string | null = null;
+
     if (avgScore <= PINECONE_SCORE) {
-      wikiSummary = await fetchWikipedia(query);
+      wikiSummary = await wikiPromise;
       console.log("Wikipedia summary:", wikiSummary);
     }
 
@@ -76,11 +78,12 @@ If you are unsure, respond exactly: "I do not have verified information about th
         let replyText = "";
 
         const completion = await openai.chat.completions.create({
-          model: "gpt-4",
+          model: "gpt-4o-mini",
           messages,
           stream: true,
           temperature: 0, // deterministic
           top_p: 1,
+          max_completion_tokens: 150,
         });
 
         try {
