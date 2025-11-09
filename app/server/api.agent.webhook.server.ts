@@ -1,14 +1,14 @@
 import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
-import { factPrompt } from "~/utils/system.prompt";
+import { factPrompt, zeroPersonalityPrompt } from "~/utils/system.prompt";
 import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
-const PROMPT = factPrompt;
+const PROMPT = zeroPersonalityPrompt;
 
 export const handleWebhook: ActionFunction = async ({ request }) => {
   const redis = await getRedis();
