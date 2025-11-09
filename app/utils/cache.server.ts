@@ -14,6 +14,7 @@ interface SearchResult {
       question: string;
       tool?: string;
       score: number;
+      hits?: number;
     };
   }[];
 }
@@ -37,7 +38,7 @@ export async function initIndex() {
         question: { type: SCHEMA_FIELD_TYPE.TEXT },
         tool: { type: SCHEMA_FIELD_TYPE.TAG },
       },
-      { ON: "HASH", PREFIX: "ay:" }
+      { ON: "HASH", PREFIX: "cache:" }
     );
   } catch (e: any) {
     if (!String(e).includes("Index already exists")) throw e;
@@ -57,7 +58,7 @@ export async function searchCache(query: string, threshold = 0.86) {
       PARAMS: { vec },
       SORTBY: "score",
       DIALECT: 2,
-      RETURN: ["answer", "question", "tool", "score"],
+      RETURN: ["answer", "question", "tool", "score", "hits"],
     }
   );
 
@@ -67,6 +68,15 @@ export async function searchCache(query: string, threshold = 0.86) {
     const doc = result.documents[0];
     const similarity = 1 - Number(doc.value.score);
     if (similarity > threshold) {
+      // ✅ Extend TTL another 90 days on every successful hit. and increment the hits on the object
+      const id = doc.id;
+      const ttl = 90 * 24 * 60 * 60;
+      try {
+        await redis.expire(id, ttl);
+        await redis.hIncrBy(id, "hits", 1);
+      } catch (e) {
+        console.error("Failed to bump TTL for cache:", id, e);
+      }
       return {
         cached: true,
         answer: doc.value.answer as string,
@@ -79,23 +89,27 @@ export async function searchCache(query: string, threshold = 0.86) {
   return null;
 }
 
+// ------------------------
+// --- STORE CACHE ---
+// ------------------------
 export async function storeCache(
   query: string,
   answer: string,
   tool: string,
-  ttlSeconds?: number
+  ttlSeconds: number = 90 * 24 * 60 * 60
 ) {
   const redis = await getRedis();
   await initIndex();
 
   const emb = float32ToBuffer(await getEmbedding(query));
-  const id = `ay:${Buffer.from(`${tool}|${query}`).toString("base64url")}`;
+  const id = `cache:${Buffer.from(`${tool}|${query}`).toString("base64url")}`;
 
   await redis.hSet(id, {
     embedding: emb,
     answer,
     question: query,
     tool,
+    hits: 0,
   });
 
   if (ttlSeconds && ttlSeconds > 0) {
