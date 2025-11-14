@@ -53,7 +53,7 @@ export default function Purchase() {
               {/* cost div */}
               <div className="flex flex-col gap-1 min-w-[116px]">
                 <span className="block font-bold text-[57px] leading-none">
-                  $15
+                  $10
                 </span>
                 <span className="text-lg block">One Week</span>
                 <span className="text-ayapi-pink">60% discount</span>
