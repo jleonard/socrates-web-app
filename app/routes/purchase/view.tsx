@@ -25,7 +25,7 @@ export default function Purchase() {
             <div className="flex flex-row items-center justify-start w-full">
               {/* cost div */}
               <div className="flex flex-col gap-1 min-w-[116px]">
-                <span className="font-bold text-[57px] leading-none">$5</span>
+                <span className="font-bold text-[57px] leading-none">$2</span>
                 <span className="text-lg">One Day</span>
               </div>
               {/* properties list */}
