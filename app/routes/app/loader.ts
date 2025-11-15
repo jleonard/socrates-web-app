@@ -16,31 +16,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/login");
   }
 
-  const access = await userHasAccess(user.id, supabase);
-  // none means this user never had access
-  if (access?.category === "none") {
-    return redirect("/purchase");
-  }
-
   // Upsert profile data on every load
   const { data: profile, error } = await upsertUserProfile(
     { user_id: user.id, email: user.email },
     request
   );
-  /*
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        user_id: user.id,
-        email: user.email,
-        last_seen: new Date(),
-      },
-      { onConflict: "user_id" }
-    )
-    .select()
-    .single();
-    */
+
+  const access = await userHasAccess(user.id, supabase);
+  // none means this user never had access
+  if (access?.category === "none") {
+    return redirect("/purchase");
+  }
 
   // if you haven't onboarded, go do it
   if (!profile.has_onboarded) {
