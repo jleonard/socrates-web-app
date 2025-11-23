@@ -19,7 +19,9 @@ export const Nav = () => {
     .filter((data): data is WithUser => data !== null && data !== undefined)
     .find((m) => m.user)?.user;
 
-  const logoSrc = isDarkPage() ? "/ayapi-white.svg" : "/ayapi.svg";
+  const logoSrc = isDarkPage()
+    ? "/logos/WonderWay-white.svg"
+    : "/logos/WonderWay.svg";
 
   return (
     <>
@@ -65,9 +67,9 @@ export const Nav = () => {
         )}
       >
         {/* Nav Bar */}
-        <div className="flex w-full flex-row gap-2 justify-center items-center">
+        <div className="flex w-full flex-row gap-2 justify-center items-center pt-[45px]">
           <a href="/app">
-            <img className="w-44" src={logoSrc} alt="ayapi ai" />
+            <img className="w-[263px]" src={logoSrc} alt="Wonder Way" />
           </a>
         </div>
 

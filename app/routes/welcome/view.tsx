@@ -19,15 +19,15 @@ const Welcome: React.FC = () => {
     },
     {
       title: "Slip on your headphones",
-      text: "Ayapi is a conversational guide just for you.",
+      text: "WonderWay is a conversational guide just for you.",
     },
     {
       title: "No wrong way to start",
-      text: "Say the name of the artwork, ask a question, or just speak what's on your mind. Ayapi will follow.",
+      text: "Say the name of the artwork, ask a question, or just speak what's on your mind. WonderWay will follow.",
     },
     {
       title: "Your curiosity is the guide",
-      text: "Big questions, quirky thoughts or strange details; Ayapi turns your wonder into conversation.",
+      text: "Big questions, quirky thoughts or strange details; WonderWay turns your wonder into conversation.",
     },
   ];
 
@@ -43,7 +43,7 @@ const Welcome: React.FC = () => {
         <h2 className="text-[32px] leading-10 font-semibold text-white text-center mb-5 w-3/4 mx-auto">
           {content[currentContent].title}
         </h2>
-        <p className="text-white text-center mb-8">
+        <p className="text-white text-center mb-8 text-balance">
           {content[currentContent].text}
         </p>
 

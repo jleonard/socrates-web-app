@@ -65,9 +65,9 @@ export default function Login() {
 
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-96 items-center">
         <h2 className="text-2xl font-regular text-center mb-7">
-          Your AI Companion for
+          Your Pocket Museum
           <br />
-          Cultural Exploration
+          Companion
         </h2>
         <GoogleAuthButton
           className="w-full"
