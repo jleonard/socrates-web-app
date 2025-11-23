@@ -39,7 +39,10 @@ const ParentComponent: React.FC = () => {
   const navigate = useNavigate();
 
   // associate any promo code to the user's account
-  const supabase = createBrowserClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+  const supabase = createBrowserClient(
+    env.SUPABASE_URL!,
+    env.SUPABASE_ANON_KEY!
+  );
   useSyncPromo(supabase, user_profile.user_id);
 
   // used for errors that should be presented to the user
@@ -194,7 +197,7 @@ const ParentComponent: React.FC = () => {
       });
       // if the access doesn't have an expiration, set it
       if (!access?.expiration) {
-        console.log("setting an expiration date ", access);
+        //console.log("setting an expiration date ", access);
         const formData = new FormData();
         formData.append("access_id", access.access_id);
         submit(formData, { method: "post" });

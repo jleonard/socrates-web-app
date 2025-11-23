@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import type { LinksFunction, LoaderFunction } from "react-router";
 import { usePageViews } from "./hooks/usePageViews";
 import { useBackgroundClass } from "./hooks/useBackgroundClass";
+import { ErrorBoundary as RootErrorBoundary } from "components/ErrorBoundary/ErrorBoundary";
 
 import { Nav } from "components/Nav/Nav";
 
@@ -127,3 +128,5 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return <Outlet />;
 }
+
+export { RootErrorBoundary as ErrorBoundary };

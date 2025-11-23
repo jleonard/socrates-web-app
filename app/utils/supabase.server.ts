@@ -16,19 +16,24 @@ export function getSupabaseServiceRoleClient(request: Request) {
     {
       auth: {
         flowType: "pkce", // Enable PKCE flow
+        persistSession: false, // Don't persist session
+        autoRefreshToken: false, // Don't refresh tokens
         detectSessionInUrl: true, // Detect the session automatically after redirect
       },
       cookies: {
         getAll() {
-          return parseCookieHeader(request.headers.get("Cookie") ?? "");
+          //return parseCookieHeader(request.headers.get("Cookie") ?? "");
+          return [];
         },
         setAll(cookiesToSet) {
+          /*
           cookiesToSet.forEach(({ name, value, options }) =>
             headers.append(
               "Set-Cookie",
               serializeCookieHeader(name, value, options)
             )
           );
+          */
         },
       },
     }

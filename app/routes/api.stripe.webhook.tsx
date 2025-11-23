@@ -4,6 +4,7 @@ import { data } from "react-router";
 import Stripe from "stripe";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import { validate as isUUID } from "uuid";
+import * as Sentry from "@sentry/react-router";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -37,8 +38,6 @@ export const action: ActionFunction = async ({ request }) => {
       throw new Error(`Invalid UUID: ${userId}`);
     }
 
-    console.log("user id is ", userId);
-
     // Product purchased
     const productCode = session.metadata?.productCode;
     const productHours = session.metadata?.productHours;
@@ -47,12 +46,6 @@ export const action: ActionFunction = async ({ request }) => {
       console.warn("Missing userId or productCode in session metadata");
       return data({ error: "Missing metadata" }, { status: 400 });
     }
-
-    console.log("Inserting access record with:", {
-      user_id: userId,
-      product_code: productCode,
-      product_hours: productHours,
-    });
 
     try {
       // Initialize Supabase server admin client
@@ -69,15 +62,21 @@ export const action: ActionFunction = async ({ request }) => {
         .select()
         .single();
 
-      // @todo - user made a purchase but there was an issue creating the access record
-      // todo sentry
+      // user made a purchase but there was an issue creating the access record
       if (accessError) {
-        console.error(
-          "Supabase error: access record error on purchase webhook: ",
-          accessError.code,
-          accessError.message,
-          userId
-        );
+        Sentry.captureException(accessError, {
+          level: "error",
+          tags: {
+            source: "api.stripe.webhook",
+            feature: "post_purchase",
+            action: "access_record",
+          },
+          extra: {
+            userId,
+            productCode,
+            productHours,
+          },
+        });
       }
 
       // now let's create a purchase record
@@ -97,26 +96,35 @@ export const action: ActionFunction = async ({ request }) => {
         .select()
         .single();
 
-      // @todo - user made a purchase but we didn't create an access record
-      // todo sentry
+      // user made a purchase but we didn't create a record of it
       if (purchaseRecordError) {
-        console.error(
-          "Supbase error: purchase record error on purchase webhook : ",
-          purchaseRecordError.code,
-          purchaseRecordError.message
-        );
+        Sentry.captureException(accessError, {
+          level: "error",
+          tags: {
+            source: "api.stripe.webhook",
+            feature: "post_purchase",
+            action: "purchase_record",
+          },
+          extra: {
+            userId,
+            productCode,
+            productHours,
+            stripePaymentIntent: session.payment_intent,
+            stripeSessionId: session.id,
+            stripeAmountTotal: session.amount_total,
+            stripeCurrency: session.currency,
+          },
+        });
       }
 
       if (accessError || purchaseRecordError) {
         return data({ error: "db error" }, { status: 500 });
       }
     } catch (err: any) {
-      console.error("Unexpected error updating access:", err.message);
       return data({ error: err.message }, { status: 500 });
     }
   } else {
     console.log(`Unhandled Stripe event type: ${event.type}`);
   }
-
   return { received: true };
 };

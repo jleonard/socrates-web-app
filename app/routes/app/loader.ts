@@ -49,8 +49,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: process.env.ELEVENLABS_AGENT!,
       env: {
-        SUPABASE_URL: process.env.SUPABASE_URL,
-        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+        SUPABASE_URL: process.env.SUPABASE_URL!,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
       },
     },
     {
