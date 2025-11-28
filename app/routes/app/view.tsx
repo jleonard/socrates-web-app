@@ -7,6 +7,7 @@ import {
   useRevalidator,
   useNavigate,
 } from "react-router";
+import * as Sentry from "@sentry/react";
 import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
@@ -80,9 +81,9 @@ const ParentComponent: React.FC = () => {
   useEffect(() => {
     setHasInternet(isOnline);
     if (!isOnline) {
-      console.warn("You're offline");
+      //console.warn("You're offline");
     } else {
-      console.log("You're back online");
+      //console.log("You're back online");
     }
   }, [isOnline]);
 
@@ -91,7 +92,7 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log("onConnect()");
+      //console.log("onConnect()");
       setButtonMode("listening");
       setCircleMode("preconnect");
       setTimeout(() => {
@@ -99,7 +100,6 @@ const ParentComponent: React.FC = () => {
       }, 250); // matches preconnect transition duration
     },
     onDisconnect: () => {
-      console.log("onDisconnect()");
       setCircleMode("idle");
       setButtonMode("disconnected");
     },
@@ -140,8 +140,8 @@ const ParentComponent: React.FC = () => {
         setButtonMode("speaking");
       }
     },
-    onError: (error) => {
-      console.log("error: ", error);
+    onError: (error: string) => {
+      Sentry.captureMessage(error, "error");
       setError(error);
     },
   });
@@ -175,7 +175,15 @@ const ParentComponent: React.FC = () => {
       // TODO: Implementar envío de mensaje contextual cuando tengamos el método correcto
       // El contexto ya está enviado via dynamicVariables por ahora
     } catch (error) {
-      // todo - this is an attention error.
+      if (error instanceof Error) {
+        Sentry.captureException(error);
+      } else {
+        Sentry.captureException(
+          new Error(
+            `app view : startConversation failed: ${JSON.stringify(error)}`
+          )
+        );
+      }
       setError("Couldn't start the conversation");
     }
   }, [conversation, user, coords, elevenLabsId]);
@@ -222,6 +230,13 @@ const ParentComponent: React.FC = () => {
       setMicAllowed(true);
       //stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
+      if (err instanceof Error) {
+        Sentry.captureException(err);
+      } else {
+        Sentry.captureException(
+          new Error(`requestMicAccess failed: ${JSON.stringify(err)}`)
+        );
+      }
       setMicAllowed(false);
     }
   };
