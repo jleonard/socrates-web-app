@@ -1,7 +1,9 @@
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "ayapi - 24 Hour Access" }];
+export const meta: MetaFunction = () => [
+  { title: "WonderWay - 24 Hour Access" },
+];
 
 export default function DayPassConfirmation() {
   return (

@@ -70,7 +70,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return Response.json(
     {
-      pageTitle: "ayapi",
+      pageTitle: "WonderWay",
       user: user,
       user_profile: error ? {} : profile,
       sessionId,

@@ -97,7 +97,7 @@ const Privacy: React.FC = () => {
         </ul>
         <br />
         To exercise these rights, contact us at:{" "}
-        <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>
+        <a href="mailto:hello@wonderway.ai">hello@wonderway.ai</a>
         <br />
         <br />
         <h2 className="mt-7 mb-4 text-3xl">6. Security</h2>
@@ -114,7 +114,7 @@ const Privacy: React.FC = () => {
         review this page periodically.
         <h2 className="mt-7 mb-4 text-3xl">9. Contact Us</h2>
         If you have questions about this Privacy Policy, please contact us at:
-        <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>
+        <a href="mailto:hello@wonderway.ai">hello@wonderway.ai</a>
       </div>
     </section>
   );

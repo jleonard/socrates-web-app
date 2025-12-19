@@ -1,7 +1,7 @@
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "Ayapi Day Pass" }];
+export const meta: MetaFunction = () => [{ title: "WonderWay Day Pass" }];
 
 export default function DayPassPromo() {
   return (

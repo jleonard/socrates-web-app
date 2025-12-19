@@ -79,7 +79,7 @@ const Privacy: React.FC = () => {
         <h2 className="mt-7 mb-4 text-3xl">10. Contact Us</h2>
         <p>
           If you have any questions about these Terms, please contact us at{" "}
-          <a href="mailto:hello@ayapi.ai">hello@ayapi.ai</a>.
+          <a href="mailto:hello@wonderway.ai">hello@wonderway.ai</a>.
         </p>
       </div>
     </section>

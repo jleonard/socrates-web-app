@@ -39,9 +39,9 @@ const LocationModal: React.FC<LocationModalProps> = ({ onAllow, onClose }) => {
           </h3>
 
           <p className="text-gray-600 mb-6">
-            Ayapi works better when it knows where you are. This helps provide
-            relevant information about your current location, like museums,
-            galleries, or cultural sites nearby.
+            WonderWay works better when it knows where you are. This helps
+            provide relevant information about your current location, like
+            museums, galleries, or cultural sites nearby.
           </p>
 
           <div className="flex flex-col space-y-3">

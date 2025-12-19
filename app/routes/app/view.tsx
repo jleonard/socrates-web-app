@@ -360,7 +360,9 @@ const ParentComponent: React.FC = () => {
             onClick={() => navigate("/purchase")}
             cta={
               <>
-                <span className="font-bold text-lg block">Enjoyed Ayapi?</span>
+                <span className="font-bold text-lg block">
+                  Enjoyed WonderWay?
+                </span>
                 <span>Unlock more time to continue exploring</span>
               </>
             }

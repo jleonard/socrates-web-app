@@ -19,7 +19,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const user = "foo";
 
   return Response.json({
-    pageTitle: "ayapi",
+    pageTitle: "WonderWay",
     user: user,
     n8nEndpoint: process.env.N8N_URL!,
     elevenLabsId: process.env.ELEVENLABS_AGENT!,

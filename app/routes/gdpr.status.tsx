@@ -32,8 +32,8 @@ export default function DeletionStatus() {
               status === "Deleted"
                 ? "bg-green-100 text-green-700"
                 : status === "Pending"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-gray-100 text-gray-600"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-gray-100 text-gray-600"
             }`}
           >
             {status}
@@ -43,10 +43,10 @@ export default function DeletionStatus() {
           <p>
             Have questions? Reach out to us at{" "}
             <a
-              href={`mailto:hello@ayapi.ai?subject=Question about data deletion – Confirmation Code: ${code}`}
+              href={`mailto:hello@wonderway.ai?subject=Question about data deletion – Confirmation Code: ${code}`}
               className="text-blue-600 hover:underline font-medium"
             >
-              hello@ayapi.ai
+              hello@wonderway.ai
             </a>
             .
           </p>

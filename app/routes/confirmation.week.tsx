@@ -1,7 +1,9 @@
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "ayapi - 1 Week of Access" }];
+export const meta: MetaFunction = () => [
+  { title: "WonderWay - 1 Week of Access" },
+];
 
 export default function WeekPassConfirmation() {
   return (

@@ -53,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Generate a unique confirmation code
     const confirmationCode = crypto.randomBytes(6).toString("hex");
 
-    const statusUrl = `https://pilot.ayapi.ai/gdpr/status?code=${confirmationCode}`;
+    const statusUrl = `https://app.wonderway.ai/gdpr/status?code=${confirmationCode}`;
 
     return {
       url: statusUrl,
