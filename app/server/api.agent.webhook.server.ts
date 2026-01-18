@@ -7,8 +7,79 @@ import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
+
 const MAX_MESSAGES = 10;
 const PROMPT = zeroPersonalityPrompt;
+
+export function isMeaningfulResponse(text: string): boolean {
+  if (!text) return false;
+  const normalized = text.trim();
+  if (normalized.length <= 20) return false;
+  const lower = normalized.toLowerCase();
+  const disallowedStarts = [
+    "i'm not",
+    "i am not",
+    "i can't",
+    "i cannot",
+    "i don't",
+  ];
+  const disallowedIncludes = ["i do not"];
+  if (disallowedIncludes.some((p) => lower.includes(p))) return false;
+  if (disallowedStarts.some((p) => lower.startsWith(p))) return false;
+  return true;
+}
+
+/**
+ * 🆕 Generate a rolling conversation summary
+ */
+async function getConversationSummary(
+  redis: any,
+  sessionId: string,
+  chatHistory: any[]
+): Promise<string> {
+  const summaryKey = `summary:${sessionId}`;
+
+  // Get existing summary
+  let existingSummary = await redis.get(summaryKey);
+
+  // Only generate summary if we have enough messages (5+)
+  if (chatHistory.length < 5) {
+    return existingSummary || "";
+  }
+
+  // Update summary every 5 messages
+  if (chatHistory.length % 5 === 0 || !existingSummary) {
+    try {
+      const recentMessages = chatHistory
+        .slice(-5)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join("\n");
+
+      const prompt = existingSummary
+        ? `Previous summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
+        : `Summarize the main topics discussed in this art conversation in 2-3 sentences:\n\n${recentMessages}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_completion_tokens: 150,
+      });
+
+      existingSummary = response.choices[0].message?.content?.trim() || "";
+      await redis.set(summaryKey, existingSummary, { EX: 24 * 60 * 60 });
+    } catch (err) {
+      console.error("Summary generation error:", err);
+    }
+  }
+
+  return existingSummary || "";
+}
 
 export const handleWebhook: ActionFunction = async ({ request }) => {
   const redis = await getRedis();
@@ -25,7 +96,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       return new Response("Missing required fields", { status: 400 });
     }
 
-    // --- 2️⃣ Try semantic cache hit first ---
+    // Try semantic cache first
     const cached = await searchCache(query);
     if (cached) {
       return new Response(cached.answer, {
@@ -39,54 +110,67 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     const memoryKey = `chat:${user_session}`;
 
-    // --- 1️⃣ Load recent history ---
+    // Load recent history
     const memoryJson = await redis.get(memoryKey);
     const chatHistory = memoryJson ? JSON.parse(memoryJson) : [];
 
-    // --- 2️⃣ Add new user message ---
+    // Add new user message
     chatHistory.push({ role: "user", content: query });
 
-    // --- 3️⃣ Keep last N messages ---
+    // Keep last N messages
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
-    // --- 3.5️⃣ Query Pinecone RAG ---
-    const { context, avgScore } = await queryPinecone(query);
-    const wikiPromise = fetchWikipedia(query);
-    console.log("avgScore:", avgScore);
+    // 🆕 Get conversation summary
+    const summary = await getConversationSummary(
+      redis,
+      user_session,
+      chatHistory
+    );
 
-    // --- 3.75️⃣ Wikipedia fallback ---
+    // Query Pinecone RAG
+    const { context, avgScore } = await queryPinecone(query);
+
+    // Wikipedia fallback
+    const wikiPromise = fetchWikipedia(query);
     let wikiSummary: string | null = null;
 
     if (avgScore <= PINECONE_SCORE) {
       wikiSummary = await wikiPromise;
-      console.log("Wikipedia summary:", wikiSummary);
     }
 
-    // --- 4️⃣ Prepare RAG / fallback message ---
+    // Prepare RAG / fallback message
     let ragContent: string;
 
     if (avgScore > PINECONE_SCORE && context) {
-      // Strong RAG context
-      ragContent = `Verified RAG context (confidence ${avgScore.toFixed(
-        2
-      )}):\n${context}`;
+      ragContent = `Verified RAG context (confidence ${avgScore.toFixed(2)}):\n${context}`;
     } else if (wikiSummary) {
-      // Wikipedia fallback only if it exists
       ragContent = `Wikipedia summary for "${query}":\n${wikiSummary}`;
     } else {
-      // No verified context → GPT must **indicate uncertainty**
       ragContent = `No verified context found. 
 Do **not** invent names, dates, or attributions. 
 If you are unsure, respond exactly: "I do not have verified information about this."`;
     }
 
-    const systemMessage = { role: "system", content: PROMPT };
-    const ragMessage = { role: "system", content: ragContent };
+    // Build system messages in priority order:
+    // 1. Base system prompt
+    // 2. RAG context (most relevant to current query)
+    // 3. Conversation summary (background context)
+    const messages: any[] = [
+      { role: "system", content: PROMPT },
+      { role: "system", content: ragContent },
+    ];
 
-    const messages = [systemMessage, ragMessage, ...trimmedHistory];
-    // console.log("Messages sent to OpenAI:", messages);
+    // 🆕 Add conversation summary if it exists
+    if (summary) {
+      messages.push({
+        role: "system",
+        content: `Previous conversation context: ${summary}`,
+      });
+    }
 
-    // --- 5️⃣ Streaming response ---
+    messages.push(...trimmedHistory);
+
+    // Streaming response
     const stream = new ReadableStream({
       async start(controller) {
         let replyText = "";
@@ -95,7 +179,7 @@ If you are unsure, respond exactly: "I do not have verified information about th
           model: "gpt-4o-mini",
           messages,
           stream: true,
-          temperature: 0, // deterministic
+          temperature: 0,
           top_p: 1,
           max_completion_tokens: 150,
         });
@@ -111,23 +195,15 @@ If you are unsure, respond exactly: "I do not have verified information about th
 
           replyText = replyText.trim();
 
-          // --- 6️⃣ Save chat history ---
+          // Save chat history
           trimmedHistory.push({ role: "assistant", content: replyText });
           await redis.set(memoryKey, JSON.stringify(trimmedHistory), {
             EX: 24 * 60 * 60,
           });
 
-          // --- ✅ 7️⃣ Conditionally store in semantic cache ---
-          const lower = replyText.toLowerCase();
-          const isMeaningful =
-            replyText.length > 20 && // not super short
-            !lower.includes("i do not") && // uncertainty fallback
-            !lower.startsWith("i'm not") &&
-            !lower.startsWith("i can't") &&
-            !lower.startsWith("i cannot") &&
-            !lower.startsWith("i don't");
+          // Conditionally store in semantic cache
+          const isMeaningful = isMeaningfulResponse(replyText);
 
-          // Only store if meaningful AND RAG/wikipedia gave some context
           if (isMeaningful) {
             try {
               await storeCache(query, replyText, "llm");
@@ -137,6 +213,7 @@ If you are unsure, respond exactly: "I do not have verified information about th
           } else {
             console.log("⚠️ Not storing in cache - response not meaningful");
           }
+
           controller.close();
           generateFollowUps(query, 3);
         } catch (err) {
@@ -164,9 +241,8 @@ If you are unsure, respond exactly: "I do not have verified information about th
  */
 export async function generateFollowUps(query: string, n = 3) {
   try {
-    // 1️⃣ Ask GPT for follow-up questions
     const followUpsRes = await openai.chat.completions.create({
-      model: "gpt-4o", // higher-power model for prediction
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -189,12 +265,9 @@ export async function generateFollowUps(query: string, n = 3) {
       );
     }
 
-    // 2️⃣ Process each follow-up question
     for (const followUp of followUpQuestions) {
-      // Skip empty or trivial follow-ups
       if (!followUp || followUp.length < 3) continue;
 
-      // RAG + Wikipedia context
       const { context, avgScore } = await queryPinecone(followUp);
       let wikiSummary: string | null = null;
       if (avgScore <= PINECONE_SCORE) {
@@ -210,9 +283,8 @@ export async function generateFollowUps(query: string, n = 3) {
         ragContent = `No verified context found. If unsure, respond exactly: "I do not have verified information about this."`;
       }
 
-      // GPT generates cached answer (no streaming)
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // higher-power model
+        model: "gpt-4o",
         messages: [
           { role: "system", content: PROMPT },
           { role: "system", content: ragContent },
@@ -223,16 +295,7 @@ export async function generateFollowUps(query: string, n = 3) {
       });
 
       const answer = completion.choices[0].message?.content?.trim() || "";
-
-      // Only store meaningful answers
-      const lower = answer.toLowerCase();
-      const isMeaningful =
-        answer.length > 20 &&
-        !lower.includes("i do not") &&
-        !lower.startsWith("i'm not") &&
-        !lower.startsWith("i can't") &&
-        !lower.startsWith("i cannot") &&
-        !lower.startsWith("i don't");
+      const isMeaningful = isMeaningfulResponse(answer);
 
       if (isMeaningful) {
         await storeCache(followUp, answer, "follow-up");
