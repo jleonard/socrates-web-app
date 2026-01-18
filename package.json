@@ -45,6 +45,7 @@
     "@react-router/fs-routes": "^7.0.0",
     "@react-router/remix-routes-option-adapter": "^7.0.0",
     "@types/dom-speech-recognition": "^0.0.4",
+    "@types/gtag.js": "^0.0.20",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.4",

@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import { validate as isUUID } from "uuid";
 import * as Sentry from "@sentry/react-router";
+import { sendPurchaseToGA } from "~/utils/googleAnalytics.server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -41,11 +42,22 @@ export const action: ActionFunction = async ({ request }) => {
     // Product purchased
     const productCode = session.metadata?.productCode;
     const productHours = session.metadata?.productHours;
+    let gaClientId = session.metadata?.gaClientId; // google analtyics client id tracking
 
     if (!userId || !productCode) {
       console.warn("Missing userId or productCode in session metadata");
       return data({ error: "Missing metadata" }, { status: 400 });
     }
+
+    if (!gaClientId) {
+      gaClientId = "unknown";
+    }
+
+    sendPurchaseToGA({
+      clientId: gaClientId,
+      transactionId: session.id,
+      value: session.amount_total ?? 0, // fallback to 0 if null
+    });
 
     try {
       // Initialize Supabase server admin client

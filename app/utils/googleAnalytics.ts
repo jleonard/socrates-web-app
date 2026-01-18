@@ -17,11 +17,25 @@ export function trackEvent({
     console.warn("gtag not available");
     return;
   }
-  console.log("gtag is ", window.gtag);
 
   window.gtag("event", action, {
     event_category: category,
     event_label: label,
     value,
+  });
+}
+
+export function getGAClientId(GA_TRACKING_ID: string): Promise<string> {
+  return new Promise((resolve) => {
+    if (!window.gtag) return resolve(" ");
+
+    (window.gtag as any)(
+      "get",
+      GA_TRACKING_ID,
+      "client_id",
+      (clientId: string) => {
+        resolve(clientId);
+      }
+    );
   });
 }

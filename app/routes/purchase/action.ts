@@ -23,6 +23,9 @@ export async function action({ request }: { request: Request }) {
     const body = await request.formData();
 
     const productCode = body.get("productCode");
+    const clientIdRaw = body.get("clientId");
+    const gaClientId =
+      clientIdRaw && typeof clientIdRaw === "string" ? clientIdRaw : "unknown";
 
     /* front end didn't pass day or week */
     if (!productKeys.includes(productCode as any)) {
@@ -38,7 +41,7 @@ export async function action({ request }: { request: Request }) {
     if (!product) {
       return data({ error: "Missing product id" }, { status: 400 });
     }
-    console.log("product: ", product);
+    //console.log("product: ", product);
 
     const DOMAIN = process.env.BASE_URL;
 
@@ -56,6 +59,7 @@ export async function action({ request }: { request: Request }) {
       metadata: {
         productCode: product.code,
         productHours: product.hours,
+        gaClientId,
       },
     });
 

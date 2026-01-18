@@ -1,10 +1,17 @@
+import { useState, useEffect } from "react";
 import { useLoaderData } from "react-router";
 import { CircleImage } from "components/CircleImage/CircleImage";
 import type { loader } from "./loader";
 import { Form } from "react-router";
+import { getGAClientId } from "~/utils/googleAnalytics";
 
 export default function Purchase() {
-  const { products } = useLoaderData<typeof loader>();
+  const { products, gaTrackingId } = useLoaderData<typeof loader>();
+  const [gaClientId, setGaClientId] = useState<string>(" ");
+
+  useEffect(() => {
+    getGAClientId(gaTrackingId).then((id) => setGaClientId(id));
+  }, []);
 
   return (
     <>
@@ -17,6 +24,7 @@ export default function Purchase() {
         {/* Day Pass */}
         <Form method="post" className="w-full">
           <input type="hidden" name="productCode" value="day" />
+          <input type="hidden" name="clientId" value={gaClientId ?? " "} />{" "}
           <button
             type="submit"
             style={{ cursor: "pointer" }}
@@ -43,6 +51,7 @@ export default function Purchase() {
         <div className="w-full border-t border-white border-t-[0.5px]"></div>{" "}
         {/* Week Pass */}
         <Form method="post" className="w-full">
+          <input type="hidden" name="clientId" value={gaClientId ?? " "} />{" "}
           <input type="hidden" name="productCode" value="week" />
           <button
             type="submit"

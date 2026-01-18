@@ -22,5 +22,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return Response.json({
     pageTitle: "WonderWay",
     products,
+    gaTrackingId: process.env.GA_TRACKING_ID,
   });
 }
