@@ -19,6 +19,7 @@ import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { EBMMessage } from "components/EBMMessage/EBMMessage";
 import LocationModal from "components/LocationModal/LocationModal";
+import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 
 import { AvatarConnection, AvatarMode } from "types/avatar";
 import { useSyncPromo } from "~/hooks/useSyncPromo";
@@ -42,7 +43,7 @@ const ParentComponent: React.FC = () => {
   // associate any promo code to the user's account
   const supabase = createBrowserClient(
     env.SUPABASE_URL!,
-    env.SUPABASE_ANON_KEY!
+    env.SUPABASE_ANON_KEY!,
   );
   useSyncPromo(supabase, user_profile.user_id);
 
@@ -54,7 +55,7 @@ const ParentComponent: React.FC = () => {
 
   // user coordinates
   const [coords, setCoords] = useState<{ lat: number; long: number } | null>(
-    null
+    null,
   );
 
   // used to present 'no internet' dialog to the user
@@ -80,11 +81,6 @@ const ParentComponent: React.FC = () => {
   const isOnline = useNetworkStatus();
   useEffect(() => {
     setHasInternet(isOnline);
-    if (!isOnline) {
-      //console.warn("You're offline");
-    } else {
-      //console.log("You're back online");
-    }
   }, [isOnline]);
 
   // tracks the response time from the AI
@@ -126,7 +122,7 @@ const ParentComponent: React.FC = () => {
           location: coords ?? undefined,
           ...(responseTime !== undefined && { response_time: responseTime }),
         },
-        user?.id
+        user?.id,
       );
     },
     onModeChange: (modeObj) => {
@@ -180,8 +176,8 @@ const ParentComponent: React.FC = () => {
       } else {
         Sentry.captureException(
           new Error(
-            `app view : startConversation failed: ${JSON.stringify(error)}`
-          )
+            `app view : startConversation failed: ${JSON.stringify(error)}`,
+          ),
         );
       }
       setError("Couldn't start the conversation");
@@ -234,7 +230,7 @@ const ParentComponent: React.FC = () => {
         Sentry.captureException(err);
       } else {
         Sentry.captureException(
-          new Error(`requestMicAccess failed: ${JSON.stringify(err)}`)
+          new Error(`requestMicAccess failed: ${JSON.stringify(err)}`),
         );
       }
       setMicAllowed(false);
@@ -278,7 +274,7 @@ const ParentComponent: React.FC = () => {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 300000, // 5 minutos
-      }
+      },
     );
   };
 
@@ -331,11 +327,7 @@ const ParentComponent: React.FC = () => {
         </div>
       )}
 
-      {!hasInternet && (
-        <div className="mt-3">
-          <EBMMessage variant="warning" message="You're offline." />
-        </div>
-      )}
+      {!hasInternet && <OfflineDialog />}
 
       {/* Location Permission Modal */}
       {showLocationModal && (
