@@ -5,7 +5,6 @@ import { Button as ReactAriaButton } from "react-aria-components";
 import { MainButtonProps, MainButtonModes } from "./MainButton.types";
 import { MainButtonStyles } from "./MainButton.styles";
 
-import XIcon from "./icons/x.png";
 import MicrophoneIcon from "./icons/Microphone.png";
 import { LoaderCircle } from "lucide-react";
 
@@ -23,6 +22,9 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
 
     return (
       <>
+        <span className="fixed left-1/2 -translate-x-1/2 bottom-44 z-20">
+          {stateText[mode]}
+        </span>
         <ReactAriaButton
           ref={ref}
           className={MainButtonStyles({ mode, className })}
@@ -35,18 +37,17 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
             {mode === "listening" && (
               <img className="size-[36px]" src={MicrophoneIcon} />
             )}
-            {mode === "speaking" && <img className="size-[24px]" src={XIcon} />}
+
+            {mode === "speaking" && (
+              <img src="/icons/Stop.svg" className="size-[26px]" />
+            )}
 
             {mode === "disconnected" && <span className="font-bold">Talk</span>}
 
             {children}
           </>
         </ReactAriaButton>
-
-        <span className="fixed left-1/2 -translate-x-1/2 bottom-12 z-20">
-          {stateText[mode]}
-        </span>
       </>
     );
-  }
+  },
 );
