@@ -140,6 +140,7 @@ const ParentComponent: React.FC = () => {
       }
     },
     onError: (error: string) => {
+      console.log("elevenlabs error ", error);
       Sentry.captureMessage(error, "error");
       setError(error);
     },
