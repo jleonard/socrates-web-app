@@ -19,7 +19,13 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     }
 
     const body = await request.json();
-    const { query, user_session } = body;
+
+    /*
+     * @TODO - place is the new dynamic var passed from front end -> eleven labs tool -> webhook
+     * the default var for place will be 'wonderway'
+     */
+    const { query, user_session, place } = body;
+    console.log("the agent says the place is ", place);
 
     if (!query || !user_session) {
       return new Response("Missing required fields", { status: 400 });
@@ -68,7 +74,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     if (avgScore > PINECONE_SCORE && context) {
       // Strong RAG context
       ragContent = `Verified RAG context (confidence ${avgScore.toFixed(
-        2
+        2,
       )}):\n${context}`;
     } else if (wikiSummary) {
       // Wikipedia fallback only if it exists
@@ -185,7 +191,7 @@ export async function generateFollowUps(query: string, n = 3) {
       console.warn(
         "Failed to parse follow-up questions JSON:",
         followUpsText,
-        e
+        e,
       );
     }
 
@@ -239,7 +245,7 @@ export async function generateFollowUps(query: string, n = 3) {
         console.log(`✅ Stored follow-up in cache: "${followUp}"`);
       } else {
         console.log(
-          `⚠️ Skipped caching follow-up (not meaningful): "${followUp}"`
+          `⚠️ Skipped caching follow-up (not meaningful): "${followUp}"`,
         );
       }
     }

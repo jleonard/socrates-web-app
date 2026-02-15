@@ -12,7 +12,11 @@ import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
+
+// stores
 import { useTranscriptStore } from "../../stores/transcriptStore";
+import { usePlaceStore } from "~/stores/placeStore";
+
 import { Circles } from "components/Circles/Circles";
 import { CircleMode } from "components/Circles/Circles.types";
 import { trackEvent } from "~/utils/googleAnalytics";
@@ -88,7 +92,6 @@ const ParentComponent: React.FC = () => {
 
   const conversation = useConversation({
     onConnect: () => {
-      //console.log("onConnect()");
       setButtonMode("listening");
       setCircleMode("preconnect");
       setTimeout(() => {
@@ -156,6 +159,17 @@ const ParentComponent: React.FC = () => {
       await requestMicAccess();
       //await navigator.mediaDevices.getUserMedia({ audio: true });
 
+      /*
+       * The activePlace in storage is sent to elevenlabs
+       * the 11labs tool sends to to our agenent webhook
+       * it can be used to change agent behavior
+       * and to change business logic in the api.agent.webhook.server
+       */
+      let activePlace = usePlaceStore((state) => state.activePlace);
+      if (!activePlace) {
+        activePlace = "wonderway";
+      }
+
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId,
@@ -165,6 +179,7 @@ const ParentComponent: React.FC = () => {
           user_long,
           user_session,
           conversation_id,
+          place: activePlace,
         },
       });
 

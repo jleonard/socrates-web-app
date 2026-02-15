@@ -24,7 +24,7 @@ type PlaceState = {
 export const usePlaceStore = create(
   persist<PlaceState>(
     (set) => ({
-      activePlace: null,
+      activePlace: "wonderway",
       setActivePlace: (place) => set({ activePlace: place }),
     }),
     {
