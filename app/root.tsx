@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import type { LinksFunction, LoaderFunction } from "react-router";
 import { usePageViews } from "./hooks/usePageViews";
 import { useBackgroundClass } from "./hooks/useBackgroundClass";
+import { usePlaceStore } from "./stores/placeStore";
 import { ErrorBoundary as RootErrorBoundary } from "components/ErrorBoundary/ErrorBoundary";
 
 import { Nav } from "components/Nav/Nav";
@@ -50,21 +51,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // ✅ Track route changes with google analytics
   usePageViews(GA_TRACKING_ID);
 
+  /*
+   * process query string vars here
+   *
+   * promo = promo codes give users free access to the site.
+   * they are processed with the 'useSyncPromo' hook
+   *
+   * place = used to capture the museum or insitution being visited
+   */
   const location = useLocation();
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+
+    // store promo
     let promoCode = params.get("promo");
-
-    console.log("code: ", promoCode, location.search);
-
-    if (!promoCode && location.search) {
-      // remove the leading "?" and use the entire string
-      promoCode = location.search.substring(1);
-      promoCode = promoCode.split("&")[0];
-    }
-
     if (promoCode) {
       localStorage.setItem("promo", promoCode);
+    }
+
+    // store place
+    let place = params.get("place");
+    if (place) {
+      usePlaceStore.getState().setActivePlace(place);
     }
   }, [location.search]);
 

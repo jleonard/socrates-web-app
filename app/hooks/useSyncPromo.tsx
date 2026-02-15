@@ -17,15 +17,13 @@ export function useSyncPromo(supabase: SupabaseClient, user_id: string | null) {
   useEffect(() => {
     if (hasRunRef.current) return;
     hasRunRef.current = true;
+
     async function updatePromo() {
-      console.log("useSyncPromo");
       if (!user_id) return;
 
       const promoCode = localStorage.getItem("promo");
 
       if (!promoCode) return;
-
-      console.log("has promo code ", promoCode, user_id);
 
       // check if there's an existing access record for this user with this promo code
       const { data: existing, error: existingError } = await supabase
