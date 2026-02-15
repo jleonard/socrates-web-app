@@ -90,6 +90,14 @@ const ParentComponent: React.FC = () => {
   // tracks the response time from the AI
   let responseTimeComparison: Date | null = null;
 
+  /*
+   * The activePlace in storage is sent to elevenlabs
+   * the 11labs tool sends to to our agenent webhook
+   * it can be used to change agent behavior
+   * and to change business logic in the api.agent.webhook.server
+   */
+  let activePlace = usePlaceStore((state) => state.activePlace);
+
   const conversation = useConversation({
     onConnect: () => {
       setButtonMode("listening");
@@ -160,13 +168,6 @@ const ParentComponent: React.FC = () => {
       await requestMicAccess();
       //await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      /*
-       * The activePlace in storage is sent to elevenlabs
-       * the 11labs tool sends to to our agenent webhook
-       * it can be used to change agent behavior
-       * and to change business logic in the api.agent.webhook.server
-       */
-      let activePlace = usePlaceStore((state) => state.activePlace);
       if (!activePlace) {
         activePlace = "wonderway";
       }
