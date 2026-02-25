@@ -29,30 +29,37 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       const end = new Date(expiration);
       const now = new Date();
       const diffMs = end.getTime() - now.getTime();
-      const diffMinutes = Math.round(diffMs / 60_000);
 
-      const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+      if (diffMs <= 0) return "0 minutes";
 
-      if (Math.abs(diffMinutes) < 60) {
-        return rtf.format(diffMinutes, "minute"); // "24 minutes left"
+      const minutes = Math.floor(diffMs / 60_000);
+      if (minutes < 60) {
+        return `${minutes} minute${minutes === 1 ? "" : "s"}`;
       }
 
-      const diffHours = Math.round(diffMinutes / 60);
-      if (Math.abs(diffHours) <= 24) {
-        return rtf.format(diffHours, "hour"); // "2 hours left"
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) {
+        return `${hours} hour${hours === 1 ? "" : "s"}`;
       }
 
-      const diffDays = Math.round(diffHours / 24);
-      if (diffDays === 1) {
-        return "1 day";
+      const days = Math.floor(hours / 24);
+      if (days < 7) {
+        return `${days} day${days === 1 ? "" : "s"}`;
       }
-      return rtf.format(diffDays, "day"); // "3 days left"
+
+      if (days < 30) {
+        const weeks = Math.floor(days / 7);
+        return `${weeks} week${weeks === 1 ? "" : "s"}`;
+      }
+
+      const months = Math.floor(days / 30);
+      return `${months} month${months === 1 ? "" : "s"}`;
     }
 
     return (
       <>
         {userAccess !== "unused" && (
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-44 z-20">
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-36 z-20 text-center">
             {stateText[mode]}
           </span>
         )}
@@ -79,7 +86,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
           </>
         </ReactAriaButton>
         {userAccess !== "unused" && (
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-10 z-20">
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-8 z-20 text-center">
             {getTimeLeft(expiration)} remaining
           </span>
         )}

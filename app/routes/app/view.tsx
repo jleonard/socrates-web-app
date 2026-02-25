@@ -369,7 +369,7 @@ const ParentComponent: React.FC = () => {
       {access?.category !== "expired" ? (
         <>
           <MainButton
-            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-20"
             onPress={handleMainButtonPress}
             mode={buttonMode}
             userAccess={access.category}
@@ -379,7 +379,7 @@ const ParentComponent: React.FC = () => {
       ) : (
         <>
           <PurchaseButton
-            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-20"
+            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-20"
             onClick={() => navigate("/purchase")}
             cta={
               <>
