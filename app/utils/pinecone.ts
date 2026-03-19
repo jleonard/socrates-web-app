@@ -25,9 +25,9 @@ export async function queryPinecone(
   const queryEmbedding = embeddingResponse.data[0].embedding;
 
   // 2️⃣ Query Pinecone
-  const index = pc.index(process.env.PINECONE_INDEX!);
+  const index = pc.index(_index);
 
-  const results = await index.namespace("met").query({
+  const results = await index.namespace(_namespace).query({
     vector: queryEmbedding,
     topK: 5,
     includeMetadata: true,

@@ -25,6 +25,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * the default var for place will be 'wonderway'
      */
     const { query, user_session, place } = body;
+
     let pinecone_index, pinecone_namespace;
 
     switch (place) {
