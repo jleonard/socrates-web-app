@@ -102,6 +102,8 @@ Do **not** invent names, dates, or attributions.
 If you are unsure, respond exactly: "I do not have verified information about this."`;
     }
 
+    console.log("rag content = ", ragContent);
+
     const systemMessage = { role: "system", content: PROMPT };
     const ragMessage = { role: "system", content: ragContent };
 
