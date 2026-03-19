@@ -8,7 +8,11 @@ const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
 export const PINECONE_SCORE = 0.62;
 
-export async function queryPinecone(query: string): Promise<{
+export async function queryPinecone(
+  query: string,
+  _index: string,
+  _namespace: string,
+): Promise<{
   context: string;
   avgScore: number;
 }> {
@@ -43,7 +47,7 @@ export async function queryPinecone(query: string): Promise<{
 
   // 3️⃣ Filter & assemble results
   const filtered = results.matches.filter(
-    (m) => m.score && m.score > PINECONE_SCORE
+    (m) => m.score && m.score > PINECONE_SCORE,
   );
   const avgScore =
     filtered.reduce((sum, m) => sum + (m.score || 0), 0) /
@@ -58,6 +62,7 @@ export async function queryPinecone(query: string): Promise<{
   return { context, avgScore };
 }
 
+/*
 export async function debugPinecone() {
   const indexes = await pc.listIndexes();
   console.log("✅ Available indexes:", indexes);
@@ -65,4 +70,4 @@ export async function debugPinecone() {
   const index = pc.index(process.env.PINECONE_INDEX!);
   const stats = await index.describeIndexStats();
   console.log("✅ Index stats:", JSON.stringify(stats, null, 2));
-}
+}*/

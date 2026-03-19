@@ -168,10 +168,6 @@ const ParentComponent: React.FC = () => {
       await requestMicAccess();
       //await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      if (!activePlace) {
-        activePlace = "wonderway";
-      }
-
       // Start the conversation with your agent
       await conversation.startSession({
         agentId: elevenLabsId,

@@ -17,8 +17,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
  * const activePlace = usePlaceStore((state) => state.activePlace);
  */
 type PlaceState = {
-  activePlace: string | null;
-  setActivePlace: (place: string | null) => void;
+  activePlace: string;
+  setActivePlace: (place: string) => void;
 };
 
 export const usePlaceStore = create(

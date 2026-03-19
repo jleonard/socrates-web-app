@@ -25,7 +25,18 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * the default var for place will be 'wonderway'
      */
     const { query, user_session, place } = body;
-    console.log("the agent says the place is ", place);
+    let pinecone_index, pinecone_namespace;
+
+    switch (place) {
+      case "mit":
+        pinecone_index = "mit-rag";
+        pinecone_namespace = "__default__";
+        break;
+      default:
+        pinecone_index = process.env.PINECONE_INDEX!;
+        pinecone_namespace = "met";
+    }
+    // console.log("the agent says the place is ", place);
 
     if (!query || !user_session) {
       return new Response("Missing required fields", { status: 400 });
@@ -56,16 +67,20 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
     // --- 3.5️⃣ Query Pinecone RAG ---
-    const { context, avgScore } = await queryPinecone(query);
+    const { context, avgScore } = await queryPinecone(
+      query,
+      pinecone_index,
+      pinecone_namespace,
+    );
     const wikiPromise = fetchWikipedia(query);
-    console.log("avgScore:", avgScore);
+    // console.log("avgScore:", avgScore);
 
     // --- 3.75️⃣ Wikipedia fallback ---
     let wikiSummary: string | null = null;
 
     if (avgScore <= PINECONE_SCORE) {
       wikiSummary = await wikiPromise;
-      console.log("Wikipedia summary:", wikiSummary);
+      // console.log("Wikipedia summary:", wikiSummary);
     }
 
     // --- 4️⃣ Prepare RAG / fallback message ---
@@ -144,7 +159,7 @@ If you are unsure, respond exactly: "I do not have verified information about th
             console.log("⚠️ Not storing in cache - response not meaningful");
           }
           controller.close();
-          generateFollowUps(query, 3);
+          generateFollowUps(query, 3, pinecone_index, pinecone_namespace);
         } catch (err) {
           console.error("Stream error:", err);
           controller.error(err);
@@ -168,7 +183,12 @@ If you are unsure, respond exactly: "I do not have verified information about th
 /**
  * Generate likely follow-up questions for a query and cache answers for all users.
  */
-export async function generateFollowUps(query: string, n = 3) {
+export async function generateFollowUps(
+  query: string,
+  n = 3,
+  pinecone_index: string,
+  pinecone_namespace: string,
+) {
   try {
     // 1️⃣ Ask GPT for follow-up questions
     const followUpsRes = await openai.chat.completions.create({
@@ -201,7 +221,11 @@ export async function generateFollowUps(query: string, n = 3) {
       if (!followUp || followUp.length < 3) continue;
 
       // RAG + Wikipedia context
-      const { context, avgScore } = await queryPinecone(followUp);
+      const { context, avgScore } = await queryPinecone(
+        followUp,
+        pinecone_index,
+        pinecone_namespace,
+      );
       let wikiSummary: string | null = null;
       if (avgScore <= PINECONE_SCORE) {
         wikiSummary = await fetchWikipedia(followUp);

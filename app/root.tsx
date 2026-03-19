@@ -70,10 +70,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
 
     // store place
-    let place = params.get("place");
-    if (place) {
-      usePlaceStore.getState().setActivePlace(place);
-    }
+    let place = params.get("place") || "wonderway";
+    usePlaceStore.getState().setActivePlace(place);
   }, [location.search]);
 
   return (
