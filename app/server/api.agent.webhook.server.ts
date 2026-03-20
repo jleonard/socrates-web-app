@@ -42,6 +42,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         pinecone_index = process.env.PINECONE_INDEX!;
         pinecone_namespace = "met";
     }
+    console.log("webhook query : ", query);
     console.log("webhook place : ", place);
 
     if (!query || !user_session) {
