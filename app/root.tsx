@@ -71,6 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
     // store place
     let place = params.get("place") || "wonderway";
+    console.log("place : ", place);
     usePlaceStore.getState().setActivePlace(place);
   }, [location.search]);
 

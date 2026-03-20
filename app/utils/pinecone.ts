@@ -57,7 +57,7 @@ export async function queryPinecone(
     .map((m) => m.metadata?.text || "")
     .join("\n\n---\n\n");
 
-  console.log("rag results ", context);
+  console.log("rag results ", context, "for query ", query);
 
   return { context, avgScore };
 }

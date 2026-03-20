@@ -42,7 +42,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         pinecone_index = process.env.PINECONE_INDEX!;
         pinecone_namespace = "met";
     }
-    // console.log("the agent says the place is ", place);
+    console.log("the agent says the place is ", place);
 
     if (!query || !user_session) {
       return new Response("Missing required fields", { status: 400 });
