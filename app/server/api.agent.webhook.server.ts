@@ -1,14 +1,18 @@
 import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
-import { factPrompt, zeroPersonalityPrompt } from "~/utils/system.prompt";
+import {
+  factPrompt,
+  zeroPersonalityPrompt,
+  mitPrompt,
+} from "~/utils/system.prompt";
 import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
-const PROMPT = zeroPersonalityPrompt;
+let PROMPT = zeroPersonalityPrompt;
 
 export const handleWebhook: ActionFunction = async ({ request }) => {
   const redis = await getRedis();
@@ -32,6 +36,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       case "mit":
         pinecone_index = "mit-rag";
         pinecone_namespace = "__default__";
+        PROMPT = mitPrompt;
         break;
       default:
         pinecone_index = process.env.PINECONE_INDEX!;
