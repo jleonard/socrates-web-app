@@ -147,6 +147,13 @@ If you are unsure, respond exactly: "I do not have verified information about th
             EX: 24 * 60 * 60,
           });
 
+          // 🆕 Get conversation summary
+          const summary = await getConversationSummary(
+            redis,
+            user_session,
+            chatHistory,
+          );
+
           // --- ✅ 7️⃣ Conditionally store in semantic cache ---
           const lower = replyText.toLowerCase();
           const isMeaningful =
