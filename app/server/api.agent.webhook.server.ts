@@ -190,6 +190,62 @@ If you are unsure, respond exactly: "I do not have verified information about th
 };
 
 /**
+ * get the summary of the conversation
+ * @param redis
+ * @param sessionId
+ * @param chatHistory
+ * @returns string
+ */
+async function getConversationSummary(
+  redis: any,
+  sessionId: string,
+  chatHistory: any[],
+): Promise<string> {
+  const summaryKey = `summary:${sessionId}`;
+
+  // Get existing summary
+  let existingSummary = await redis.get(summaryKey);
+
+  // Only generate summary if we have enough messages (5+)
+  if (chatHistory.length < 5) {
+    return existingSummary || "";
+  }
+
+  // Update summary every 5 messages
+  if (chatHistory.length % 5 === 0 || !existingSummary) {
+    try {
+      const recentMessages = chatHistory
+        .slice(-5)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join("\n");
+
+      const prompt = existingSummary
+        ? `Previous summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
+        : `Summarize the main topics discussed in this art conversation in 2-3 sentences:\n\n${recentMessages}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_completion_tokens: 150,
+      });
+
+      existingSummary = response.choices[0].message?.content?.trim() || "";
+      await redis.set(summaryKey, existingSummary, { EX: 24 * 60 * 60 });
+    } catch (err) {
+      console.error("Summary generation error:", err);
+    }
+  }
+
+  return existingSummary || "";
+}
+
+/**
  * Generate likely follow-up questions for a query and cache answers for all users.
  */
 export async function generateFollowUps(
