@@ -73,6 +73,13 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     // --- 3️⃣ Keep last N messages ---
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
+    // 🆕 Get conversation summary
+    const summary = await getConversationSummary(
+      redis,
+      user_session,
+      chatHistory,
+    );
+
     // --- 3.5️⃣ Query Pinecone RAG ---
     const { context, avgScore } = await queryPinecone(
       query,
@@ -114,6 +121,13 @@ If you are unsure, respond exactly: "I do not have verified information about th
     const ragMessage = { role: "system", content: ragContent };
 
     const messages = [systemMessage, ragMessage, ...trimmedHistory];
+    // 🆕 Add conversation summary if it exists
+    if (summary) {
+      messages.push({
+        role: "system",
+        content: `Previous conversation context: ${summary}`,
+      });
+    }
     // console.log("Messages sent to OpenAI:", messages);
 
     // --- 5️⃣ Streaming response ---
@@ -146,13 +160,6 @@ If you are unsure, respond exactly: "I do not have verified information about th
           await redis.set(memoryKey, JSON.stringify(trimmedHistory), {
             EX: 24 * 60 * 60,
           });
-
-          // 🆕 Get conversation summary
-          const summary = await getConversationSummary(
-            redis,
-            user_session,
-            chatHistory,
-          );
 
           // --- ✅ 7️⃣ Conditionally store in semantic cache ---
           const lower = replyText.toLowerCase();
