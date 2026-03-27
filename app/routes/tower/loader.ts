@@ -7,8 +7,7 @@ import { getSessionId, sessionStorage } from "~/sessions.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { supabase: subabaseServiceRole } =
-    getSupabaseServiceRoleClient(request);
+  const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
   const { supabase: userSupabase } = getSupabaseServerClient(request);
   const { session, sessionId } = await getSessionId(request);
 
@@ -23,7 +22,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Upsert profile data on every load
   const { data: profile, error } = await upsertUserProfile(
     { user_id: user.id, email: user.email },
-    request
+    request,
   );
 
   // @todo sentry
@@ -48,7 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       last_seen,
       email,
       role
-    `
+    `,
       )
       .eq("role", "user")
       .gte("last_seen", since.toISOString());
@@ -85,6 +84,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session),
       },
-    }
+    },
   );
 }

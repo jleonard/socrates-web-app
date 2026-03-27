@@ -7,7 +7,7 @@ import {
 import { serialize } from "cookie";
 import type { Session } from "@supabase/supabase-js";
 
-export function getSupabaseServiceRoleClient(request: Request) {
+export function getSupabaseServiceRoleClient() {
   const headers = new Headers();
 
   const supabase = createServerClient(
@@ -36,7 +36,7 @@ export function getSupabaseServiceRoleClient(request: Request) {
           */
         },
       },
-    }
+    },
   );
 
   return { supabase, headers };
@@ -61,12 +61,12 @@ export function getSupabaseServerClient(request: Request) {
           cookiesToSet.forEach(({ name, value, options }) =>
             headers.append(
               "Set-Cookie",
-              serializeCookieHeader(name, value, options)
-            )
+              serializeCookieHeader(name, value, options),
+            ),
           );
         },
       },
-    }
+    },
   );
 
   return { supabase, headers };

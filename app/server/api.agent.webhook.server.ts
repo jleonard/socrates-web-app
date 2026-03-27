@@ -9,6 +9,8 @@ import {
 import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
+import { logHistory } from "~/utils/history.server";
+import { HistoryLog } from "~/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
@@ -29,6 +31,19 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * the default var for place will be 'wonderway'
      */
     const { query, user_session, place } = body;
+
+    // used to log response times
+    let timer_start = new Date();
+
+    // the object that gets logged to the history table
+    let history_object: HistoryLog = {
+      user_id: user_session,
+      query,
+      tool_cache: false,
+      tool_wikipedia: false,
+      response: "",
+      response_time: 0,
+    };
 
     let pinecone_index, pinecone_namespace;
 
@@ -52,6 +67,9 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     // --- 2️⃣ Try semantic cache hit first ---
     const cached = await searchCache(query);
     if (cached) {
+      history_object.tool_cache = true;
+      history_object.response_time = Date.now() - timer_start.getTime();
+      await logHistory(history_object);
       return new Response(cached.answer, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
@@ -93,8 +111,11 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     let wikiSummary: string | null = null;
 
     if (avgScore <= PINECONE_SCORE) {
+      history_object.tool_wikipedia = true;
       wikiSummary = await wikiPromise;
-      // console.log("Wikipedia summary:", wikiSummary);
+    } else {
+      history_object.tool_rag = true;
+      history_object.rag_score = avgScore;
     }
 
     // --- 4️⃣ Prepare RAG / fallback message ---
@@ -114,8 +135,6 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 Do **not** invent names, dates, or attributions. 
 If you are unsure, respond exactly: "I do not have verified information about this."`;
     }
-
-    console.log("rag content = ", ragContent);
 
     const systemMessage = { role: "system", content: PROMPT };
     const ragMessage = { role: "system", content: ragContent };
@@ -181,6 +200,8 @@ If you are unsure, respond exactly: "I do not have verified information about th
           } else {
             console.log("⚠️ Not storing in cache - response not meaningful");
           }
+          history_object.response_time = Date.now() - timer_start.getTime();
+          await logHistory(history_object);
           controller.close();
           generateFollowUps(query, 3, pinecone_index, pinecone_namespace);
         } catch (err) {

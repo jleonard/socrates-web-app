@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
     event = stripe.webhooks.constructEvent(
       body,
       sig!,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET!,
     );
   } catch (err: any) {
     console.error("⚠️ Webhook signature verification failed.", err.message);
@@ -61,7 +61,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     try {
       // Initialize Supabase server admin client
-      const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient(request);
+      const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient();
 
       // Create an access record
       const { data: accessRecord, error: accessError } = await supabaseAdmin
