@@ -70,6 +70,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     if (cached) {
       history_object.tool_cache = true;
       history_object.response_time = Date.now() - timer_start.getTime();
+      history_object.response = cached.answer;
       await logHistory(history_object);
       return new Response(cached.answer, {
         headers: {
@@ -202,6 +203,7 @@ If you are unsure, respond exactly: "I do not have verified information about th
             console.log("⚠️ Not storing in cache - response not meaningful");
           }
           history_object.response_time = Date.now() - timer_start.getTime();
+          history_object.response = replyText;
           await logHistory(history_object);
           controller.close();
           generateFollowUps(query, 3, pinecone_index, pinecone_namespace);
