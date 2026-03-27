@@ -37,10 +37,11 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     // the object that gets logged to the history table
     let history_object: HistoryLog = {
-      user_id: user_session,
+      user_id: user_session.split("__")[0],
       query,
       tool_cache: false,
       tool_wikipedia: false,
+      tool_rag: false,
       response: "",
       response_time: 0,
     };
