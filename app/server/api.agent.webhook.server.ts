@@ -9,7 +9,7 @@ import {
 import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
-import { logHistory } from "~/utils/history.server";
+import { logAgentHistory } from "~/utils/history.server";
 import { HistoryLog } from "~/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
@@ -71,7 +71,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       history_object.tool_cache = true;
       history_object.response_time = Date.now() - timer_start.getTime();
       history_object.response = cached.answer;
-      await logHistory(history_object);
+      await logAgentHistory(history_object);
       return new Response(cached.answer, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
@@ -204,7 +204,7 @@ If you are unsure, respond exactly: "I do not have verified information about th
           }
           history_object.response_time = Date.now() - timer_start.getTime();
           history_object.response = replyText;
-          await logHistory(history_object);
+          await logAgentHistory(history_object);
           controller.close();
           generateFollowUps(query, 3, pinecone_index, pinecone_namespace);
         } catch (err) {
