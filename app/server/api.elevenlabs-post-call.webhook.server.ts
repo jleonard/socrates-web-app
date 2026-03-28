@@ -14,7 +14,6 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
   try {
     const body = await request.json();
     const payload = body?.data;
-    console.log("slayload: ", payload?.metadata);
     console.log("payload: ", payload.conversation_initiation_client_data);
     //X analysis.transcript_summary = text
     // metadata.cost = number of tokens
@@ -44,18 +43,19 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       const tool = item?.tool_calls?.tool_name; // sometimes this is null
       transcript.push({ role, message, tool });
     }
+    let entry = {
+      summary,
+      elevenlabs_tokens: cost,
+      user_id,
+      transcript: { transcript },
+      duration,
+      payload,
+    };
+    console.log("entry ", entry);
     const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
-
     const { error } = await subabaseServiceRole
       .from("elevenlabs_history")
-      .upsert({
-        summary,
-        elevenlabs_tokens: cost,
-        user_id,
-        transcript: { transcript },
-        duration,
-        payload,
-      });
+      .upsert(entry);
     if (error) {
       console.error("supabase error : ", error.message);
     }
