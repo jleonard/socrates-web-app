@@ -6,6 +6,10 @@ import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
  * @param param
  * @returns
  */
+
+// TODO - implement a check for the elevenlabs secret
+// this is it
+// wsec_14bb0f3bde34491be0cd064774297cd1b4701eddbefc272ab334be0c189f3d0c
 export const handleWebhook: ActionFunction = async ({ request }) => {
   try {
     const payload = await request.json();
@@ -53,6 +57,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       console.error("supabase error : ", error.message);
     }
   } catch (err) {
+    console.log("error: ", err);
     // @TODO - log this to sentry
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
