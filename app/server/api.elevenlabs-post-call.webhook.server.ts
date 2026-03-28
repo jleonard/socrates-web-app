@@ -49,7 +49,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       summary,
       elevenlabs_tokens: cost,
       user_id,
-      transcript: { transcript },
+      transcript: JSON.stringify({ transcript }),
       duration,
     };
     console.log("entry ", entry);
