@@ -12,7 +12,8 @@ import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 // wsec_14bb0f3bde34491be0cd064774297cd1b4701eddbefc272ab334be0c189f3d0c
 export const handleWebhook: ActionFunction = async ({ request }) => {
   try {
-    const payload = await request.json();
+    const body = await request.json();
+    const payload = body?.data;
     console.log("slayload: ", payload?.metadata);
     console.log("payload: ", payload.conversation_initiation_client_data);
     //X analysis.transcript_summary = text
