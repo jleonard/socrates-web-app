@@ -38,9 +38,9 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const user_id = user_session.split("__")[0];
     let transcript = [];
     for (const item of payload?.transcript ?? []) {
-      const message = item?.message; // sometimes this is null;
-      const role = item?.role;
-      const tool = item?.tool_calls?.tool_name; // sometimes this is null
+      const message = item?.message ?? null;
+      const role = item?.role ?? null;
+      const tool = item?.tool_calls?.tool_name ?? null;
       const turn = { role, message, tool };
       console.log("turn: ", turn);
       transcript.push(turn);
