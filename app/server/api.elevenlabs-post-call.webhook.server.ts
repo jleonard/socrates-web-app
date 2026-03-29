@@ -58,7 +58,12 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       .from("elevenlabs_history")
       .upsert(entry);
     if (error) {
-      console.error("supabase error : ", error.message, error);
+      console.error(
+        "supabase error : ",
+        error.message,
+        error.details,
+        error.name,
+      );
     }
   } catch (err) {
     console.log("error: ", err);
