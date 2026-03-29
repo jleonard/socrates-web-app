@@ -12,4 +12,6 @@ export type HistoryLog = {
   tool_wikipedia: boolean;
   response_time: number;
   rag_score?: number;
+  text_wikipedia?: string | null;
+  text_rag?: string | null;
 };

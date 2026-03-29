@@ -107,18 +107,19 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       pinecone_index,
       pinecone_namespace,
     );
-    const wikiPromise = fetchWikipedia(query);
-    // console.log("avgScore:", avgScore);
+    history_object.rag_score = avgScore;
+    history_object.text_rag = context;
 
     // --- 3.75️⃣ Wikipedia fallback ---
     let wikiSummary: string | null = null;
+    const wikiPromise = fetchWikipedia(query);
 
     if (avgScore <= PINECONE_SCORE) {
-      history_object.tool_wikipedia = true;
       wikiSummary = await wikiPromise;
+      history_object.tool_wikipedia = true;
+      history_object.text_wikipedia = wikiSummary;
     } else {
       history_object.tool_rag = true;
-      history_object.rag_score = avgScore;
     }
 
     // --- 4️⃣ Prepare RAG / fallback message ---
