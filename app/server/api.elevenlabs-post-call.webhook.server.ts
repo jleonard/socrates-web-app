@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
+import * as Sentry from "@sentry/react-router";
 
 /**
  * This webhook is called by elevenlabs when a conversation ends.
@@ -46,7 +47,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       return new Response("OK", { status: 200 });
     }
   } catch (err) {
-    console.log("error: ", err);
+    Sentry.captureException(err);
     // @TODO - log this to sentry
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,

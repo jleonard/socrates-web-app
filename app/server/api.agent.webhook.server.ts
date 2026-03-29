@@ -11,6 +11,7 @@ import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
 import { logAgentHistory } from "~/utils/history.server";
 import { HistoryLog } from "~/types";
+import * as Sentry from "@sentry/react-router";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
@@ -223,6 +224,7 @@ If you are unsure, respond exactly: "I do not have verified information about th
     });
   } catch (err) {
     console.error("Webhook error:", err);
+    Sentry.captureException(err);
     return new Response("Internal server error", { status: 500 });
   }
 };
@@ -276,6 +278,7 @@ async function getConversationSummary(
       existingSummary = response.choices[0].message?.content?.trim() || "";
       await redis.set(summaryKey, existingSummary, { EX: 24 * 60 * 60 });
     } catch (err) {
+      Sentry.captureException(err);
       console.error("Summary generation error:", err);
     }
   }
@@ -311,6 +314,7 @@ export async function generateFollowUps(
     try {
       followUpQuestions = JSON.parse(followUpsText);
     } catch (e) {
+      Sentry.captureException(e);
       console.warn(
         "Failed to parse follow-up questions JSON:",
         followUpsText,
@@ -378,5 +382,6 @@ export async function generateFollowUps(
     }
   } catch (err) {
     console.error("Follow-up generation error:", err);
+    Sentry.captureException(err);
   }
 }
