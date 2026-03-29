@@ -3,7 +3,11 @@ import { X, Menu } from "lucide-react";
 import { Link, useMatches, useLocation } from "react-router";
 import clsx from "clsx";
 
-import { isDarkPage, isHiddenNavPage } from "~/hooks/useBackgroundClass";
+import {
+  isDarkPage,
+  isPinkPage,
+  isHiddenNavPage,
+} from "~/hooks/useBackgroundClass";
 
 export const Nav = () => {
   const location = useLocation();
@@ -19,9 +23,10 @@ export const Nav = () => {
     .filter((data): data is WithUser => data !== null && data !== undefined)
     .find((m) => m.user)?.user;
 
-  const logoSrc = isDarkPage()
-    ? "/logos/WonderWay-white.svg"
-    : "/logos/WonderWay.svg";
+  const logoSrc =
+    isDarkPage() || isPinkPage()
+      ? "/logos/WonderWay-white.svg"
+      : "/logos/WonderWay.svg";
 
   return (
     <>
@@ -62,8 +67,10 @@ export const Nav = () => {
 
       <nav
         className={clsx(
-          "sticky top-0 flex flex-col w-full pt-10 pb-4 z-40",
-          isDarkPage() ? "bg-transparent" : "bg-paper-background"
+          "sticky top-0 flex flex-col w-full pt-10 pb-4 z-30",
+          isDarkPage() || isPinkPage()
+            ? "bg-transparent"
+            : "bg-paper-background",
         )}
       >
         {/* Nav Bar */}

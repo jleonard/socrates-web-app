@@ -399,5 +399,5 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
         </div>
       </div>
     );
-  }
+  },
 );

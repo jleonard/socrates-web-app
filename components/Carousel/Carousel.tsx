@@ -5,12 +5,14 @@ import clsx from "clsx";
 type CarouselProps = {
   onSlideChange?: (index: number) => void;
   nextTrigger?: number;
+  previousTrigger?: number;
   className?: string;
 };
 
 export function Carousel({
   onSlideChange,
   nextTrigger,
+  previousTrigger,
   className,
 }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel();
@@ -22,11 +24,16 @@ export function Carousel({
   }, [nextTrigger, emblaApi]);
 
   useEffect(() => {
+    if (previousTrigger && previousTrigger > 0) {
+      if (emblaApi) emblaApi.scrollPrev();
+    }
+  }, [previousTrigger, emblaApi]);
+
+  useEffect(() => {
     if (!emblaApi) return;
 
     // handler for when slide changes
     const onSelect = () => {
-      console.log("Now showing slide:", emblaApi.selectedScrollSnap());
       if (onSlideChange) {
         onSlideChange(emblaApi.selectedScrollSnap());
       }
@@ -41,30 +48,27 @@ export function Carousel({
   }, [emblaApi]);
 
   return (
-    <div ref={emblaRef} className={clsx("overflow-hidden h-full", className)}>
+    <div
+      ref={emblaRef}
+      className={clsx("overflow-hidden h-full select-none", className)}
+    >
       <div className="flex h-full">
-        <div className="grow-0 shrink-0 basis-full min-w-0">
+        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center">
           <img
-            className="h-full w-full object-cover object-center"
-            src="/images/welcome/FTUE-00.png"
+            className="object-center -mt-32"
+            src="/images/welcome/welcome-wifi.svg"
           />
         </div>
-        <div className="grow-0 shrink-0 basis-full min-w-0">
+        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center">
           <img
-            className="h-full w-full object-cover object-center"
-            src="/images/welcome/FTUE-01.png"
+            className="w-72 object-center -mt-32"
+            src="/images/welcome/welcome-headphones.png"
           />
         </div>
-        <div className="grow-0 shrink-0 basis-full min-w-0 ">
+        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center">
           <img
-            className="w-full h-full object-cover object-center"
-            src="/images/welcome/FTUE-02.png"
-          />
-        </div>
-        <div className="grow-0 shrink-0 basis-full min-w-0 ">
-          <img
-            className="w-full h-full object-cover object-center"
-            src="/images/welcome/FTUE-03.png"
+            className="object-center -mt-32 max-w-[398px] h-60"
+            src="/images/welcome/welcome-chat-dialog.png"
           />
         </div>
       </div>

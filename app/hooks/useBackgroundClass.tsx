@@ -24,7 +24,6 @@ export function isDarkPage() {
 
   const darkPages = [
     "/login",
-    "/welcome",
     "/purchase",
     "/promo/day-pass",
     "/promo/week-pass",
@@ -36,6 +35,22 @@ export function isDarkPage() {
   return darkPages.includes(path);
 }
 
+export function isPinkPage() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const pages = ["/welcome"];
+
+  return pages.includes(path);
+}
+
 export function useBackgroundClass() {
-  return isDarkPage() ? "bg-ayapi-grey text-white" : "bg-paper-background";
+  let colors = "bg-paper-background";
+  if (isDarkPage()) {
+    colors = "bg-ayapi-grey text-white";
+  }
+  if (isPinkPage()) {
+    colors = "bg-ayapi-pink text-white";
+  }
+  return colors;
 }

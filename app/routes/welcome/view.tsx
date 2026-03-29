@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
 import { Carousel } from "components/Carousel/Carousel";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Welcome: React.FC = () => {
-  const [trigger, setTrigger] = useState(0);
+  const [goForward, setGoForward] = useState(0);
+  const [goBack, setGoBack] = useState(0);
   const [currentContent, setCurrentContent] = useState(0);
 
-  const nextSlide = () => setTrigger(Date.now());
+  const nextSlide = () => setGoForward(Date.now());
+  const prevSlide = () => setGoBack(Date.now());
 
   function slideChange(index: number) {
     setCurrentContent(index);
@@ -15,27 +18,30 @@ const Welcome: React.FC = () => {
   const content = [
     {
       title: "Connect to the public WiFi",
-      text: "It'll help you maintain connectivity and uninterrupted conversation.",
+      text: "Internet connectivity is essential to maintain an uninterrupted conversation.",
     },
     {
       title: "Slip on your headphones",
-      text: "WonderWay is a conversational guide just for you.",
+      text: "We don't want to make it noisy for others.",
     },
     {
-      title: "No wrong way to start",
-      text: "Say the name of the artwork, ask a question, or just speak what's on your mind. WonderWay will follow.",
+      title: "Start by asking",
+      text: "Where you are. The name of the art piece. Anything you want to know about it. Switch language on the go.",
     },
+    /*
     {
       title: "Your curiosity is the guide",
       text: "Big questions, quirky thoughts or strange details; WonderWay turns your wonder into conversation.",
     },
+    */
   ];
 
   return (
     <>
       <Carousel
         className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full"
-        nextTrigger={trigger}
+        nextTrigger={goForward}
+        previousTrigger={goBack}
         onSlideChange={slideChange}
       />
 
@@ -51,30 +57,43 @@ const Welcome: React.FC = () => {
           {content.map((_, i) => (
             <div
               key={i}
-              className={`w-3 h-3 rounded-full ${
-                i === currentContent ? "bg-ayapi-pink" : "bg-white"
+              className={`h-2 rounded-full ${
+                i === currentContent ? "bg-black w-8" : "bg-white w-2"
               }`}
             />
           ))}
         </div>
 
-        {currentContent < content.length - 1 && (
-          <button
-            onClick={nextSlide}
-            className="mt-4 px-6 py-3 bg-transparent border border-white text-white rounded-full pointer-events-auto"
-          >
-            Next
-          </button>
-        )}
+        {/* button container */}
+        <div className="mt-4 w-full flex">
+          {currentContent < content.length - 1 && (
+            <div className="w-full flex flex-row gap-3">
+              <button
+                onClick={prevSlide}
+                disabled={currentContent === 0}
+                className={`${currentContent === 0 ? "opacity-50 cursor-not-allowed" : ""} flex gap-2 px-3 py-3 bg-white text-black rounded-full text-center pointer-events-auto items-center justify-center`}
+              >
+                <ChevronLeft size={20} strokeWidth={1.5} />
+              </button>
+              <button
+                onClick={nextSlide}
+                className="flex gap-2 w-full px-6 py-3 bg-black text-white rounded-full text-center pointer-events-auto items-center justify-center"
+              >
+                <span className="uppercase text-sm">Next</span>
+                <ChevronRight size={20} strokeWidth={1.5} />
+              </button>
+            </div>
+          )}
 
-        {currentContent === content.length - 1 && (
-          <Link
-            to="/app"
-            className="mt-4 px-6 py-3 bg-transparent border border-white text-white rounded-full text-center pointer-events-auto"
-          >
-            Get Started
-          </Link>
-        )}
+          {currentContent === content.length - 1 && (
+            <Link
+              to="/app"
+              className="flex w-full px-6 py-3 bg-black text-white rounded-full text-center pointer-events-auto items-center justify-center"
+            >
+              <span className="uppercase text-sm">Get Started</span>
+            </Link>
+          )}
+        </div>
       </div>
     </>
   );

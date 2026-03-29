@@ -330,7 +330,7 @@ const ParentComponent: React.FC = () => {
 
   return (
     <>
-      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14">
+      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14 z-40">
         <Circles mode={circleMode}></Circles>
       </div>
 
