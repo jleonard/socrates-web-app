@@ -26,8 +26,8 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       const message = item?.message ?? null;
       const role = item?.role ?? null;
       const tool = item?.tool_calls?.tool_name ?? null;
-      const turn = { role };
-      console.log("turn: ", turn);
+      const turn = { role, message, tool };
+      // console.log("turn: ", turn);
       transcript.push(turn);
     }
     let entry = {
