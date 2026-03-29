@@ -16,7 +16,6 @@ export async function queryPinecone(
   context: string;
   avgScore: number;
 }> {
-  console.log("query: ", query);
   // 1️⃣ Create high-quality embedding for the query
   const embeddingResponse = await openai.embeddings.create({
     model: "text-embedding-3-large",
@@ -37,11 +36,13 @@ export async function queryPinecone(
   if (!results.matches?.length) return { context: "", avgScore: 0 };
 
   results.matches.forEach((m, i) => {
+    /*
     console.log(`🧠 Match ${i + 1}`);
     console.log("Score:", m.score);
     console.log("Text:", m.metadata?.text);
     console.log("Metadata:", m.metadata);
     console.log("-----");
+    */
   });
 
   // 3️⃣ Filter & assemble results
@@ -56,8 +57,8 @@ export async function queryPinecone(
     .map((m) => m.metadata?.text || "")
     .join("\n\n---\n\n");
 
-  console.log("rag results: ", context);
-  console.log("rag score: ", avgScore);
+  // console.log("rag results: ", context);
+  // console.log("rag score: ", avgScore);
 
   return { context, avgScore };
 }
