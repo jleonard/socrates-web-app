@@ -37,7 +37,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       transcript: { transcript },
       duration,
     };
-    console.log("entry ", entry);
+    console.log("entry ", JSON.stringify(entry));
     const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
     const { error } = await subabaseServiceRole
       .from("elevenlabs_history")
