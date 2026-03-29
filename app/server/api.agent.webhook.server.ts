@@ -116,6 +116,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     if (avgScore <= PINECONE_SCORE) {
       wikiSummary = await wikiPromise;
+      console.log("wikipedia result : ", wikiSummary);
       history_object.tool_wikipedia = true;
       history_object.text_wikipedia = wikiSummary;
     } else {
