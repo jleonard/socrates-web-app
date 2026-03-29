@@ -43,12 +43,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       .from("elevenlabs_history")
       .insert(entry);
     if (error) {
-      console.error(
-        "supabase error : ",
-        error.message,
-        error.details,
-        error.name,
-      );
+      console.error("supabase error : ", JSON.stringify(error));
     } else {
       return new Response("OK", { status: 200 });
     }
