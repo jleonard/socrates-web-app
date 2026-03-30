@@ -213,7 +213,7 @@ const ParentComponent: React.FC = () => {
         label: "press to connect",
       });
       // if the access doesn't have an expiration, set it
-      if (!access?.expiration) {
+      if (!access?.expiration && access?.access_id) {
         //console.log("setting an expiration date ", access);
         const formData = new FormData();
         formData.append("access_id", access.access_id);
@@ -226,7 +226,7 @@ const ParentComponent: React.FC = () => {
         label: "press to disconnect",
       });
       stopConversation();
-      if (access?.expiration > Date.now()) {
+      if (access?.expiration && new Date(access?.expiration) > new Date()) {
         console.log("expired! revalidate ", access);
         revalidator.revalidate();
       }
@@ -351,13 +351,13 @@ const ParentComponent: React.FC = () => {
       )}
 
       {access?.category === "unused" && (
-        <div className="bg-ayapi-pink rounded-t-2xl w-[260px] h-[200px] fixed bottom-0 left-1/2 -translate-x-1/2 text-white flex flex-col gap-1 items-center justify-center">
-          <p className="font-bold pt-28">Congratulations!</p>
+        <div className="bg-ayapi-pink rounded-t-2xl w-[240px] h-[200px] fixed bottom-0 left-1/2 -translate-x-1/2 text-white flex flex-col gap-1 items-center justify-center">
+          <p className="font-bold pt-[132px]">Congratulations!</p>
           <p>
             {access.hours <= 24
               ? `${access.hours} hours`
               : `${Math.ceil(access.hours / 24)} days`}{" "}
-            remaining
+            access
           </p>
         </div>
       )}
@@ -368,8 +368,8 @@ const ParentComponent: React.FC = () => {
             className="fixed left-1/2 -translate-x-1/2 bottom-16 z-20"
             onPress={handleMainButtonPress}
             mode={buttonMode}
-            userAccess={access.category}
-            expiration={access.expiration}
+            userAccess={access?.category ?? "none"}
+            expiration={access?.expiration ?? new Date().toISOString()}
           ></MainButton>
         </>
       ) : (

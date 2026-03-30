@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { AccessRecord } from "~/types";
 
 export async function setAccessExpiration(access_id: string, request: Request) {
   try {
@@ -26,7 +27,7 @@ export async function setAccessExpiration(access_id: string, request: Request) {
 
     const { data: setData, error: setError } = await supabase
       .from("access")
-      .update({ expiration: expirationDate })
+      .update({ expiration: expirationDate.toISOString() })
       .eq("access_id", access_id);
 
     return { setData, setError };
@@ -35,7 +36,10 @@ export async function setAccessExpiration(access_id: string, request: Request) {
   }
 }
 
-export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
+export async function userHasAccess(
+  user_id: string,
+  supabase: SupabaseClient,
+): Promise<AccessRecord | null> {
   // 01. Check for an active access record
   const { data: access, error: accessError } = await supabase
     .from("access")
@@ -47,8 +51,8 @@ export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
     .single();
 
   if (access) {
-    access.category = "active";
-    return access;
+    const record = { ...access, category: "active" } as AccessRecord;
+    return record;
   }
 
   // 02. check if there's an unused access record
@@ -62,11 +66,11 @@ export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
     .maybeSingle();
 
   if (unusedAccess) {
-    unusedAccess.category = "unused";
-    return unusedAccess;
+    const record = { ...unusedAccess, category: "unused" } as AccessRecord;
+    return record;
   }
 
-  // 03. Check for prior access
+  // 03. Check for expired access
   const { data: priorAccess, error: priorAccessError } = await supabase
     .from("access")
     .select()
@@ -76,8 +80,8 @@ export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
     .single();
 
   if (priorAccess && !priorAccessError) {
-    priorAccess.category = "expired";
-    return priorAccess;
+    const record = { ...priorAccess, category: "expired" } as AccessRecord;
+    return record;
   }
 
   // 04. Give this user 20 minutes of free access.
@@ -89,10 +93,10 @@ export async function userHasAccess(user_id: string, supabase: SupabaseClient) {
     .single();
 
   if (newAccess && !newAccessError) {
-    newAccess.category = "trial";
-    return newAccess;
+    const record = { ...newAccess, category: "trial" } as AccessRecord;
+    return record;
   }
 
   // this really shouldn't happen.
-  return { category: "none" };
+  return null;
 }

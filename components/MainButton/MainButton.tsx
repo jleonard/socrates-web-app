@@ -2,11 +2,7 @@ import React from "react";
 
 import { Button as ReactAriaButton } from "react-aria-components";
 
-import {
-  MainButtonProps,
-  MainButtonModes,
-  UserAccessModes,
-} from "./MainButton.types";
+import { MainButtonProps, MainButtonModes } from "./MainButton.types";
 import { MainButtonStyles } from "./MainButton.styles";
 
 import MicrophoneIcon from "./icons/Microphone.png";
@@ -25,35 +21,40 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       connecting: "Just a moment",
     };
 
-    function getTimeLeft(expiration: string | Date) {
+    function getTimeRemainingLabel(expiration: string) {
       const end = new Date(expiration);
       const now = new Date();
       const diffMs = end.getTime() - now.getTime();
 
-      if (diffMs <= 0) return "0 minutes";
+      console.log("getTimeRemaining()");
+      console.log("expiration:", expiration);
+      console.log("end:", new Date(expiration));
+      console.log("diffMs:", diffMs);
+
+      if (diffMs <= 0) return "";
 
       const minutes = Math.floor(diffMs / 60_000);
       if (minutes < 60) {
-        return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+        return `${minutes} minute${minutes === 1 ? "" : "s"} remaining`;
       }
 
       const hours = Math.floor(minutes / 60);
       if (hours < 24) {
-        return `${hours} hour${hours === 1 ? "" : "s"}`;
+        return `${hours} hour${hours === 1 ? "" : "s"} remaining`;
       }
 
       const days = Math.floor(hours / 24);
       if (days < 7) {
-        return `${days} day${days === 1 ? "" : "s"}`;
+        return `${days} day${days === 1 ? "" : "s"} remaining`;
       }
 
       if (days < 30) {
         const weeks = Math.floor(days / 7);
-        return `${weeks} week${weeks === 1 ? "" : "s"}`;
+        return `${weeks} week${weeks === 1 ? "" : "s"} remaining`;
       }
 
       const months = Math.floor(days / 30);
-      return `${months} month${months === 1 ? "" : "s"}`;
+      return `${months} month${months === 1 ? "" : "s"} remaining`;
     }
 
     return (
@@ -87,7 +88,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
         </ReactAriaButton>
         {userAccess !== "unused" && (
           <span className="fixed left-1/2 -translate-x-1/2 bottom-8 z-20 text-center">
-            {getTimeLeft(expiration)} remaining
+            {getTimeRemainingLabel(expiration)}
           </span>
         )}
       </>

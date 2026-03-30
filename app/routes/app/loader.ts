@@ -1,8 +1,9 @@
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { redirect, data, type LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import { userHasAccess } from "~/server/access.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
+import type { AccessRecord } from "~/types";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
@@ -19,10 +20,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Upsert profile data on every load
   const { data: profile, error } = await upsertUserProfile(
     { user_id: user.id, email: user.email },
-    request
+    request,
   );
 
   const access = await userHasAccess(user.id, supabase);
+  console.log("userHasAccess : ", access);
   // none means this user never had access
   if (access?.category === "none") {
     return redirect("/purchase");
@@ -38,12 +40,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log("sb error: ", error);
   }
 
-  return Response.json(
+  return data(
     {
       pageTitle: "WonderWay",
       user: user,
       user_profile: error ? {} : profile,
-      access,
+      access: access as AccessRecord | null,
       sessionId,
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
@@ -57,6 +59,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session),
       },
-    }
+    },
   );
 }

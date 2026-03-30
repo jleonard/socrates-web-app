@@ -1,4 +1,5 @@
 import { ButtonProps as ReactAriaButtonProps } from "react-aria-components";
+import { AccessCategory } from "~/types";
 
 export type MainButtonModes =
   | "speaking"
@@ -6,21 +7,14 @@ export type MainButtonModes =
   | "disconnected"
   | "connecting";
 
-export type UserAccessModes =
-  | "active"
-  | "expired"
-  | "trial"
-  | "none"
-  | "unused";
-
 export type MainButtonBaseProps = {
   className?: string;
 
   mode: MainButtonModes;
 
-  userAccess: UserAccessModes;
+  userAccess: AccessCategory;
 
-  expiration: Date;
+  expiration: string;
 };
 
 export type MainButtonProps = ReactAriaButtonProps & MainButtonBaseProps;

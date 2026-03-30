@@ -1,3 +1,9 @@
+import type { Database } from "~/types/supabase";
+
+export type AccessRow = Database["public"]["Tables"]["access"]["Row"];
+export type AccessCategory = "active" | "unused" | "expired" | "trial" | "none";
+export type AccessRecord = AccessRow & { category: AccessCategory };
+
 export type ProductInfo = {
   code: string;
   hours: number;
