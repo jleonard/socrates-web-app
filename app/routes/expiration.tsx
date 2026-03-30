@@ -1,32 +1,26 @@
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { ChevronRight } from "lucide-react";
 
 export const meta: MetaFunction = () => [{ title: "WonderWay Access Expired" }];
 
 export default function Expiration() {
   return (
     <>
-      <img
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover h-full"
-        src="/images/expiration.png"
-      />
-
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-80 items-center">
-        <img className="block size-[38px]" src="/images/logo/nub.png" />
-        <h2 className="text-3xl leading-8 text-white text-center mb-6 mx-auto">
+        <img className="block size-52" src="/images/logo/big-nub.svg" />
+        <h2 className="mt-6 text-3xl text-white font-semibold text-center mx-auto">
           Thank you for exploring with WonderWay
         </h2>
-        <p className="text-center leading-normal">
-          <span className="text-[16px]">
-            Your complementary time has expired. Share your thoughts in a
-            two-minute survey and unlock more time.
-          </span>
+        <p className="mt-6 text-center leading-normal">
+          <span className="text-[16px]">Your time has expired.</span>
         </p>
         <Link
-          to="/login"
-          className="w-10/12 mt-[77px] px-6 py-3 border border-white text-white bg-black/55 rounded-full text-center pointer-events-auto"
+          to="/purchase"
+          className="flex gap-2 items-center justify-center w-10/12 mt-11 px-6 py-3 text-white bg-black rounded-full text-center pointer-events-auto"
         >
-          Get Started
+          <span className="uppercase text-sm">Continue</span>
+          <ChevronRight size={20} strokeWidth={1.5} />
         </Link>
       </div>
     </>

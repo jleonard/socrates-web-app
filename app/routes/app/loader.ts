@@ -24,10 +24,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   );
 
   const access = await userHasAccess(user.id, supabase);
-  console.log("userHasAccess : ", access);
+
   // none means this user never had access
   if (access?.category === "none") {
     return redirect("/purchase");
+  }
+
+  // expired access
+  if (access?.category === "expired") {
+    return redirect("/expiration");
   }
 
   // if you haven't onboarded, go do it

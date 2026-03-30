@@ -27,7 +27,6 @@ export function isDarkPage() {
     "/purchase",
     "/promo/day-pass",
     "/promo/week-pass",
-    "/expiration",
     "/confirmation/day",
     "/confirmation/week",
   ];
@@ -39,7 +38,7 @@ export function isPinkPage() {
   const location = useLocation();
   const path = location.pathname;
 
-  const pages = ["/welcome"];
+  const pages = ["/welcome", "/expiration"];
 
   return pages.includes(path);
 }
