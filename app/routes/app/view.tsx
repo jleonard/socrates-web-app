@@ -87,6 +87,16 @@ const ParentComponent: React.FC = () => {
     setHasInternet(isOnline);
   }, [isOnline]);
 
+  // poll for exipiration changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("check expiration");
+      submit({ intent: "check-expiration" }, { method: "POST" });
+    }, 60_000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // tracks the response time from the AI
   let responseTimeComparison: Date | null = null;
 
@@ -214,8 +224,8 @@ const ParentComponent: React.FC = () => {
       });
       // if the access doesn't have an expiration, set it
       if (!access?.expiration && access?.access_id) {
-        //console.log("setting an expiration date ", access);
         const formData = new FormData();
+        formData.append("intent", "set-expiration");
         formData.append("access_id", access.access_id);
         submit(formData, { method: "post" });
       }
