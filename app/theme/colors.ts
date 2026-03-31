@@ -75,7 +75,7 @@ export const textColors = {
   success: coreColors.green["700"],
   warning: coreColors.orange["400"],
   critical: coreColors.red["400"],
-  "ayapi-pink": "#FF2F92",
+  "ayapi-pink": "#D8296E",
 };
 
 export const linkColors = {
@@ -93,7 +93,7 @@ export const surfaceColors = {
   handle: coreColors.grey["700"],
   inverse: coreColors.granite["1100"],
   "ayapi-grey": "#1F1F1F",
-  "ayapi-pink": "#FF2F92",
+  "ayapi-pink": "#D8296E",
   paper: {
     DEFAULT: coreColors.paper,
     dark: coreColors.paper["dark"],
