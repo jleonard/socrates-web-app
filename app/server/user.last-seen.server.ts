@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import * as Sentry from "@sentry/react-router";
 
 type UpdateUserArgs = {
   user_id: string;
@@ -9,7 +10,7 @@ type UpdateUserArgs = {
 
 export async function upsertUserProfile(
   userObj: UpdateUserArgs,
-  request: Request
+  request: Request,
 ) {
   try {
     const { getSupabaseServerClient } = await import("~/utils/supabase.server");
@@ -18,12 +19,26 @@ export async function upsertUserProfile(
 
     userObj.last_seen = new Date();
 
-    return supabase
+    const { data, error } = await supabase
       .from("profiles")
       .upsert(userObj, { onConflict: "user_id" })
       .select()
       .single();
+
+    if (error) {
+      Sentry.captureMessage("upsertUserProfile failed", {
+        level: "error",
+        extra: { user: userObj, error },
+      });
+      return { data: null, error: error };
+    }
+
+    return { data, error: null };
   } catch (err: any) {
+    Sentry.captureMessage("upsertUserProfile unexpected error", {
+      level: "error",
+      extra: { user: userObj, error: err },
+    });
     return { data: null, error: { message: err.message } };
   }
 }
