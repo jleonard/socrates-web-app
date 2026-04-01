@@ -51,31 +51,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // ✅ Track route changes with google analytics
   usePageViews(GA_TRACKING_ID);
 
-  /*
-   * process query string vars here
-   *
-   * promo = promo codes give users free access to the site.
-   * they are processed with the 'useSyncPromo' hook
-   *
-   * place = used to capture the museum or insitution being visited
-   */
-  const location = useLocation();
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-
-    // store promo
-    let promoCode = params.get("promo");
-    if (promoCode) {
-      // console.log("promo : ", promoCode);
-      localStorage.setItem("promo", promoCode);
-    }
-
-    // store place
-    let place = params.get("place") || "wonderway";
-    // console.log("place : ", place);
-    usePlaceStore.getState().setActivePlace(place);
-  }, [location.search]);
-
   return (
     <html lang="en">
       <head>
@@ -134,6 +109,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  console.log("APP!");
+  /*
+   * process query string vars here
+   *
+   * promo = promo codes give users free access to the site.
+   * they are processed with the 'useSyncPromo' hook
+   *
+   * place = used to capture the museum or insitution being visited
+   */
+  const location = useLocation();
+  const setActivePlace = usePlaceStore((state) => state.setActivePlace);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    // store promo
+    let promoCode = params.get("promo");
+    if (promoCode) {
+      console.log("promo : ", promoCode);
+      localStorage.setItem("promo", promoCode);
+    }
+
+    // store place
+    let place = params.get("place") || "wonderway";
+    console.log("place : ", place);
+    setActivePlace(place);
+  }, [location.search, setActivePlace]);
+
   return <Outlet />;
 }
 
