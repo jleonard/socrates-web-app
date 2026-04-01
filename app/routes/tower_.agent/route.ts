@@ -7,5 +7,5 @@ export { default } from "./view";
 export { action } from "./action";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: data?.pageTitle }];
+  return [{ title: "Tower | Agent Questions" }];
 };

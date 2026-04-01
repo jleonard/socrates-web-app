@@ -7,6 +7,8 @@ import {
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 
+import type { RedisEntry } from "~/types";
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const redis = await getRedis();
   const { supabase: userSupabase } = getSupabaseServerClient(request);
@@ -48,7 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const PAGE_SIZE = 10;
 
   let cursor = "0";
-  const entries: CacheEntry[] = [];
+  const entries: RedisEntry[] = [];
 
   do {
     const { cursor: next, keys } = await redis.scan(cursor, {
@@ -58,16 +60,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     cursor = next;
     if (keys.length) {
-      const pipeline = redis.pipeline();
-      keys.forEach((k) => pipeline.hgetall(k));
-      const results = await pipeline.exec();
+      const results = await Promise.all(keys.map((k) => redis.hGetAll(k)));
       keys.forEach((key, i) => {
-        const data = results[i][1];
+        const hash = results[i];
         if (
           !search ||
-          data?.question?.toLowerCase().includes(search.toLowerCase())
+          hash?.question?.toLowerCase().includes(search.toLowerCase())
         ) {
-          entries.push({ key, ...data });
+          entries.push({ key, ...hash } as RedisEntry);
         }
       });
     }
@@ -79,6 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     entries: paged,
     total,
     page,
+    search,
     pageSize: PAGE_SIZE,
     headers: {
       "Set-Cookie": await sessionStorage.commitSession(session),
