@@ -123,6 +123,7 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    console.log("set params : ", params);
 
     // store promo
     let promoCode = params.get("promo");
