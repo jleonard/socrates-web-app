@@ -118,21 +118,20 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     if (avgScore <= PINECONE_SCORE) {
       wikiSummary = await wikiPromise;
-      history_object.tool_wikipedia = true;
-      history_object.text_wikipedia = wikiSummary;
-    } else {
-      history_object.tool_rag = true;
     }
 
     // --- 4️⃣ Prepare RAG / fallback message ---
     let ragContent: string;
 
     if (avgScore > PINECONE_SCORE && context) {
+      history_object.tool_rag = true;
       // Strong RAG context
       ragContent = `Verified RAG context (confidence ${avgScore.toFixed(
         2,
       )}):\n${context}`;
     } else if (wikiSummary) {
+      history_object.tool_wikipedia = true;
+      history_object.text_wikipedia = wikiSummary;
       // Wikipedia fallback only if it exists
       ragContent = `Wikipedia summary for "${query}":\n${wikiSummary}`;
     } else {
