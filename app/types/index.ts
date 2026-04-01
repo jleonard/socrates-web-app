@@ -4,11 +4,6 @@ export type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 export type AccessCategory = "active" | "unused" | "expired" | "trial" | "none";
 export type AccessRecord = AccessRow & { category: AccessCategory };
 
-export type ProductInfo = {
-  code: string;
-  hours: number;
-};
-
 export type HistoryLog = {
   user_id: string;
   query: string;
@@ -20,4 +15,18 @@ export type HistoryLog = {
   rag_score?: number;
   text_wikipedia?: string | null;
   text_rag?: string | null;
+};
+
+export type ProductInfo = {
+  code: string;
+  hours: number;
+};
+
+type RedisEntry = {
+  key: string;
+  answer: string;
+  tool: string;
+  embedding: string;
+  hits: string;
+  question: string;
 };

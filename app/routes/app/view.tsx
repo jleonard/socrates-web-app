@@ -81,13 +81,17 @@ const ParentComponent: React.FC = () => {
 
   const addEntry = useTranscriptStore((state) => state.addEntry);
 
-  // check for network availability
+  /**
+   * monitor network availability
+   */
   const isOnline = useNetworkStatus();
   useEffect(() => {
     setHasInternet(isOnline);
   }, [isOnline]);
 
-  // poll for exipiration changes
+  /**
+   * poll for exipiration changes
+   */
   useEffect(() => {
     const interval = setInterval(() => {
       console.log("check expiration");
