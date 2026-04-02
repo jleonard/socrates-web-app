@@ -62,13 +62,16 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          qa: string | null
           query: string | null
+          rag_index: string | null
           rag_score: number | null
           response: string | null
           response_time: number | null
           text_rag: string | null
           text_wikipedia: string | null
           tool_cache: boolean | null
+          tool_followup: boolean | null
           tool_rag: boolean | null
           tool_wikipedia: boolean | null
           user_id: string | null
@@ -76,13 +79,16 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          qa?: string | null
           query?: string | null
+          rag_index?: string | null
           rag_score?: number | null
           response?: string | null
           response_time?: number | null
           text_rag?: string | null
           text_wikipedia?: string | null
           tool_cache?: boolean | null
+          tool_followup?: boolean | null
           tool_rag?: boolean | null
           tool_wikipedia?: boolean | null
           user_id?: string | null
@@ -90,13 +96,16 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          qa?: string | null
           query?: string | null
+          rag_index?: string | null
           rag_score?: number | null
           response?: string | null
           response_time?: number | null
           text_rag?: string | null
           text_wikipedia?: string | null
           tool_cache?: boolean | null
+          tool_followup?: boolean | null
           tool_rag?: boolean | null
           tool_wikipedia?: boolean | null
           user_id?: string | null

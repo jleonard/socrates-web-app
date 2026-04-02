@@ -43,10 +43,12 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       tool_cache: false,
       tool_wikipedia: false,
       tool_rag: false,
+      tool_followup: false,
       response: "",
       response_time: 0,
       text_wikipedia: null,
       text_rag: null,
+      rag_index: null,
     };
 
     let pinecone_index, pinecone_namespace;
@@ -63,6 +65,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     }
     console.log("webhook query : ", query);
     console.log("webhook place : ", place);
+    history_object.rag_index = pinecone_namespace;
 
     if (!query || !user_session) {
       return new Response("Missing required fields", { status: 400 });
@@ -118,21 +121,20 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     if (avgScore <= PINECONE_SCORE) {
       wikiSummary = await wikiPromise;
-      history_object.tool_wikipedia = true;
-      history_object.text_wikipedia = wikiSummary;
-    } else {
-      history_object.tool_rag = true;
     }
 
     // --- 4️⃣ Prepare RAG / fallback message ---
     let ragContent: string;
 
     if (avgScore > PINECONE_SCORE && context) {
+      history_object.tool_rag = true;
       // Strong RAG context
       ragContent = `Verified RAG context (confidence ${avgScore.toFixed(
         2,
       )}):\n${context}`;
     } else if (wikiSummary) {
+      history_object.tool_wikipedia = true;
+      history_object.text_wikipedia = wikiSummary;
       // Wikipedia fallback only if it exists
       ragContent = `Wikipedia summary for "${query}":\n${wikiSummary}`;
     } else {
@@ -298,6 +300,11 @@ export async function generateFollowUps(
   pinecone_index: string,
   pinecone_namespace: string,
 ) {
+  /**
+   * setup the history object for logging
+   */
+  let botUserId = "00000000-0000-4000-8000-000000000000";
+
   try {
     // 1️⃣ Ask GPT for follow-up questions
     const followUpsRes = await openai.chat.completions.create({
@@ -330,6 +337,23 @@ export async function generateFollowUps(
       // Skip empty or trivial follow-ups
       if (!followUp || followUp.length < 3) continue;
 
+      /**
+       * prep the history object
+       */
+      let history_object: HistoryLog = {
+        user_id: botUserId,
+        query: followUp,
+        tool_cache: false,
+        tool_wikipedia: false,
+        tool_rag: false,
+        tool_followup: true,
+        response: "",
+        response_time: 0,
+        text_wikipedia: null,
+        text_rag: null,
+        rag_index: pinecone_index,
+      };
+
       // RAG + Wikipedia context
       const { context, avgScore } = await queryPinecone(
         followUp,
@@ -343,8 +367,13 @@ export async function generateFollowUps(
 
       let ragContent: string;
       if (avgScore > PINECONE_SCORE && context) {
+        history_object.rag_score = avgScore;
+        history_object.text_rag = context;
+        history_object.tool_rag = true;
         ragContent = `Verified RAG context (confidence ${avgScore.toFixed(2)}):\n${context}`;
       } else if (wikiSummary) {
+        history_object.tool_wikipedia = true;
+        history_object.text_wikipedia = wikiSummary;
         ragContent = `Wikipedia summary for "${followUp}":\n${wikiSummary}`;
       } else {
         ragContent = `No verified context found. If unsure, respond exactly: "I do not have verified information about this."`;
@@ -375,7 +404,9 @@ export async function generateFollowUps(
         !lower.startsWith("i don't");
 
       if (isMeaningful) {
+        history_object.response = answer;
         await storeCache(followUp, answer, "follow-up");
+        await logAgentHistory(history_object);
         console.log(`✅ Stored follow-up in cache: "${followUp}"`);
       } else {
         console.log(

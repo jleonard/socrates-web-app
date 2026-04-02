@@ -34,7 +34,7 @@ export const Nav = () => {
       {isOpen && (
         <button
           type="button"
-          className="fixed inset-0 bg-paper-background z-30"
+          className="fixed inset-0 bg-paper-background z-60 was-30"
           aria-label="Close navigation menu"
           tabIndex={0}
           onClick={() => setIsOpen(false)}
@@ -52,7 +52,7 @@ export const Nav = () => {
           onClick={() => {
             setIsOpen((prev) => !prev);
           }}
-          className="absolute bottom-5 right-8 z-40"
+          className="absolute bottom-5 right-8 z-70 was-40"
         >
           {/* Swap icon if needed */}
           {isOpen ? (
@@ -67,7 +67,8 @@ export const Nav = () => {
 
       <nav
         className={clsx(
-          "sticky top-0 flex flex-col w-full pt-10 pb-4 z-30",
+          "sticky top-0 flex flex-col w-full pt-10 pb-4",
+          isOpen ? "z-60" : "z-30",
           isDarkPage() || isPinkPage()
             ? "bg-transparent"
             : "bg-paper-background",
@@ -83,7 +84,7 @@ export const Nav = () => {
         {isOpen && (
           <>
             {/* Your menu on top of the overlay */}
-            <div className="flex py-4 w-full z-40">
+            <div className="flex py-4 w-full z-70 was-40">
               <ul className="space-y-2 w-full">
                 <li className="py-3 border-b-slate-600 border-b">
                   <Link className="block w-full" to="/privacy">

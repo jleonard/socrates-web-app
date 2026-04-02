@@ -46,7 +46,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServiceRoleClient();
 
   let query = supabase
-    .from("agent_responses")
+    .from("agent_history")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);

@@ -14,10 +14,12 @@ export type HistoryLog = {
   tool_cache: boolean;
   tool_rag: boolean;
   tool_wikipedia: boolean;
+  tool_followup: boolean;
   response_time: number;
   rag_score?: number;
   text_wikipedia?: string | null;
   text_rag?: string | null;
+  rag_index: string | null;
 };
 
 export type ProductInfo = {

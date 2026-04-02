@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { useFetcher, useLoaderData, useSearchParams, Form } from "react-router";
 
-import type { RedisEntry } from "~/types";
+import type { AgentResponse } from "~/types";
 import type { loader } from "./loader";
 
 // ─── View ─────────────────────────────────────────────────────────────────────
-export default function CacheAdmin() {
+export default function AgentResponseAdmin() {
   const { entries, total, page, search, pageSize } =
     useLoaderData<typeof loader>();
   const [, setSearchParams] = useSearchParams();
   const fetcher = useFetcher();
   const totalPages = Math.ceil(total / pageSize);
 
-  const [selected, setSelected] = useState<RedisEntry | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  const [selected, setSelected] = useState<AgentResponse | null>(null);
+  const [qa, setQa] = useState("");
 
   function goToPage(p: number) {
     setSearchParams((prev) => {
@@ -21,25 +21,34 @@ export default function CacheAdmin() {
       return prev;
     });
     setSelected(null);
-    setConfirming(false);
+    setQa("");
   }
 
-  function handleDelete(key: string) {
-    fetcher.submit({ key }, { method: "post" });
+  function handleSave() {
+    if (!selected) return;
+    fetcher.submit({ id: String(selected.id), qa }, { method: "post" });
     setSelected(null);
-    setConfirming(false);
+    setQa("");
+  }
+
+  // add this helper near the bottom with the other helpers
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   }
 
   return (
     <div className="absolute inset-0 overflow-y-auto py-10 px-4 max-w-3xl z-50 bg-paper">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-lg font-medium">Cache admin</h1>
+        <h1 className="text-lg font-medium">Agent response admin</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Inspect and delete Redis cache entries matching{" "}
-          <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
-            cache:*
-          </code>
+          Inspect and annotate agent responses from Supabase.
         </p>
       </div>
 
@@ -72,7 +81,7 @@ export default function CacheAdmin() {
         <input
           name="q"
           defaultValue={search}
-          placeholder="Search by question…"
+          placeholder="Search by query…"
           className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-gray-400"
         />
         <input type="hidden" name="page" value="0" />
@@ -101,25 +110,38 @@ export default function CacheAdmin() {
         <div className="flex flex-col gap-2">
           {entries.map((entry) => (
             <button
-              key={entry.key}
+              key={entry.id}
               onClick={() => {
-                setSelected(selected?.key === entry.key ? null : entry);
-                setConfirming(false);
+                setSelected(selected?.id === entry.id ? null : entry);
+                setQa("");
               }}
-              className={`w-full text-left border rounded-xl px-4 py-3 hover:border-gray-300 transition-colors ${
-                selected?.key === entry.key
+              className={`w-full text-left border rounded-sm px-4 py-3 hover:border-gray-300 transition-colors ${
+                selected?.id === entry.id
                   ? "border-gray-400 bg-gray-50"
                   : "border-gray-200 bg-white"
               }`}
             >
-              <div className="text-sm truncate">{entry.question}</div>
-              <div className="flex justify-between mt-1">
+              <div className="text-sm truncate">{entry.query ?? "—"}</div>
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-xs text-gray-600 font-mono truncate max-w-xs">
+                  {entry.rag_index ?? "—"}
+                </span>
                 <span className="text-xs text-gray-400 font-mono truncate max-w-xs">
-                  {entry.key}
+                  {entry.user_id ?? "—"}
                 </span>
-                <span className="text-xs text-gray-400 ml-4 shrink-0">
-                  {parseInt(entry.hits || "0", 10)} hits
-                </span>
+
+                <div className="flex gap-2 ml-4 shrink-0 justify-center items-center">
+                  <span className="text-xs text-gray-600">
+                    {formatDate(entry.created_at)}
+                  </span>
+                  <Check label="cache" value={entry.tool_cache} />
+                  <Check
+                    label={`rag ${entry.rag_score?.toFixed(2) ?? "—"}`}
+                    value={entry.tool_rag}
+                  />{" "}
+                  <Check label="wiki" value={entry.tool_wikipedia} />
+                  <Check label="follow up" value={entry.tool_followup} />
+                </div>
               </div>
             </button>
           ))}
@@ -157,59 +179,50 @@ export default function CacheAdmin() {
         <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
           <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
             <span className="text-sm font-medium">Entry detail</span>
-            <div className="flex gap-2">
-              {!confirming && (
-                <button
-                  onClick={() => setConfirming(true)}
-                  className="px-3 py-1.5 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
-                >
-                  Delete
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setSelected(null);
-                  setConfirming(false);
-                }}
-                className="px-3 py-1.5 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setSelected(null);
+                setQa("");
+              }}
+              className="px-3 py-1.5 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50"
+            >
+              Close
+            </button>
           </div>
 
           <div className="p-4 flex flex-col gap-4">
-            <Field label="Question" value={selected.question} />
-            <Field label="Answer" value={selected.answer} truncate />
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Tool" value={selected.tool} />
-              <Field label="Hits" value={selected.hits} />
+            <Field label="User ID" value={selected.user_id} mono />
+            <Field label="Query" value={selected.query} />
+            <Field label="Response" value={selected.response} />
+            <div className="grid grid-cols-3 gap-4">
+              <CheckField label="Cache" value={selected.tool_cache} />
+              <CheckField label="RAG" value={selected.tool_rag} />
+              <CheckField label="Wikipedia" value={selected.tool_wikipedia} />
+              <CheckField label="Wikipedia" value={selected.tool_followup} />
             </div>
-            <Field label="Key" value={selected.key} mono />
-            <Field label="Embedding" value={selected.embedding} truncate mono />
+            <div>
+              <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                QA annotation
+              </div>
+              <textarea
+                value={qa}
+                onChange={(e) => setQa(e.target.value)}
+                placeholder="Add a QA note…"
+                rows={3}
+                className="w-full text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 outline-none focus:border-gray-400 resize-none"
+              />
+            </div>
           </div>
 
-          {confirming && (
-            <div className="flex justify-between items-center px-4 py-3 border-t border-red-200 bg-red-50">
-              <span className="text-sm text-red-600">
-                Delete this entry? This cannot be undone.
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setConfirming(false)}
-                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white text-gray-500 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(selected.key)}
-                  className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Yes, delete
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200">
+            <button
+              onClick={handleSave}
+              disabled={!qa || fetcher.state === "submitting"}
+              className="px-3 py-1.5 text-xs bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {fetcher.state === "submitting" ? "Saving…" : "Save"}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -221,12 +234,10 @@ function Field({
   label,
   value,
   mono,
-  truncate,
 }: {
   label: string;
-  value: string;
+  value: string | null;
   mono?: boolean;
-  truncate?: boolean;
 }) {
   return (
     <div>
@@ -234,12 +245,47 @@ function Field({
         {label}
       </div>
       <div
-        className={`text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 ${
+        className={`text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 break-all whitespace-pre-wrap ${
           mono ? "font-mono" : ""
-        } ${truncate ? "truncate" : "break-all whitespace-pre-wrap"}`}
+        }`}
       >
-        {value || "—"}
+        {value ?? "—"}
       </div>
     </div>
+  );
+}
+
+// ─── CheckField ───────────────────────────────────────────────────────────────
+function CheckField({
+  label,
+  value,
+}: {
+  label: string;
+  value: boolean | null;
+}) {
+  return (
+    <div>
+      <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+        {label}
+      </div>
+      <div className="text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+        {value ? "✓" : "—"}
+      </div>
+    </div>
+  );
+}
+
+// ─── Check (inline badge) ─────────────────────────────────────────────────────
+function Check({ label, value }: { label: string; value: boolean | null }) {
+  return (
+    <span
+      className={`text-xs px-1.5 py-0.5 rounded ${
+        value
+          ? "bg-green-600 text-green-200 border border-green-200"
+          : "bg-gray-50 text-gray-300 border border-gray-200"
+      }`}
+    >
+      {label}
+    </span>
   );
 }
