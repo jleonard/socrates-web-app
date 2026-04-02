@@ -65,7 +65,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     }
     console.log("webhook query : ", query);
     console.log("webhook place : ", place);
-    history_object.rag_index = pinecone_namespace;
+    history_object.rag_index = pinecone_index;
 
     if (!query || !user_session) {
       return new Response("Missing required fields", { status: 400 });
