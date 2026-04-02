@@ -25,7 +25,6 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (intent === "check-expiration") {
-    console.log("action check expiration");
     return new Response("Expiration check", { status: 200 });
   }
 

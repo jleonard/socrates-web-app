@@ -14,8 +14,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
         <div className="relative size-60">
           {/* XL Circle */}
           <motion.div
+            key="xl-circle"
             animate={mode}
             className="animation inset-0 z-10"
+            style={{ z: 1 }}
             initial={["idle"]}
             variants={{
               processing: {
@@ -109,8 +111,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
 
           {/* L Circle */}
           <motion.div
+            key="lg-circle"
             animate={mode}
             className="absolute inset-0 z-20"
+            style={{ z: 1 }}
             initial={["idle"]}
             variants={{
               processing: {
@@ -201,8 +205,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
 
           {/* M Circle */}
           <motion.div
+            key="md-circle"
             animate={mode}
             initial={["idle"]}
+            style={{ z: 1 }}
             variants={{
               processing: {
                 rotate: 360,
@@ -307,8 +313,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
 
           {/* SM Circle */}
           <motion.div
+            key="sm-circle"
             animate={mode}
             initial={["idle"]}
+            style={{ z: 1 }}
             variants={{
               idle: {
                 x: 0,

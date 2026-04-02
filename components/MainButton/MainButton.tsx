@@ -26,10 +26,12 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       const now = new Date();
       const diffMs = end.getTime() - now.getTime();
 
+      /*
       console.log("getTimeRemaining()");
       console.log("expiration:", expiration);
       console.log("end:", new Date(expiration));
       console.log("diffMs:", diffMs);
+      */
 
       if (diffMs <= 0) return "";
 
