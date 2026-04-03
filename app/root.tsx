@@ -31,9 +31,12 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export const loader: LoaderFunction = () => {
+export const loader = ({ request }: { request: Request }) => {
+  const url = new URL(request.url);
+  const place = url.searchParams.get("place");
   return {
     GA_TRACKING_ID: process.env.GA_TRACKING_ID, // Load from .env
+    place,
   };
 };
 
@@ -118,10 +121,18 @@ export default function App() {
    * place = used to capture the museum or insitution being visited
    */
   const location = useLocation();
+  const { place } = useLoaderData<typeof loader>();
   const setActivePlace = usePlaceStore((state) => state.setActivePlace);
+
+  // synchronous, runs before child loaders redirect
+  if (place) {
+    console.log("place >> : ", place);
+    setActivePlace(place);
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+
     console.log("set params : ", params);
 
     // store promo
@@ -131,12 +142,13 @@ export default function App() {
       localStorage.setItem("promo", promoCode);
     }
 
-    // store place
+    /* store place
     const place = params.get("place");
     if (place) {
       console.log("place : ", place);
       setActivePlace(place);
     }
+      */
   }, [location.search, setActivePlace]);
 
   return <Outlet />;
