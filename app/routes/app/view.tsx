@@ -424,6 +424,7 @@ const ParentComponent: React.FC = () => {
       </div>
 
       <div className="fixed bottom-5 right-5 z-50 hidden">
+        <span>active place : {activePlace}</span>
         <Stopwatch />
       </div>
       {/*
