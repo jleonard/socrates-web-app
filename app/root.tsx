@@ -133,8 +133,8 @@ export default function App() {
 
     // store place
     const place = params.get("place");
-    console.log("place : ", place);
     if (place) {
+      console.log("place : ", place);
       setActivePlace(place);
     }
   }, [location.search, setActivePlace]);
