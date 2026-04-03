@@ -125,16 +125,18 @@ export default function App() {
     console.log("set params : ", params);
 
     // store promo
-    let promoCode = params.get("promo");
+    const promoCode = params.get("promo");
     if (promoCode) {
       console.log("promo : ", promoCode);
       localStorage.setItem("promo", promoCode);
     }
 
     // store place
-    let place = params.get("place") || "wonderway";
+    const place = params.get("place");
     console.log("place : ", place);
-    setActivePlace(place);
+    if (place) {
+      setActivePlace(place);
+    }
   }, [location.search, setActivePlace]);
 
   return <Outlet />;
