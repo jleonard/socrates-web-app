@@ -11,13 +11,23 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
         {...rest}
         className="relative flex items-center justify-center w-dvw h-dvh"
       >
-        <div className="relative size-60">
+        <div
+          className="relative size-60 scale-75 tall:scale-100"
+          /*
+          style={{
+            transform: `scale(min(1, calc(100dvh / 667px)))`,
+            transformOrigin: "center center",
+            willChange: "transform",
+          }}*/
+        >
           {/* XL Circle */}
           <motion.div
             key="xl-circle"
             animate={mode}
             className="animation inset-0 z-10"
-            style={{ z: 1 }}
+            style={{
+              z: 1,
+            }}
             initial={["idle"]}
             variants={{
               processing: {
@@ -114,7 +124,9 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             key="lg-circle"
             animate={mode}
             className="absolute inset-0 z-20"
-            style={{ z: 1 }}
+            style={{
+              z: 1,
+            }}
             initial={["idle"]}
             variants={{
               processing: {
@@ -208,7 +220,9 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             key="md-circle"
             animate={mode}
             initial={["idle"]}
-            style={{ z: 1 }}
+            style={{
+              z: 1,
+            }}
             variants={{
               processing: {
                 rotate: 360,
@@ -316,7 +330,9 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             key="sm-circle"
             animate={mode}
             initial={["idle"]}
-            style={{ z: 1 }}
+            style={{
+              z: 1,
+            }}
             variants={{
               idle: {
                 x: 0,
