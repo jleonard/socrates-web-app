@@ -27,6 +27,8 @@ export type ProductInfo = {
   hours: number;
 };
 
+export type PromoRow = Database["public"]["Tables"]["promos"]["Row"];
+
 export type RedisEntry = {
   key: string;
   answer: string;

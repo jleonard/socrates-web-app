@@ -3,13 +3,22 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 import { parseCookieHeader } from "@supabase/ssr";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { sessionStorage } from "~/sessions.server"; // your Remix session
+import * as Sentry from "@sentry/react-router";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const next = url.searchParams.get("next") || "/";
 
-  if (!code) return redirect("/auth/error");
+  if (!code) {
+    Sentry.captureMessage(
+      "login.callback : no code param in the query string",
+      {
+        level: "error",
+      },
+    );
+    return redirect("/auth/error");
+  }
 
   // optional: parse cookies if you need them for something
   parseCookieHeader(request.headers.get("Cookie") ?? "");
@@ -20,13 +29,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Exchange the code for a session
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    // console.error("Error exchanging code for session:", error.message);
+    Sentry.captureMessage("login.callback : error exchaning code for session", {
+      level: "error",
+      extra: { error },
+    });
     return redirect("/auth/error");
   }
 
   // also update your Remix session if you want to store something
   const session = await sessionStorage.getSession(
-    request.headers.get("Cookie")
+    request.headers.get("Cookie"),
   );
   session.set("loggedInAt", new Date().toISOString());
 

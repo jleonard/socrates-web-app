@@ -26,30 +26,21 @@ import LocationModal from "components/LocationModal/LocationModal";
 import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 
 import { AvatarConnection, AvatarMode } from "types/avatar";
-import { useSyncPromo } from "~/hooks/useSyncPromo";
-import { createBrowserClient } from "@supabase/ssr";
 
 import { Stopwatch } from "components/Stopwatch/Stopwatch";
-import { DebugPanel } from "components/DebugPanel/DebugPanel";
 
 const ParentComponent: React.FC = () => {
-  const { access, elevenLabsId, sessionId, user, user_profile, env } =
+  const { access, elevenLabsId, sessionId, user, user_profile, env, place } =
     useLoaderData<typeof loader>();
 
   // this is used to post to the action
   const submit = useSubmit();
+
   // this is used to refresh the page when we want
   // to call the loader again
   const revalidator = useRevalidator();
 
   const navigate = useNavigate();
-
-  // associate any promo code to the user's account
-  const supabase = createBrowserClient(
-    env.SUPABASE_URL!,
-    env.SUPABASE_ANON_KEY!,
-  );
-  useSyncPromo(supabase, user_profile.user_id);
 
   // used for errors that should be presented to the user
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +101,12 @@ const ParentComponent: React.FC = () => {
    * it can be used to change agent behavior
    * and to change business logic in the api.agent.webhook.server
    */
+  const setActivePlace = usePlaceStore((state) => state.setActivePlace);
+
+  useEffect(() => {
+    if (place) setActivePlace(place);
+  }, [place]);
+
   let activePlace = usePlaceStore((state) => state.activePlace);
 
   const conversation = useConversation({
