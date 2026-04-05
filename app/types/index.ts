@@ -7,6 +7,21 @@ export type AccessRecord = AccessRow & { category: AccessCategory };
 export type AgentResponse =
   Database["public"]["Tables"]["agent_history"]["Row"];
 
+export type ElevenLabsConversation =
+  Database["public"]["Tables"]["elevenlabs_history"]["Row"];
+
+export type ElevenLabsConverstaionTurnRole = "user" | "agent";
+
+export type ElevenLabsConversationTurn = {
+  role: ElevenLabsConverstaionTurnRole;
+  tool: string | null;
+  message: string | null;
+};
+
+export type ElevenLabsConversationTranscript = {
+  transcript: ElevenLabsConversationTurn[];
+};
+
 export type HistoryLog = {
   user_id: string;
   query: string;

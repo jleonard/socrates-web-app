@@ -118,6 +118,7 @@ export type Database = {
           duration: number | null
           elevenlabs_tokens: number | null
           id: number
+          qa: string | null
           summary: string | null
           transcript: Json | null
           user_id: string | null
@@ -127,6 +128,7 @@ export type Database = {
           duration?: number | null
           elevenlabs_tokens?: number | null
           id?: number
+          qa?: string | null
           summary?: string | null
           transcript?: Json | null
           user_id?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           duration?: number | null
           elevenlabs_tokens?: number | null
           id?: number
+          qa?: string | null
           summary?: string | null
           transcript?: Json | null
           user_id?: string | null
