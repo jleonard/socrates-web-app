@@ -23,7 +23,7 @@ export async function setUserPromo(
         "promo.manager.server : postgres error checking for promo",
         {
           level: "error",
-          extra: { user_id, promo_code: promo },
+          extra: { user_id, promo_code: promo, error: existingError },
         },
       );
       return { data: null, error: existingError };
@@ -48,7 +48,7 @@ export async function setUserPromo(
           "promo.manager.server : postgres error getting the promo to apply",
           {
             level: "error",
-            extra: { user_id, promo_code: promo },
+            extra: { user_id, promo_code: promo, error: promoError },
           },
         );
         return { data: null, error: promoError };

@@ -100,7 +100,7 @@ export async function userHasAccess(
       "access.manager.server : postgres error checking for an active access record",
       {
         level: "error",
-        extra: { user_id },
+        extra: { user_id, error: accessError },
       },
     );
   }
@@ -125,7 +125,7 @@ export async function userHasAccess(
       "access.manager.server : postgres error checking for unused access",
       {
         level: "error",
-        extra: { user_id },
+        extra: { user_id, error: unusedAccessError },
       },
     );
   }
@@ -149,7 +149,7 @@ export async function userHasAccess(
       "access.manager.server : postgres error checking for expired access",
       {
         level: "error",
-        extra: { user_id },
+        extra: { user_id, error: priorAccessError },
       },
     );
   }
@@ -173,7 +173,7 @@ export async function userHasAccess(
         "access.manager.server : postgres error setting trial access",
         {
           level: "error",
-          extra: { user_id },
+          extra: { user_id, error: newAccessError },
         },
       );
     }
