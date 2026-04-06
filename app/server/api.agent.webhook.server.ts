@@ -31,7 +31,9 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * @TODO - place is the new dynamic var passed from front end -> eleven labs tool -> webhook
      * the default var for place will be 'wonderway'
      */
-    const { query, user_session, place } = body;
+    const { query, user_session, user_id, place } = body;
+
+    console.log("BING BING webhook got user id ", user_id);
 
     // used to log response times
     let timer_start = new Date();
