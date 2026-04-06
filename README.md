@@ -1,4 +1,4 @@
-# Socrates web app POC
+# Wonderway
 
 ## Promo Code Logic
 
@@ -6,10 +6,16 @@ Promo codes are used to track sign-ups from events, locations etc. The promo cod
 
 **How promo codes are captured**
 
-1. When the user hits the app with a `promo` value in the query string.
-2. Then the `root.tsx` file will save it to localstorage so we can wait to process it until we have a `user`
-3. After the user logs in and hits `/app` then `useSyncPromo` is called.
-4. The hook checks for a promo code in localstorage and preps an `access` record for the user if its there.
+1. When the user hits the `app/` route with a `promo` value in the query string. Note HAS to be the `app/` route
+2. Then the app loader file will save it to the session cookie.
+3. After the user logs in and hits `/app` then the promo is read from the session and is used to create a new access log.
+
+## Place logic
+
+1. When the user hits the `app/` route with a `place` value in the query string. Note HAS to be the `app/` route
+2. Then the app loader file will save it to the session cookie.
+3. After the user logs in and hits `/app` then the place is read from the session and passed to the front end.
+4. The front end stores the place in Zustand store using `stores/placeStore`.
 
 ## Access Logic
 

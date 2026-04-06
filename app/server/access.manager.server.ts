@@ -1,6 +1,40 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AccessRecord } from "~/types";
 
+import * as Sentry from "@sentry/react-router";
+
+export async function createAccessRecordFromPromoCode(
+  user_id: string,
+  hours: number,
+  promoCode: string,
+  supabase: SupabaseClient,
+) {
+  try {
+    const { data, error } = await supabase
+      .from("access")
+      .insert({
+        user_id,
+        promo_code: promoCode,
+        hours: hours,
+      })
+      .select()
+      .single();
+    if (error) {
+      Sentry.captureMessage(
+        "access.manager.server : postgres error creating access record",
+        {
+          level: "error",
+          extra: { user_id, promo_code: promoCode, hours, error },
+        },
+      );
+    }
+    return { data, error };
+  } catch (e) {
+    Sentry.captureException(e);
+    return { data: null, error: e };
+  }
+}
+
 export async function setAccessExpiration(access_id: string, request: Request) {
   try {
     const { getSupabaseServerClient } = await import("~/utils/supabase.server");
@@ -21,7 +55,7 @@ export async function setAccessExpiration(access_id: string, request: Request) {
       return { data: null, error: { message: "Access record not found" } };
     }
 
-    const hours = accessRecords.hours ?? 4;
+    const hours = accessRecords.hours ?? 1;
     const now = new Date();
     const expirationDate = new Date(now.getTime() + hours * 60 * 60 * 1000);
 
@@ -30,8 +64,19 @@ export async function setAccessExpiration(access_id: string, request: Request) {
       .update({ expiration: expirationDate.toISOString() })
       .eq("access_id", access_id);
 
-    return { setData, setError };
+    if (setError) {
+      Sentry.captureMessage(
+        "access.manager.server : postgres error setting expiration date for access",
+        {
+          level: "error",
+          extra: { access_id },
+        },
+      );
+    }
+
+    return { data: setData, error: setError };
   } catch (err: any) {
+    Sentry.captureException(err);
     return { data: null, error: { message: err.message } };
   }
 }
@@ -50,6 +95,16 @@ export async function userHasAccess(
     .limit(1)
     .single();
 
+  if (accessError) {
+    Sentry.captureMessage(
+      "access.manager.server : postgres error checking for an active access record",
+      {
+        level: "error",
+        extra: { user_id, error: accessError },
+      },
+    );
+  }
+
   if (access) {
     const record = { ...access, category: "active" } as AccessRecord;
     return record;
@@ -65,6 +120,16 @@ export async function userHasAccess(
     .limit(1)
     .maybeSingle();
 
+  if (unusedAccessError) {
+    Sentry.captureMessage(
+      "access.manager.server : postgres error checking for unused access",
+      {
+        level: "error",
+        extra: { user_id, error: unusedAccessError },
+      },
+    );
+  }
+
   if (unusedAccess) {
     const record = { ...unusedAccess, category: "unused" } as AccessRecord;
     return record;
@@ -79,6 +144,16 @@ export async function userHasAccess(
     .limit(1)
     .single();
 
+  if (priorAccessError) {
+    Sentry.captureMessage(
+      "access.manager.server : postgres error checking for expired access",
+      {
+        level: "error",
+        extra: { user_id, error: priorAccessError },
+      },
+    );
+  }
+
   if (priorAccess && !priorAccessError) {
     const record = { ...priorAccess, category: "expired" } as AccessRecord;
     return record;
@@ -92,11 +167,27 @@ export async function userHasAccess(
     .select()
     .single();
 
+  if (newAccessError) {
+    if (priorAccessError) {
+      Sentry.captureMessage(
+        "access.manager.server : postgres error setting trial access",
+        {
+          level: "error",
+          extra: { user_id, error: newAccessError },
+        },
+      );
+    }
+  }
+
   if (newAccess && !newAccessError) {
     const record = { ...newAccess, category: "trial" } as AccessRecord;
     return record;
   }
 
   // this really shouldn't happen.
+  Sentry.captureMessage("access.manager.server : unknown error", {
+    level: "error",
+    extra: { user_id },
+  });
   return null;
 }

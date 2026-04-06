@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
   useLoaderData,
   useLocation,
+  data,
 } from "react-router";
 import { useEffect } from "react";
 import type { LinksFunction, LoaderFunction } from "react-router";
@@ -13,7 +14,7 @@ import { usePageViews } from "./hooks/usePageViews";
 import { useBackgroundClass } from "./hooks/useBackgroundClass";
 import { usePlaceStore } from "./stores/placeStore";
 import { ErrorBoundary as RootErrorBoundary } from "components/ErrorBoundary/ErrorBoundary";
-
+import { sessionStorage } from "./sessions.server";
 import { Nav } from "components/Nav/Nav";
 
 import "./tailwind.css";
@@ -31,13 +32,10 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export const loader = ({ request }: { request: Request }) => {
-  const url = new URL(request.url);
-  const place = url.searchParams.get("place");
-  return {
-    GA_TRACKING_ID: process.env.GA_TRACKING_ID, // Load from .env
-    place,
-  };
+export const loader = async ({ request }: { request: Request }) => {
+  return data({
+    GA_TRACKING_ID: process.env.GA_TRACKING_ID,
+  });
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -119,16 +117,8 @@ export default function App() {
    * they are processed with the 'useSyncPromo' hook
    *
    * place = used to capture the museum or insitution being visited
-   */
+  
   const location = useLocation();
-  const { place } = useLoaderData<typeof loader>();
-  const setActivePlace = usePlaceStore((state) => state.setActivePlace);
-
-  // synchronous, runs before child loaders redirect
-  if (place) {
-    console.log("place >> : ", place);
-    setActivePlace(place);
-  }
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -141,15 +131,8 @@ export default function App() {
       console.log("promo : ", promoCode);
       localStorage.setItem("promo", promoCode);
     }
-
-    /* store place
-    const place = params.get("place");
-    if (place) {
-      console.log("place : ", place);
-      setActivePlace(place);
-    }
-      */
-  }, [location.search, setActivePlace]);
+  }, [location.search]);
+   */
 
   return <Outlet />;
 }
