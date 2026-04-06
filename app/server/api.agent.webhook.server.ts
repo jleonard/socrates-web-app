@@ -40,7 +40,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     // the object that gets logged to the history table
     let history_object: HistoryLog = {
-      user_id: user_session.split("__")[0],
+      user_id: user_id,
       query,
       tool_cache: false,
       tool_wikipedia: false,
@@ -65,11 +65,11 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         pinecone_index = process.env.PINECONE_INDEX!;
         pinecone_namespace = "met";
     }
-    console.log("webhook query : ", query);
-    console.log("webhook place : ", place);
+    // console.log("webhook query : ", query);
+    // console.log("webhook place : ", place);
     history_object.rag_index = pinecone_index;
 
-    if (!query || !user_session) {
+    if (!query || !user_id) {
       return new Response("Missing required fields", { status: 400 });
     }
 
@@ -89,7 +89,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       });
     }
 
-    const memoryKey = `chat:${user_session}`;
+    const memoryKey = `chat:${user_id}`;
 
     // --- 1️⃣ Load recent history ---
     const memoryJson = await redis.get(memoryKey);
@@ -102,11 +102,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
     // 🆕 Get conversation summary
-    const summary = await getConversationSummary(
-      redis,
-      user_session,
-      chatHistory,
-    );
+    const summary = await getConversationSummary(redis, user_id, chatHistory);
 
     // --- 3.5️⃣ Query Pinecone RAG ---
     const { context, avgScore } = await queryPinecone(
@@ -245,10 +241,10 @@ If you are unsure, respond exactly: "I do not have verified information about th
  */
 async function getConversationSummary(
   redis: any,
-  sessionId: string,
+  key: string,
   chatHistory: any[],
 ): Promise<string> {
-  const summaryKey = `summary:${sessionId}`;
+  const summaryKey = `summary:${key}`;
 
   // Get existing summary
   let existingSummary = await redis.get(summaryKey);
