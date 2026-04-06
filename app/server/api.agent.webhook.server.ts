@@ -31,14 +31,16 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * @TODO - place is the new dynamic var passed from front end -> eleven labs tool -> webhook
      * the default var for place will be 'wonderway'
      */
-    const { query, user_session, place } = body;
+    const { query, user_session, user_id, place } = body;
+
+    console.log("BING BING webhook got user id ", user_id);
 
     // used to log response times
     let timer_start = new Date();
 
     // the object that gets logged to the history table
     let history_object: HistoryLog = {
-      user_id: user_session.split("__")[0],
+      user_id: user_id,
       query,
       query_classification: "on-topic",
       tool_cache: false,
@@ -64,11 +66,11 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         pinecone_index = process.env.PINECONE_INDEX!;
         pinecone_namespace = "met";
     }
-    console.log("webhook query : ", query);
-    console.log("webhook place : ", place);
+    // console.log("webhook query : ", query);
+    // console.log("webhook place : ", place);
     history_object.rag_index = pinecone_index;
 
-    if (!query || !user_session) {
+    if (!query || !user_id) {
       return new Response("Missing required fields", { status: 400 });
     }
 
@@ -88,7 +90,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       });
     }
 
-    const memoryKey = `chat:${user_session}`;
+    const memoryKey = `chat:${user_id}`;
 
     // --- 1️⃣ Load recent history ---
     const memoryJson = await redis.get(memoryKey);
@@ -101,11 +103,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
     // 🆕 Get conversation summary
-    const summary = await getConversationSummary(
-      redis,
-      user_session,
-      chatHistory,
-    );
+    const summary = await getConversationSummary(redis, user_id, chatHistory);
 
     // --- 3.5️⃣ Query Pinecone RAG ---
     const { context, avgScore } = await queryPinecone(
@@ -244,10 +242,10 @@ If you are unsure, respond exactly: "I do not have verified information about th
  */
 async function getConversationSummary(
   redis: any,
-  sessionId: string,
+  key: string,
   chatHistory: any[],
 ): Promise<string> {
-  const summaryKey = `summary:${sessionId}`;
+  const summaryKey = `summary:${key}`;
 
   // Get existing summary
   let existingSummary = await redis.get(summaryKey);
