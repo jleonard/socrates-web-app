@@ -25,6 +25,7 @@ export type ElevenLabsConversationTranscript = {
 export type HistoryLog = {
   user_id: string;
   query: string;
+  query_classification: string;
   response: string;
   tool_cache: boolean;
   tool_rag: boolean;

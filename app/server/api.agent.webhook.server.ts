@@ -40,6 +40,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     let history_object: HistoryLog = {
       user_id: user_session.split("__")[0],
       query,
+      query_classification: "on-topic",
       tool_cache: false,
       tool_wikipedia: false,
       tool_rag: false,
@@ -343,6 +344,7 @@ export async function generateFollowUps(
       let history_object: HistoryLog = {
         user_id: botUserId,
         query: followUp,
+        query_classification: "on-topic",
         tool_cache: false,
         tool_wikipedia: false,
         tool_rag: false,

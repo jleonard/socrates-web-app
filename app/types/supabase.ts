@@ -64,6 +64,7 @@ export type Database = {
           id: number
           qa: string | null
           query: string | null
+          query_classification: string | null
           rag_index: string | null
           rag_score: number | null
           response: string | null
@@ -81,6 +82,7 @@ export type Database = {
           id?: number
           qa?: string | null
           query?: string | null
+          query_classification?: string | null
           rag_index?: string | null
           rag_score?: number | null
           response?: string | null
@@ -98,6 +100,7 @@ export type Database = {
           id?: number
           qa?: string | null
           query?: string | null
+          query_classification?: string | null
           rag_index?: string | null
           rag_score?: number | null
           response?: string | null
