@@ -2,20 +2,14 @@ import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
 
-import {
-  factPrompt,
-  zeroPersonalityPrompt,
-  mitPrompt,
-} from "~/utils/system.prompt";
-
-import { searchCache, storeCache } from "~/utils/cache.server";
+import { historyPrompt } from "~/utils/system.prompt";
 import { logAgentHistory } from "~/utils/history.server";
 import { HistoryLog } from "~/types";
 import * as Sentry from "@sentry/react-router";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 20;
-let PROMPT = zeroPersonalityPrompt;
+let PROMPT = historyPrompt;
 
 export const handleWebhook: ActionFunction = async ({ request }) => {
   const redis = await getRedis();
@@ -27,10 +21,6 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     const body = await request.json();
 
-    /*
-     * @TODO - place is the new dynamic var passed from front end -> eleven labs tool -> webhook
-     * the default var for place will be 'wonderway'
-     */
     const { query, user_id } = body;
 
     // used to log response times
@@ -56,9 +46,11 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       return new Response("Missing required fields", { status: 400 });
     }
 
+    console.log("history agent :: ", query);
+
     const memoryKey = `chat:${user_id}`;
 
-    // --- 1️⃣ Load recent history ---
+    // --- 1️⃣ Load recent chat history ---
     const memoryJson = await redis.get(memoryKey);
     const chatHistory = memoryJson ? JSON.parse(memoryJson) : [];
 
@@ -66,19 +58,28 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
 
     // 🆕 Get conversation summary
-    const summary = await getConversationSummary(redis, user_id, chatHistory);
+    const summaryKey = `summary:${user_id}`;
+    let existingSummary = await redis.get(summaryKey);
+
+    if (!existingSummary) {
+      existingSummary = "no prior conversation found";
+    }
+
+    const summaryMessage = {
+      role: "system",
+      content: `Summary of previous conversation context: ${existingSummary}`,
+    };
 
     const systemMessage = { role: "system", content: PROMPT };
 
-    const messages = [systemMessage, ...trimmedHistory];
+    const messages = [
+      systemMessage,
+      { role: "user", content: query },
+      systemMessage,
+      ...trimmedHistory,
+    ];
 
-    // 🆕 Add conversation summary if it exists
-    if (summary) {
-      messages.push({
-        role: "system",
-        content: `Previous conversation context: ${summary}`,
-      });
-    }
+    console.log("history agent prompt :: ", messages);
 
     // --- 5️⃣ Streaming response ---
     const stream = new ReadableStream({
@@ -130,60 +131,3 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     return new Response("Internal server error", { status: 500 });
   }
 };
-
-/**
- * get the summary of the conversation
- * @param redis
- * @param sessionId
- * @param chatHistory
- * @returns string
- */
-async function getConversationSummary(
-  redis: any,
-  key: string,
-  chatHistory: any[],
-): Promise<string> {
-  const summaryKey = `summary:${key}`;
-
-  // Get existing summary
-  let existingSummary = await redis.get(summaryKey);
-
-  // Only generate summary if we have enough messages (5+)
-  if (chatHistory.length < 5) {
-    return existingSummary || "";
-  }
-
-  // Update summary every 5 messages
-  if (chatHistory.length % 5 === 0 || !existingSummary) {
-    try {
-      const recentMessages = chatHistory
-        .slice(-5)
-        .map((m) => `${m.role}: ${m.content}`)
-        .join("\n");
-
-      const prompt = existingSummary
-        ? `Previous summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
-        : `Summarize the main topics discussed in this art conversation in 2-3 sentences:\n\n${recentMessages}`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.3,
-        max_completion_tokens: 150,
-      });
-
-      existingSummary = response.choices[0].message?.content?.trim() || "";
-      await redis.set(summaryKey, existingSummary, { EX: 24 * 60 * 60 });
-    } catch (err) {
-      Sentry.captureException(err);
-      console.error("Summary generation error:", err);
-    }
-  }
-
-  return existingSummary || "";
-}
