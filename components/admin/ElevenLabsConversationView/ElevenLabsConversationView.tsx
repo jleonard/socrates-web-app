@@ -16,10 +16,24 @@ export function ElevenLabsConversationView({
       } | null
     )?.transcript ?? null;
 
+  // add this helper near the bottom with the other helpers
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      <span className="text-slate-800">
+        {formatDate(conversation.created_at)}
+      </span>
       {/* Meta bar */}
-      <div className="flex flex-wrap gap-3 text-xs text-slate-500 font-mono border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap gap-3 text-sm text-slate-500 font-mono border-b border-slate-200 pb-3">
         <span>
           <span className="text-slate-400">id</span> {conversation.id}
         </span>
@@ -29,7 +43,7 @@ export function ElevenLabsConversationView({
         </span>
         <span>
           <span className="text-slate-400">created</span>{" "}
-          {new Date(conversation.created_at).toLocaleString()}
+          {formatDate(conversation.created_at)}
         </span>
         {conversation.duration != null && (
           <span>
