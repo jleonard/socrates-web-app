@@ -65,18 +65,15 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       existingSummary = "no prior conversation found";
     }
 
-    const summaryMessage = {
+    const systemMessage = {
       role: "system",
-      content: `Summary of previous conversation context: ${existingSummary}`,
+      content: `${PROMPT}. Previous Conversation Summary: ${existingSummary}`,
     };
-
-    const systemMessage = { role: "system", content: PROMPT };
 
     const messages = [
       systemMessage,
-      { role: "user", content: query },
-      summaryMessage,
       ...trimmedHistory,
+      { role: "user", content: query },
     ];
 
     console.log("history agent prompt :: ", messages);
