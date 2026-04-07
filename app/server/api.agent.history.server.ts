@@ -75,7 +75,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const messages = [
       systemMessage,
       { role: "user", content: query },
-      systemMessage,
+      summaryMessage,
       ...trimmedHistory,
     ];
 

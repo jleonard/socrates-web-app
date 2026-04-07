@@ -189,7 +189,6 @@ const ParentComponent: React.FC = () => {
           user_long,
           user_id: user_profile?.user_id,
           user_session,
-          user_id,
           conversation_id,
           place: activePlace,
         },
