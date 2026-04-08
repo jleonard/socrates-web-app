@@ -4,7 +4,7 @@ import { getSessionId, sessionStorage } from "~/sessions.server";
 import { userHasAccess } from "~/server/access.manager.server";
 import { setUserPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
-import type { AccessRecord } from "~/types";
+import type { AccessRecord, UserProfile } from "~/types";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
@@ -84,7 +84,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       access: access as AccessRecord | null,
       pageTitle: "WonderWay",
       user: user,
-      user_profile: error ? {} : profile,
+      user_profile: profile as UserProfile,
       sessionId,
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",

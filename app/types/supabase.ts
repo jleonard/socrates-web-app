@@ -286,6 +286,7 @@ export type Database = {
           email: string | null
           has_onboarded: boolean | null
           id: number
+          last_greeted: string | null
           last_seen: string | null
           promo_code: string | null
           role: string | null
@@ -296,6 +297,7 @@ export type Database = {
           email?: string | null
           has_onboarded?: boolean | null
           id?: number
+          last_greeted?: string | null
           last_seen?: string | null
           promo_code?: string | null
           role?: string | null
@@ -306,6 +308,7 @@ export type Database = {
           email?: string | null
           has_onboarded?: boolean | null
           id?: number
+          last_greeted?: string | null
           last_seen?: string | null
           promo_code?: string | null
           role?: string | null

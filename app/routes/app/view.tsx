@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import type { loader } from "./loader";
 import {
   useLoaderData,
@@ -17,6 +17,7 @@ import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
 import { useTranscriptStore } from "../../stores/transcriptStore";
 import { usePlaceStore } from "~/stores/placeStore";
 
+import { AudioPlayer } from "components/AudioPlayer/AudioPlayer";
 import { Circles } from "components/Circles/Circles";
 import { CircleMode } from "components/Circles/Circles.types";
 import { trackEvent } from "~/utils/googleAnalytics";
@@ -219,6 +220,8 @@ const ParentComponent: React.FC = () => {
       avatarConnection === "disconnected" ||
       avatarConnection === "disconnecting"
     ) {
+      // stop the greeting right away;
+      audioRef.current?.stop();
       startConversation();
       trackEvent({
         action: "user-conversation-started",
@@ -341,8 +344,35 @@ const ParentComponent: React.FC = () => {
     }
   }, [avatarConnection]);
 
+  /*
+   * greeting logic
+   */
+  type AudioPlayerHandle = {
+    stop: () => void;
+    play: () => void;
+  };
+  const audioRef = useRef<AudioPlayerHandle>(null);
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+  const shouldPlayGreeting =
+    !user_profile?.last_greeted ||
+    Date.now() - new Date(user_profile.last_greeted).getTime() > THIRTY_DAYS;
+
+  const handleGreetingEnded = () => {
+    setCircleMode("idle");
+    submit({ intent: "greeted", user_id: user.id }, { method: "post" });
+  };
+
   return (
     <>
+      {shouldPlayGreeting && (
+        <AudioPlayer
+          ref={audioRef}
+          src="/audio/greetings/greeting.mp3"
+          onStart={() => setCircleMode("speaking")}
+          onEnded={() => handleGreetingEnded()}
+        />
+      )}
       <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14 z-40">
         <Circles key="avatar-circle" mode={circleMode}></Circles>
       </div>

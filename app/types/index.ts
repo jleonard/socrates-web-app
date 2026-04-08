@@ -53,3 +53,5 @@ export type RedisEntry = {
   hits: string;
   question: string;
 };
+
+export type UserProfile = Database["public"]["Tables"]["profiles"]["Row"];
