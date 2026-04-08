@@ -10,12 +10,19 @@ import { LoaderCircle } from "lucide-react";
 
 export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
   (props, ref) => {
-    const { className, mode, userAccess, expiration, children, ...rest } =
-      props;
+    const {
+      className,
+      mode,
+      userAccess,
+      expiration,
+      label = "Talk",
+      children,
+      ...rest
+    } = props;
 
     // used to set the text under the button
     const stateText: Record<MainButtonModes, string | null> = {
-      disconnected: "Press to talk",
+      disconnected: `Press to ${label.toLowerCase()}`,
       listening: "Ask away",
       speaking: "Talking",
       connecting: "Just a moment",
@@ -25,13 +32,6 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       const end = new Date(expiration);
       const now = new Date();
       const diffMs = end.getTime() - now.getTime();
-
-      /*
-      console.log("getTimeRemaining()");
-      console.log("expiration:", expiration);
-      console.log("end:", new Date(expiration));
-      console.log("diffMs:", diffMs);
-      */
 
       if (diffMs <= 0) return "";
 
@@ -83,7 +83,9 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
               <img src="/icons/Stop.svg" className="size-[26px]" />
             )}
 
-            {mode === "disconnected" && <span className="font-bold">Talk</span>}
+            {mode === "disconnected" && (
+              <span className="font-bold">{label}</span>
+            )}
 
             {children}
           </>

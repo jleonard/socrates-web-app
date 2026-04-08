@@ -6,7 +6,40 @@ type UpdateUserArgs = {
   email?: string;
   has_onboarded?: boolean;
   last_seen?: Date;
+  last_greeted?: Date;
 };
+
+/*
+ * todo, refactor out the old upsertUserProfile below.
+ * This one is better because it takes an existing supabase client vs a request
+ */
+export async function betterUpsertUserProfile(
+  userObj: UpdateUserArgs,
+  supabase: SupabaseClient,
+) {
+  try {
+    userObj.last_seen = new Date();
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert(userObj, { onConflict: "user_id" })
+      .select()
+      .single();
+
+    if (error) {
+      Sentry.captureMessage("betterUpsertUserProfile failed", {
+        level: "error",
+        extra: { user: userObj, error },
+      });
+    }
+    return { data, error };
+  } catch (err: any) {
+    Sentry.captureMessage("betterUpsertUserProfile unexpected error", {
+      level: "error",
+      extra: { user: userObj, error: err },
+    });
+    return { data: null, error: { message: err.message } };
+  }
+}
 
 export async function upsertUserProfile(
   userObj: UpdateUserArgs,

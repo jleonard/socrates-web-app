@@ -15,6 +15,8 @@ export type MainButtonBaseProps = {
   userAccess: AccessCategory;
 
   expiration: string;
+
+  label?: string;
 };
 
 export type MainButtonProps = ReactAriaButtonProps & MainButtonBaseProps;
