@@ -20,6 +20,7 @@ import { usePlaceStore } from "~/stores/placeStore";
 import { AudioPlayer } from "components/AudioPlayer/AudioPlayer";
 import { Circles } from "components/Circles/Circles";
 import { CircleMode } from "components/Circles/Circles.types";
+import { GreetingButton } from "components/GreetingButton/GreetingButton";
 import { trackEvent } from "~/utils/googleAnalytics";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { EBMMessage } from "components/EBMMessage/EBMMessage";
@@ -220,8 +221,9 @@ const ParentComponent: React.FC = () => {
       avatarConnection === "disconnected" ||
       avatarConnection === "disconnecting"
     ) {
-      // stop the greeting right away;
-      audioRef.current?.stop();
+      // stop the greeting right away if it is playing
+      stopGreeting();
+
       startConversation();
       trackEvent({
         action: "user-conversation-started",
@@ -363,15 +365,26 @@ const ParentComponent: React.FC = () => {
     submit({ intent: "greeted", user_id: user.id }, { method: "post" });
   };
 
+  const startGreeting = () => {
+    audioRef.current?.play();
+  };
+
+  const stopGreeting = () => {
+    audioRef.current?.stop();
+  };
+
   return (
     <>
       {shouldPlayGreeting && (
-        <AudioPlayer
-          ref={audioRef}
-          src="/audio/greetings/greeting.mp3"
-          onStart={() => setCircleMode("speaking")}
-          onEnded={() => handleGreetingEnded()}
-        />
+        <>
+          <GreetingButton onPress={startGreeting}></GreetingButton>
+          <AudioPlayer
+            ref={audioRef}
+            src="/audio/greetings/greeting.mp3"
+            onStart={() => setCircleMode("speaking")}
+            onEnded={() => handleGreetingEnded()}
+          />
+        </>
       )}
       <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14 z-40">
         <Circles key="avatar-circle" mode={circleMode}></Circles>
@@ -413,6 +426,7 @@ const ParentComponent: React.FC = () => {
             mode={buttonMode}
             userAccess={access?.category ?? "none"}
             expiration={access?.expiration ?? new Date().toISOString()}
+            label={shouldPlayGreeting ? "Start" : "Talk"}
           ></MainButton>
         </>
       ) : (
