@@ -10,7 +10,7 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const query = formData.get("query")?.toString() || "";
 
-  const corrected = await correctTranscription(query);
+  const { corrected, raw } = await correctTranscription(query);
 
-  return { corrected } as ActionData;
+  return { corrected, raw } as ActionData;
 };
