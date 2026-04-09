@@ -1,5 +1,5 @@
-import Fuse from "fuse.js";
-import { doubleMetaphone } from "double-metaphone";
+// import Fuse from "fuse.js";
+// import { doubleMetaphone } from "double-metaphone";
 
 // ---------- Entities ----------
 // @todo - implement this later.
@@ -54,6 +54,9 @@ const corrections: Record<string, string> = {
   kizzmet: "Kismet",
   kismit: "Kismet",
   kyzmet: "Kismet",
+  "mink see": "Minsky",
+  "mink sea": "Minsky",
+  "see more paper": "Seymour Papert",
   "alter ego": "AlterEgo",
   "angel us novus": "Angelus Novus",
   "angelous novus": "Angelus Novus",
