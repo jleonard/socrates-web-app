@@ -36,6 +36,7 @@ const corrections: Record<string, string> = {
   "gee bo": "Jibo",
   geebo: "Jibo",
   "ma three": "MA-3",
+  me3: "MA-3",
   ma3: "MA-3",
   "m a three": "MA-3",
   "m a 3": "MA-3",
@@ -63,6 +64,9 @@ const corrections: Record<string, string> = {
   "angelus novas": "Angelus Novus",
   "angelus novis": "Angelus Novus",
   "angle us novus": "Angelus Novus",
+  velgrade: "Belgrade",
+  "tactile globe": "Tacticle Glove",
+  "scalable, tactile globe": "Sensory Tactile Glove",
 };
 
 // ---------- Main correction function ----------
