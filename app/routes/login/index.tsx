@@ -22,7 +22,7 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     const supabase = getSupabaseBrowserClient(
       env.SUPABASE_URL,
-      env.SUPABASE_ANON_KEY
+      env.SUPABASE_ANON_KEY,
     );
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -38,7 +38,7 @@ export default function Login() {
   const handleFacebookLogin = async () => {
     const supabase = getSupabaseBrowserClient(
       env.SUPABASE_URL,
-      env.SUPABASE_ANON_KEY
+      env.SUPABASE_ANON_KEY,
     );
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
@@ -65,9 +65,8 @@ export default function Login() {
 
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-96 items-center">
         <h2 className="text-2xl font-regular text-center mb-7">
-          Your Pocket Museum
-          <br />
-          Companion
+          Your Guide to the World’s Museums, Landmarks, and Cultural
+          Institutions
         </h2>
         <GoogleAuthButton
           className="w-full"
