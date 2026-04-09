@@ -12,6 +12,7 @@ import { searchCache, storeCache } from "~/utils/cache.server";
 import { logAgentHistory } from "~/utils/history.server";
 import { HistoryLog } from "~/types";
 import * as Sentry from "@sentry/react-router";
+import { logAppEvent } from "~/utils/events/appEvents.server";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
@@ -32,6 +33,15 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * the default var for place will be 'wonderway'
      */
     const { query, user_id, place } = body;
+
+    logAppEvent({
+      event_type: "agent_log",
+      event_message: `query : ${query}`,
+      event_details: {
+        user_id,
+        place,
+      },
+    });
 
     // used to log response times
     let timer_start = new Date();
@@ -64,8 +74,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         pinecone_index = process.env.PINECONE_INDEX!;
         pinecone_namespace = "met";
     }
-    // console.log("webhook query : ", query);
-    // console.log("webhook place : ", place);
+
     history_object.rag_index = pinecone_index;
 
     if (!query || !user_id) {
@@ -74,11 +83,20 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     // --- 2️⃣ Try semantic cache hit first ---
     const cached = await searchCache(query);
+
     if (cached) {
       history_object.tool_cache = true;
       history_object.response_time = Date.now() - timer_start.getTime();
       history_object.response = cached.answer;
       await logAgentHistory(history_object);
+      logAppEvent({
+        event_type: "agent_log",
+        event_message: `cached response : ${cached.answer}`,
+        event_details: {
+          user_id,
+          place,
+        },
+      });
       return new Response(cached.answer, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
@@ -208,6 +226,30 @@ If you are unsure, respond exactly: "I do not have verified information about th
           history_object.response_time = Date.now() - timer_start.getTime();
           history_object.response = replyText;
           await logAgentHistory(history_object);
+
+          // log results to the event log
+          if (history_object.tool_rag && history_object.text_rag) {
+            logAppEvent({
+              event_type: "agent_log",
+              event_message: `RAG : ${history_object.text_rag}`,
+              event_details: {
+                rag_score: history_object.rag_score,
+                rag_index: history_object.rag_index,
+              },
+            });
+          }
+          if (history_object.tool_wikipedia && history_object.text_wikipedia) {
+            logAppEvent({
+              event_type: "agent_log",
+              event_message: `Wikipedia : ${history_object.text_wikipedia}`,
+              event_details: {},
+            });
+          }
+          logAppEvent({
+            event_type: "agent_log",
+            event_message: `agent response : ${replyText}`,
+            event_details: {},
+          });
           controller.close();
           generateFollowUps(query, 3, pinecone_index, pinecone_namespace);
         } catch (err) {

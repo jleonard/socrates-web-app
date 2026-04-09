@@ -7,6 +7,8 @@ export type AccessRecord = AccessRow & { category: AccessCategory };
 export type AgentResponse =
   Database["public"]["Tables"]["agent_history"]["Row"];
 
+export type AppEventLog = Database["public"]["Tables"]["event_log"]["Row"];
+
 export type ElevenLabsConversation =
   Database["public"]["Tables"]["elevenlabs_history"]["Row"];
 

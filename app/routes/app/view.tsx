@@ -12,6 +12,7 @@ import { useConversation } from "@elevenlabs/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
+import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 
 // stores
 import { useTranscriptStore } from "../../stores/transcriptStore";
@@ -138,6 +139,13 @@ const ParentComponent: React.FC = () => {
 
         responseTimeComparison = null;
       }
+
+      logAppEventFromClient({
+        event_type: message.source == "user" ? "user_spoke" : "agent_spoke",
+        event_message: message.message,
+        event_details: { user_id: user.id },
+      });
+
       addEntry(
         {
           timestamp: new Date(),
@@ -196,6 +204,13 @@ const ParentComponent: React.FC = () => {
         },
       });
 
+      console.log("log app event from client ");
+      logAppEventFromClient({
+        event_type: "conversation_started",
+        event_message: "New Conversation",
+        event_details: { user_id: user.id },
+      });
+
       // TODO: Implementar envío de mensaje contextual cuando tengamos el método correcto
       // El contexto ya está enviado via dynamicVariables por ahora
     } catch (error) {
@@ -213,6 +228,11 @@ const ParentComponent: React.FC = () => {
   }, [conversation, user, coords, elevenLabsId]);
 
   const stopConversation = useCallback(async () => {
+    logAppEventFromClient({
+      event_type: "conversation_ended",
+      event_message: "Conversation Ended",
+      event_details: { user_id: user.id },
+    });
     await conversation.endSession();
   }, [conversation]);
 

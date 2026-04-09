@@ -65,6 +65,7 @@ export type Database = {
           qa: string | null
           query: string | null
           query_classification: string | null
+          "query-before-fixing": string | null
           rag_index: string | null
           rag_score: number | null
           response: string | null
@@ -72,6 +73,7 @@ export type Database = {
           text_rag: string | null
           text_wikipedia: string | null
           tool_cache: boolean | null
+          "tool_fix-speech": boolean | null
           tool_followup: boolean | null
           tool_rag: boolean | null
           tool_wikipedia: boolean | null
@@ -83,6 +85,7 @@ export type Database = {
           qa?: string | null
           query?: string | null
           query_classification?: string | null
+          "query-before-fixing"?: string | null
           rag_index?: string | null
           rag_score?: number | null
           response?: string | null
@@ -90,6 +93,7 @@ export type Database = {
           text_rag?: string | null
           text_wikipedia?: string | null
           tool_cache?: boolean | null
+          "tool_fix-speech"?: boolean | null
           tool_followup?: boolean | null
           tool_rag?: boolean | null
           tool_wikipedia?: boolean | null
@@ -101,6 +105,7 @@ export type Database = {
           qa?: string | null
           query?: string | null
           query_classification?: string | null
+          "query-before-fixing"?: string | null
           rag_index?: string | null
           rag_score?: number | null
           response?: string | null
@@ -108,6 +113,7 @@ export type Database = {
           text_rag?: string | null
           text_wikipedia?: string | null
           tool_cache?: boolean | null
+          "tool_fix-speech"?: boolean | null
           tool_followup?: boolean | null
           tool_rag?: boolean | null
           tool_wikipedia?: boolean | null
@@ -145,6 +151,33 @@ export type Database = {
           summary?: string | null
           transcript?: Json | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      event_log: {
+        Row: {
+          created_at: string
+          event_details: Json | null
+          event_message: string | null
+          event_type: string | null
+          id: number
+          qa: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_details?: Json | null
+          event_message?: string | null
+          event_type?: string | null
+          id?: number
+          qa?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_details?: Json | null
+          event_message?: string | null
+          event_type?: string | null
+          id?: number
+          qa?: string | null
         }
         Relationships: []
       }

@@ -5,6 +5,7 @@ import { useLoaderData } from "react-router";
 import { CircleImage } from "components/CircleImage/CircleImage";
 import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
 import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";
+import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const env = {
@@ -24,6 +25,11 @@ export default function Login() {
       env.SUPABASE_URL,
       env.SUPABASE_ANON_KEY,
     );
+    logAppEventFromClient({
+      event_type: "user_log_in",
+      event_message: "Login",
+      event_details: { provider: "google" },
+    });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -36,6 +42,11 @@ export default function Login() {
   };
 
   const handleFacebookLogin = async () => {
+    logAppEventFromClient({
+      event_type: "user_log_in",
+      event_message: "Login",
+      event_details: { provider: "facebook" },
+    });
     const supabase = getSupabaseBrowserClient(
       env.SUPABASE_URL,
       env.SUPABASE_ANON_KEY,
