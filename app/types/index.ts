@@ -33,6 +33,8 @@ export type HistoryLog = {
   tool_rag: boolean;
   tool_wikipedia: boolean;
   tool_followup: boolean;
+  "tool_fix-speech"?: boolean;
+  "query-before-fixing"?: string;
   response_time: number;
   rag_score?: number;
   text_wikipedia?: string | null;
