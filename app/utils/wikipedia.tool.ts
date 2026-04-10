@@ -3,10 +3,11 @@ export async function fetchWikipedia(query: string): Promise<string | null> {
   try {
     // 1️⃣ Search Wikipedia for the query
     const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-      query
+      query,
     )}&format=json&utf8=1`;
 
     const searchRes = await fetch(searchUrl);
+
     if (!searchRes.ok) {
       console.error("Wikipedia search failed:", searchRes.statusText);
       return null;
@@ -14,6 +15,7 @@ export async function fetchWikipedia(query: string): Promise<string | null> {
 
     const searchData = await searchRes.json();
     const topResult = searchData.query?.search?.[0];
+
     if (!topResult) return null;
 
     const title = topResult.title;

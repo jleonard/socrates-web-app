@@ -30,24 +30,40 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const body = await request.json();
 
     /*
-     * @TODO - place is the new dynamic var passed from front end -> eleven labs tool -> webhook
-     * the default var for place will be 'wonderway'
+     * process body vars
      */
     const { query: postedQuery, user_id, place } = body;
 
-    const { corrected: correctedQuery, raw: rawQuery } =
-      correctTranscription(postedQuery);
-
-    const query = correctedQuery !== rawQuery ? correctedQuery : rawQuery;
-
+    /* log the query */
     logAppEvent({
       event_type: "agent_log",
-      event_message: `query : ${query}`,
+      event_message: `posted query : ${postedQuery}`,
       event_details: {
         user_id,
         place,
       },
     });
+
+    /*
+     * correct known mispronounciations
+     */
+    const { corrected: correctedQuery, raw: rawQuery } =
+      correctTranscription(postedQuery);
+
+    /*
+     * log mispronounciations
+     */
+    if (correctedQuery !== rawQuery) {
+      logAppEvent({
+        event_type: "agent_log",
+        event_message: `mispronounciations fixed : ${correctedQuery}`,
+        event_details: {
+          user_id,
+        },
+      });
+    }
+
+    const query = correctedQuery !== rawQuery ? correctedQuery : rawQuery;
 
     // used to log response times
     let timer_start = new Date();
@@ -71,7 +87,6 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     if (correctedQuery != rawQuery) {
       history_object["tool_fix-speech"] = true;
       history_object["query-before-fixing"] = postedQuery;
-      console.log("corrected ", correctedQuery, rawQuery);
     }
 
     let pinecone_index, pinecone_namespace;
@@ -101,14 +116,18 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       history_object.response_time = Date.now() - timer_start.getTime();
       history_object.response = cached.answer;
       await logAgentHistory(history_object);
+
+      /* log the cached response */
       logAppEvent({
         event_type: "agent_log",
         event_message: `cached response : ${cached.answer}`,
         event_details: {
           user_id,
           place,
+          tool_cache: true,
         },
       });
+
       return new Response(cached.answer, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
@@ -142,12 +161,34 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     history_object.rag_score = avgScore;
     history_object.text_rag = context;
 
+    /* log rag response */
+    logAppEvent({
+      event_type: "agent_log",
+      event_message: `rag response : ${context}`,
+      event_details: {
+        rag_used: avgScore > PINECONE_SCORE ? true : false,
+        rag_score: avgScore,
+        user_id,
+      },
+    });
+
     // --- 3.75️⃣ Wikipedia fallback ---
     let wikiSummary: string | null = null;
     const wikiPromise = fetchWikipedia(query);
 
     if (avgScore <= PINECONE_SCORE) {
       wikiSummary = await wikiPromise;
+
+      /* log wikipedia summary */
+      logAppEvent({
+        event_type: "agent_log",
+        event_message: `wikipedia response : ${wikiSummary ? wikiSummary : "none"}`,
+        event_details: {
+          rag_used: avgScore > PINECONE_SCORE ? true : false,
+          rag_score: avgScore,
+          user_id,
+        },
+      });
     }
 
     // --- 4️⃣ Prepare RAG / fallback message ---
@@ -169,6 +210,14 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       ragContent = `No verified context found. 
 Do **not** invent names, dates, or attributions. 
 If you are unsure, respond exactly: "I do not have verified information about this."`;
+
+      logAppEvent({
+        event_type: "agent_log",
+        event_message: `no agent tool response`,
+        event_details: {
+          user_id,
+        },
+      });
     }
 
     const systemMessage = { role: "system", content: PROMPT };
@@ -239,28 +288,17 @@ If you are unsure, respond exactly: "I do not have verified information about th
           history_object.response = replyText;
           await logAgentHistory(history_object);
 
-          // log results to the event log
-          if (history_object.tool_rag && history_object.text_rag) {
-            logAppEvent({
-              event_type: "agent_log",
-              event_message: `RAG : ${history_object.text_rag}`,
-              event_details: {
-                rag_score: history_object.rag_score,
-                rag_index: history_object.rag_index,
-              },
-            });
-          }
-          if (history_object.tool_wikipedia && history_object.text_wikipedia) {
-            logAppEvent({
-              event_type: "agent_log",
-              event_message: `Wikipedia : ${history_object.text_wikipedia}`,
-              event_details: {},
-            });
-          }
           logAppEvent({
             event_type: "agent_log",
             event_message: `agent response : ${replyText}`,
-            event_details: {},
+            event_details: {
+              user_id,
+              place,
+              response_time: history_object.response_time,
+              tool_rag: history_object.tool_rag,
+              tool_wikipedia: history_object.tool_wikipedia,
+              "tool_fix-sppech": history_object["tool_fix-speech"],
+            },
           });
           controller.close();
           generateFollowUps(query, 3, pinecone_index, pinecone_namespace);

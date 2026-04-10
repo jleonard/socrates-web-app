@@ -6,7 +6,7 @@ const pc = new Pinecone({
 });
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
-export const PINECONE_SCORE = 0.62;
+export const PINECONE_SCORE = 0.6;
 
 export async function queryPinecone(
   query: string,
