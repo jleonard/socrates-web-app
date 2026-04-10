@@ -9,6 +9,7 @@ import {
 import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { searchCache, storeCache } from "~/utils/cache.server";
+import { correctTranscription } from "~/utils/query-correction.server";
 import { logAgentHistory } from "~/utils/history.server";
 import { HistoryLog } from "~/types";
 import * as Sentry from "@sentry/react-router";
@@ -31,7 +32,12 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      * @TODO - place is the new dynamic var passed from front end -> eleven labs tool -> webhook
      * the default var for place will be 'wonderway'
      */
-    const { query, user_id, place } = body;
+    const { query: postedQuery, user_id, place } = body;
+
+    const { corrected: correctedQuery, raw: rawQuery } =
+      correctTranscription(postedQuery);
+
+    const query = correctedQuery !== rawQuery ? correctedQuery : rawQuery;
 
     // used to log response times
     let timer_start = new Date();
@@ -51,6 +57,12 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       text_rag: null,
       rag_index: null,
     };
+
+    if (correctedQuery != rawQuery) {
+      history_object["tool_fix-speech"] = true;
+      history_object["query-before-fixing"] = postedQuery;
+      console.log("corrected ", correctedQuery, rawQuery);
+    }
 
     let pinecone_index, pinecone_namespace;
 
