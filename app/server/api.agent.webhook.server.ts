@@ -37,7 +37,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const { corrected: correctedQuery, raw: rawQuery } =
       correctTranscription(postedQuery);
 
-    const query = correctedQuery != rawQuery ? correctedQuery : postedQuery;
+    const query = correctedQuery !== rawQuery ? correctedQuery : rawQuery;
 
     // used to log response times
     let timer_start = new Date();
