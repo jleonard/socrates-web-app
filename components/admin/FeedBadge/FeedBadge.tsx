@@ -59,9 +59,9 @@ export function FeedBadge({ appEventType = "log", className }: FeedBadgeProps) {
   const theme = eventThemeMap[appEventType];
   return (
     <div
-      className={`size-12 rounded-full border-2 flex flex-col gap-3 justify-center items-center ${theme} ${className}`}
+      className={`size-10 rounded-full border flex flex-col gap-3 justify-center items-center ${theme} ${className}`}
     >
-      <Icon size={20} strokeWidth={1}></Icon>
+      <Icon size={16} strokeWidth={1}></Icon>
     </div>
   );
 }

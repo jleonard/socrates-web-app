@@ -106,7 +106,7 @@ export default function FeedView() {
           No events found.
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {entries.map((entry) => (
             <button
               key={entry.id}
