@@ -497,6 +497,10 @@ export async function generateFollowUps(
         history_object.response = answer;
         await storeCache(followUp, answer, "follow-up");
         await logAgentHistory(history_object);
+        logAppEvent({
+          event_type: "agent_log",
+          event_message: `Auto-generated follow-up : ${followUp}`,
+        });
         console.log(`✅ Stored follow-up in cache: "${followUp}"`);
       } else {
         console.log(

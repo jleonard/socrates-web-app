@@ -40,7 +40,6 @@ export async function logAppEvent({
   const supabase = getServiceClient();
 
   try {
-    console.log("new logger ", event_type, event_message, event_details);
     await (supabase.from("event_log") as any).insert({
       event_type,
       event_message,
