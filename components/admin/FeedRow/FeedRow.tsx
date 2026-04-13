@@ -2,12 +2,14 @@ import { AppEventLog } from "~/types";
 import { LogAppEventType } from "~/utils/events/appEvents.server";
 import { FeedBadge } from "../FeedBadge/FeedBadge";
 import { FeedChip } from "../FeedChip/FeedChip";
+import { Pencil } from "lucide-react";
 
 export type FeedRowProps = {
   appEventLog: AppEventLog;
+  onNotesClick?: (appEventLog: AppEventLog) => void;
 };
 
-export function FeedRow({ appEventLog }: FeedRowProps) {
+export function FeedRow({ appEventLog, onNotesClick }: FeedRowProps) {
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleString("en-US", {
       month: "2-digit",
@@ -51,7 +53,7 @@ export function FeedRow({ appEventLog }: FeedRowProps) {
         className="shrink-0"
         appEventType={appEventLog.event_type as LogAppEventType}
       />
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 grow">
         <span className="text-xs text-slate-700 text-left">
           {formatDate(appEventLog.created_at)}
         </span>
@@ -64,6 +66,15 @@ export function FeedRow({ appEventLog }: FeedRowProps) {
             ))}
           </div>
         </div>
+      </div>
+      <div className="shrink-0 flex-col gap-2 justify-center items-center">
+        <button
+          className="flex flex-row gap-1 justify-center items-center border border-slate-500 bg-slate-100 rounded p-2 text-sm"
+          onClick={() => onNotesClick?.(appEventLog)}
+        >
+          <Pencil strokeWidth={1} size={16} />
+          <span>{appEventLog.qa ? "View Notes" : "Notes"}</span>
+        </button>
       </div>
     </div>
   );

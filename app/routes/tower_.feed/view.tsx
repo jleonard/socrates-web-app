@@ -108,16 +108,14 @@ export default function FeedView() {
       ) : (
         <div className="flex flex-col gap-1">
           {entries.map((entry) => (
-            <button
+            <FeedRow
               key={entry.id}
-              onClick={() => {
-                setSelected(selected?.id === entry.id ? null : entry);
-                setQa("");
+              onNotesClick={(selected: AppEventLog) => {
+                setSelected(selected);
+                setQa(selected?.qa ? selected.qa : "");
               }}
-              className={``}
-            >
-              <FeedRow appEventLog={entry} />
-            </button>
+              appEventLog={entry}
+            />
           ))}
         </div>
       )}
@@ -150,43 +148,46 @@ export default function FeedView() {
 
       {/* Detail drawer */}
       {selected && (
-        <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
-            <span className="text-sm font-medium">Entry detail</span>
-            <button
-              onClick={() => {
-                setSelected(null);
-                setQa("");
-              }}
-              className="px-3 py-1.5 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50"
-            >
-              Close
-            </button>
-          </div>
-
-          <div className="p-4 flex flex-col gap-4">
-            <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                QA annotation
-              </div>
-              <textarea
-                value={qa}
-                onChange={(e) => setQa(e.target.value)}
-                placeholder="Add a QA note…"
-                rows={3}
-                className="w-full text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 outline-none focus:border-gray-400 resize-none"
-              />
+        <div className="fixed bg-slate-900/20 inset-0 flex overflow-hidden justify-center items-center">
+          <div className="flex flex-col gap-2 bg-white w-3/4 rounded-sm px-4 py-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Notes</span>
+              <button
+                onClick={() => {
+                  setSelected(null);
+                  setQa("");
+                }}
+                className="px-3 py-1.5 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50"
+              >
+                Close
+              </button>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200">
-            <button
-              onClick={handleSave}
-              disabled={!qa || fetcher.state === "submitting"}
-              className="px-3 py-1.5 text-xs bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {fetcher.state === "submitting" ? "Saving…" : "Save"}
-            </button>
+            <div className="flex flex-col">
+              <div className="text-sm py-2 pb-4">{selected?.event_message}</div>
+              <div>
+                <div className="text-xs text-gray-700 uppercase tracking-wide mb-1">
+                  QA annotation
+                </div>
+                <textarea
+                  value={qa}
+                  onChange={(e) => setQa(e.target.value)}
+                  placeholder="Add a QA note…"
+                  rows={3}
+                  className="w-full text-sm bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-200 outline-none focus:border-gray-400 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200">
+              <button
+                onClick={handleSave}
+                disabled={!qa || fetcher.state === "submitting"}
+                className="px-3 py-1.5 text-xs bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {fetcher.state === "submitting" ? "Saving…" : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       )}
