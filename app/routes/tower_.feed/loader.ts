@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log("sb error: ", error);
   }
 
-  if (profile.role !== "admin") {
+  if (profile.role !== "admin" && profile.role !== "client") {
     return redirect("/app");
   }
   /**
