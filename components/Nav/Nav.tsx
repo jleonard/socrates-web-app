@@ -7,6 +7,7 @@ import {
   isDarkPage,
   isPinkPage,
   isHiddenNavPage,
+  globalUIConfig,
 } from "~/hooks/useBackgroundClass";
 
 export const Nav = () => {
@@ -15,6 +16,8 @@ export const Nav = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const matches = useMatches();
+
+  const { hiddenLogo, hiddenNav, pageColors } = globalUIConfig();
 
   type WithUser = { user?: unknown };
 
@@ -76,9 +79,11 @@ export const Nav = () => {
       >
         {/* Nav Bar */}
         <div className="flex w-full flex-row gap-2 justify-center items-center pt-[45px]">
-          <a href="/app">
-            <img className="w-[263px]" src={logoSrc} alt="Wonder Way" />
-          </a>
+          {!hiddenLogo && (
+            <a href="/app">
+              <img className="w-[263px]" src={logoSrc} alt="Wonder Way" />
+            </a>
+          )}
         </div>
 
         {isOpen && (

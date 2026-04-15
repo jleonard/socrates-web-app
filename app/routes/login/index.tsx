@@ -64,21 +64,21 @@ export default function Login() {
 
   return (
     <>
-      <CircleImage
-        className="hidden absolute -top-40 left-1/2 transform -translate-x-1/2"
-        img="/images/login.png"
-      />
-
-      <img
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover h-full"
-        src="/images/UI/text-2x.png"
-      />
-
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-96 items-center">
-        <h2 className="text-2xl font-regular text-center mb-7">
-          Your Guide to the World's Museums, Landmarks, and Cultural
-          Institutions
-        </h2>
+        <img
+          className="w-[263px]"
+          src="/logos/WonderWay-white.svg"
+          alt="Wonder Way"
+        />
+        {/* text container */}
+        <div className="flex flex-col gap-10 mb-28 text-center text-2xl font-regular items-center">
+          <h2>
+            is your musuem <br />
+            companion
+          </h2>
+          <h2>Ask anything about the exhibition</h2>
+          <h2>Follow your curiosity</h2>
+        </div>
         <GoogleAuthButton
           className="w-full"
           label="Continue with Google"
