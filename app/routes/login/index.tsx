@@ -73,7 +73,7 @@ export default function Login() {
         {/* text container */}
         <div className="flex flex-col gap-10 mb-28 text-center text-2xl font-regular items-center">
           <h2>
-            is your musuem <br />
+            is your museum <br />
             companion
           </h2>
           <h2>Ask anything about the exhibition</h2>
