@@ -1,5 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { createHmac } from "crypto";
+import { deleteByMetadata, upsertChunk } from "~/utils/pinecone";
+import { processMarkdown } from "~/utils/processMarkdown.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   // Verify it's actually from GitHub
@@ -26,13 +28,38 @@ export async function action({ request }: ActionFunctionArgs) {
   const modified = commits.flatMap((c: any) => c.modified);
   const removed = commits.flatMap((c: any) => c.removed);
 
-  for (const path of [...added, ...modified]) {
+  const isMd = (path: string) => path.endsWith(".md");
+
+  for (const path of [...added, ...modified].filter(isMd)) {
     const content = await getFileContent(owner, repo, ref, path);
+    const { ignore, chunks } = processMarkdown(path, content);
     console.log("TODO: upsert into RAG:", path, content.slice(0, 100));
+
+    if (ignore) {
+      continue;
+    }
+
+    // Clean out old chunks for this file before upserting new ones
+    // TODO remove this after retiring the mit-rag
+    await deleteByMetadata("mit-rag", "filePath", path);
+    await deleteByMetadata("wonderway", "filePath", path);
+
+    for (const chunk of chunks) {
+      await upsertChunk(
+        chunk.text,
+        chunk.metadata,
+        chunk.index,
+        chunk.namespace,
+      );
+    }
   }
 
-  for (const path of removed) {
+  for (const path of removed.filter(isMd)) {
     console.log("TODO: delete from RAG:", path);
+
+    // TODO remove this after retiring the mit-rag
+    await deleteByMetadata("mit-rag", "filePath", path);
+    await deleteByMetadata("wonderway", "filePath", path);
   }
 
   return new Response("OK", { status: 200 });

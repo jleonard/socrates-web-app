@@ -63,6 +63,72 @@ export async function queryPinecone(
   return { context, avgScore };
 }
 
+/**
+ * Delete all records with a matching key/value metadata pair.
+ * @param _index
+ * @param key
+ * @param value
+ */
+export async function deleteByMetadata(
+  _index: string,
+  key: string,
+  value: string,
+) {
+  const index = pc.index(_index);
+  const stats = await index.describeIndexStats();
+  const namespaces = Object.keys(stats.namespaces ?? {});
+
+  for (const namespace of namespaces) {
+    const results = await index.namespace(namespace).query({
+      vector: new Array(3072).fill(0), // text-embedding-3-large dimension
+      topK: 10000,
+      includeMetadata: true,
+      filter: { [key]: { $eq: value } },
+    });
+
+    const ids = results.matches.map((m) => m.id);
+    if (ids.length > 0) {
+      await index.namespace(namespace).deleteMany(ids);
+      console.log(
+        `Deleted ${ids.length} records from namespace "${namespace}" where ${key}=${value}`,
+      );
+    }
+  }
+}
+
+/**
+ * Upsert a chunk of text into the rag
+ * @param text
+ * @param metadata
+ * @param _index
+ * @param _namespace
+ */
+export async function upsertChunk(
+  text: string,
+  metadata: Record<string, string>,
+  _index: string = "wonderway",
+  _namespace: string = "global",
+) {
+  const embeddingResponse = await openai.embeddings.create({
+    model: "text-embedding-3-large",
+    input: text,
+  });
+
+  const vector = embeddingResponse.data[0].embedding;
+  const id = crypto.randomUUID();
+
+  const index = pc.index(_index);
+  await index.namespace(_namespace).upsert([
+    {
+      id,
+      values: vector,
+      metadata: { ...metadata, text },
+    },
+  ]);
+
+  console.log(`Upserted chunk to ${_index}/${_namespace}:`, id);
+}
+
 /*
 export async function debugPinecone() {
   const indexes = await pc.listIndexes();
