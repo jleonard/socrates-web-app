@@ -33,6 +33,7 @@ export async function action({ request }: ActionFunctionArgs) {
   for (const path of [...added, ...modified].filter(isMd)) {
     const content = await getFileContent(owner, repo, ref, path);
     const { ignore, chunks } = processMarkdown(path, content);
+
     console.log("TODO: upsert into RAG:", path, content.slice(0, 100));
 
     if (ignore) {
