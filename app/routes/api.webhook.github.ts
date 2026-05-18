@@ -30,30 +30,20 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const isMd = (path: string) => path.endsWith(".md");
 
-  for (const path of [...added, ...modified].filter(isMd)) {
-    const content = await getFileContent(owner, repo, ref, path);
-    const { ignore, chunks } = processMarkdown(path, content);
-
-    console.log("TODO: upsert into RAG:", path, content.slice(0, 100));
-
-    if (ignore) {
-      continue;
-    }
-
-    // Clean out old chunks for this file before upserting new ones
-    // TODO remove this after retiring the mit-rag
-    await deleteByMetadata("mit-rag", "filePath", path);
-    await deleteByMetadata("wonderway", "filePath", path);
-
-    for (const chunk of chunks) {
-      await upsertChunk(
-        chunk.text,
-        chunk.metadata,
-        chunk.index,
-        chunk.namespace,
+  await Promise.all(
+    [...added, ...modified].filter(isMd).map(async (path) => {
+      const content = await getFileContent(owner, repo, ref, path);
+      const { ignore, chunks } = processMarkdown(path, content);
+      if (ignore) return;
+      await deleteByMetadata("mit-rag", "filePath", path);
+      await deleteByMetadata("wonderway", "filePath", path);
+      await Promise.all(
+        chunks.map((chunk) =>
+          upsertChunk(chunk.text, chunk.metadata, chunk.index, chunk.namespace),
+        ),
       );
-    }
-  }
+    }),
+  );
 
   for (const path of removed.filter(isMd)) {
     console.log("TODO: delete from RAG:", path);
