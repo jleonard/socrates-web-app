@@ -4,9 +4,6 @@ import crypto from "crypto";
 
 import { getSupabaseServerClient } from "~/utils/supabase.server"; // Import helper to initialize supabase client
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
-
 // Grab this from your FB Developer Dashboard
 const APP_SECRET = process.env.FB_APP_SECRET || "FACEBOOK_APP_SECRET";
 

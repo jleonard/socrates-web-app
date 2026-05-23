@@ -10,20 +10,20 @@ import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 export async function loader({ request }: LoaderFunctionArgs) {
   const env = {
     SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    SUPABASE_KEY: process.env.SUPABASE_BROWSER_KEY,
   };
   return { env };
 }
 
 export default function Login() {
   const { env } = useLoaderData<{
-    env: { SUPABASE_URL: string; SUPABASE_ANON_KEY: string };
+    env: { SUPABASE_URL: string; SUPABASE_KEY: string };
   }>();
 
   const handleGoogleLogin = async () => {
     const supabase = getSupabaseBrowserClient(
       env.SUPABASE_URL,
-      env.SUPABASE_ANON_KEY,
+      env.SUPABASE_KEY,
     );
     logAppEventFromClient({
       event_type: "user_log_in",
@@ -49,7 +49,7 @@ export default function Login() {
     });
     const supabase = getSupabaseBrowserClient(
       env.SUPABASE_URL,
-      env.SUPABASE_ANON_KEY,
+      env.SUPABASE_KEY,
     );
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",

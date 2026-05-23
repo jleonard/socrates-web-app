@@ -12,7 +12,7 @@ export function getSupabaseServiceRoleClient() {
 
   const supabase = createServerClient(
     process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_SECRET_KEY!,
     {
       auth: {
         flowType: "pkce", // Enable PKCE flow
@@ -47,7 +47,7 @@ export function getSupabaseServerClient(request: Request) {
 
   const supabase = createServerClient(
     process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_SECRET_KEY!,
     {
       auth: {
         flowType: "pkce", // Enable PKCE flow
@@ -110,16 +110,3 @@ export function setAuthCookie(session: Session, headers: Headers) {
   headers.append("Set-Cookie", accessTokenCookie);
   headers.append("Set-Cookie", refreshTokenCookie);
 }
-
-/*
-  import { createClient, SupabaseClient } from "@supabase/supabase-js";
-  
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-    throw new Error("Supabase environment variables are not set.");
-  }
-  
-  export const supabase: SupabaseClient = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
-  );
-  */

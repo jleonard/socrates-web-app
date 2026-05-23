@@ -35,8 +35,13 @@ export async function action({ request }: ActionFunctionArgs) {
       const content = await getFileContent(owner, repo, ref, path);
       const { ignore, chunks } = processMarkdown(path, content);
       if (ignore) return;
-      await deleteByMetadata("mit-rag", "filePath", path);
-      await deleteByMetadata("wonderway", "filePath", path);
+
+      if (chunks[0].index && chunks[0].index !== "wonderway") {
+        await deleteByMetadata(chunks[0].index, "filePath", path);
+      } else {
+        await deleteByMetadata("wonderway", "filePath", path);
+      }
+
       await Promise.all(
         chunks.map((chunk) =>
           upsertChunk(chunk.text, chunk.metadata, chunk.index, chunk.namespace),

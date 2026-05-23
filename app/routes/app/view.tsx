@@ -33,7 +33,7 @@ import { AvatarConnection, AvatarMode } from "types/avatar";
 import { Stopwatch } from "components/Stopwatch/Stopwatch";
 
 const ParentComponent: React.FC = () => {
-  const { access, elevenLabsId, sessionId, user, user_profile, env, place } =
+  const { access, elevenLabsId, sessionId, user, user_profile, place } =
     useLoaderData<typeof loader>();
 
   // this is used to post to the action

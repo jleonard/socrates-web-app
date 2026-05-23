@@ -7,7 +7,9 @@ import { upsertUserProfile } from "~/server/user.last-seen.server";
 import type { AccessRecord, UserProfile } from "~/types";
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("try supabase setup");
   const { supabase } = getSupabaseServerClient(request);
+  console.log("passed supabase setup");
   const { session, sessionId } = await getSessionId(request);
 
   const url = new URL(request.url);
@@ -89,10 +91,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: process.env.ELEVENLABS_AGENT!,
-      env: {
-        SUPABASE_URL: process.env.SUPABASE_URL!,
-        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
-      },
       place: session.get("place"),
     },
     {

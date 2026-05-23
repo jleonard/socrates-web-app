@@ -65,6 +65,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         event_message: `mispronounciations fixed : ${correctedQuery}`,
         event_details: {
           user_id,
+          place,
         },
       });
     }
@@ -193,6 +194,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
           rag_used: avgScore > PINECONE_SCORE ? true : false,
           rag_score: avgScore,
           user_id,
+          place,
         },
       });
     }
@@ -225,6 +227,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
         event_message: `no agent tool response`,
         event_details: {
           user_id,
+          place,
         },
       });
     }
