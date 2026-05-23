@@ -2,9 +2,15 @@ import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
 import {
-  factPrompt,
   zeroPersonalityPrompt,
   mitPrompt,
+  role,
+  context,
+  goals,
+  accuracy,
+  guardrails,
+  mitRole,
+  mitContext,
 } from "~/utils/system.prompt";
 import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
@@ -17,7 +23,7 @@ import { logAppEvent } from "~/utils/events/appEvents.server";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
-let PROMPT = zeroPersonalityPrompt;
+let PROMPT = `${role}\n\n${context}\n\n${goals}\n\n${accuracy}\n\n${guardrails}`;
 
 export const handleWebhook: ActionFunction = async ({ request }) => {
   const redis = await getRedis();
@@ -95,7 +101,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       case "mit":
         pinecone_index = "mit-rag";
         pinecone_namespace = "__default__";
-        PROMPT = mitPrompt;
+        PROMPT = `${mitRole}\n\n${mitContext}\n\n${goals}\n\n${accuracy}\n\n${guardrails}`;
         break;
       default:
         pinecone_index = process.env.PINECONE_INDEX!;
@@ -203,13 +209,16 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     } else if (wikiSummary) {
       history_object.tool_wikipedia = true;
       history_object.text_wikipedia = wikiSummary;
+
       // Wikipedia fallback only if it exists
       ragContent = `Wikipedia summary for "${query}":\n${wikiSummary}`;
     } else {
       // No verified context → GPT must **indicate uncertainty**
-      ragContent = `No verified context found. 
-Do **not** invent names, dates, or attributions. 
-If you are unsure, respond exactly: "I do not have verified information about this."`;
+      ragContent = `No RAG or Wikipedia context was found for this query. Use your own trained knowledge to answer, but you MUST:
+- Only state things you are highly confident about
+- Use hedging language for anything uncertain: "It is generally believed...", "Historically...", "Most accounts suggest..."
+- Never fabricate specific names, dates, or attributions
+- If you truly cannot answer confidently, say: "This falls outside what I can verify."`;
 
       logAppEvent({
         event_type: "agent_log",
