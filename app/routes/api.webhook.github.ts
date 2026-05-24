@@ -1,3 +1,15 @@
+/**
+ * The markdown files for the RAG are synced via Dropbox. 
+ * When pushed to the repo this webhook is triggered and the markdown files 
+ * are processed and upserted into Pinecone.
+ * 
+ * This file defines a webhook endpoint for GitHub to sync markdown files from a repository into Pinecone.
+ * It verifies the webhook signature, processes added/modified markdown files, and deletes removed files from Pinecone.
+ * The main function is `action`, which handles the incoming webhook request.
+ * The helper function `getFileContent` fetches the content of a file from GitHub given its path and reference.
+
+ */
+
 import type { ActionFunctionArgs } from "react-router";
 import { createHmac } from "crypto";
 import { deleteByMetadata, upsertChunk } from "~/utils/pinecone";

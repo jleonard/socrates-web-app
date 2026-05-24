@@ -11,15 +11,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
         {...rest}
         className="relative flex items-center justify-center w-dvw h-dvh"
       >
-        <div
-          className="relative size-60 scale-75 tall:scale-100"
-          /*
-          style={{
-            transform: `scale(min(1, calc(100dvh / 667px)))`,
-            transformOrigin: "center center",
-            willChange: "transform",
-          }}*/
-        >
+        <div className="relative size-60 scale-75 tall:scale-100">
           {/* XL Circle */}
           <motion.div
             key="xl-circle"
@@ -151,6 +143,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     duration: 4,
                     ease: "easeInOut",
                   },
+                  scale: { duration: 0.4, ease: "easeInOut" },
                 },
               },
               preconnect: {
@@ -337,6 +330,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               idle: {
                 x: 0,
                 y: [-200, -180, -200], // moved up from [-100, -80, -100],
+                scale: 1,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -348,6 +342,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                     duration: 7,
                     ease: "easeInOut",
                   },
+                  scale: { duration: 0.4, ease: "easeInOut" },
                 },
               },
               processing: {
