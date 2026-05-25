@@ -11,7 +11,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
         {...rest}
         className="relative flex items-center justify-center w-dvw h-dvh"
       >
-        <div className="relative size-60 scale-75 tall:scale-100">
+        <div className="relative size-60 scale-75 tall:scale-95">
           {/* XL Circle */}
           <motion.div
             key="xl-circle"
