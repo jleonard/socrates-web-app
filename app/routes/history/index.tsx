@@ -1,12 +1,46 @@
-import React, { useEffect, useState } from "react";
-import { useLoaderData, Link } from "react-router";
+import React, { useState, useEffect } from "react";
+import { useLoaderData, Link, redirect, useNavigate } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
-import { redirect } from "react-router";
+import type { Json } from "~/types/supabase";
 import ChatMessage from "components/ChatMessage/ChatMessage";
 
-type HistoryItem = Record<string, unknown>;
+const PAGE_SIZE = 25;
 
+// Types
+export type TranscriptTurn = {
+  role: "user" | "agent";
+  tool: string | null;
+  message: string;
+};
+
+export type Conversation = {
+  id: number;
+  created_at: string;
+  duration: number | null;
+  summary: string | null;
+  transcript: TranscriptTurn[];
+};
+
+// Transcript parser
+function parseTranscript(raw: Json | null): TranscriptTurn[] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+
+  const turns = (raw as { transcript?: Json }).transcript;
+  if (!Array.isArray(turns)) return [];
+
+  return turns.filter(
+    (turn): turn is TranscriptTurn =>
+      turn !== null &&
+      typeof turn === "object" &&
+      !Array.isArray(turn) &&
+      (turn.role === "user" || turn.role === "agent") &&
+      typeof turn.message === "string" &&
+      turn.message.trim() !== "",
+  );
+}
+
+// Loader
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase } = getSupabaseServerClient(request);
   const {
@@ -17,100 +51,112 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/login");
   }
 
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get("page") ?? "0", 10);
+  const from = page * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const { data, error } = await supabase
+    .from("elevenlabs_history")
+    .select("id, created_at, duration, summary, transcript")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    console.error("Failed to fetch elevenlabs_history:", error);
+    return { user, conversations: [] as Conversation[], hasMore: false, page };
+  }
+
+  const conversations: Conversation[] = (data ?? [])
+    .map((row) => ({
+      ...row,
+      transcript: parseTranscript(row.transcript),
+    }))
+    .filter((row) => row.transcript.length > 0);
+
   return {
     user,
+    conversations,
+    hasMore: data.length === PAGE_SIZE,
+    page,
   };
 }
 
+// Component
 const HistoryPage: React.FC = () => {
-  const loaderData = useLoaderData<{ user?: { id: string } } | null>();
-  const userId = loaderData?.user?.id;
-  const [historial, setHistorial] = useState<HistoryItem[]>([]);
+  const loaderData = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+
+  const [allConversations, setAllConversations] = useState<Conversation[]>(
+    loaderData.conversations,
+  );
 
   useEffect(() => {
-    if (!userId) return;
-    fetch(
-      `https://leonardalonso.app.n8n.cloud/webhook/f4140ee1-ae3d-487a-8487-028196f983b1?session=${encodeURIComponent(
-        userId
-      )}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setHistorial(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        setHistorial([]);
-      });
-  }, [userId]);
-
-  if (!userId) {
-    return <div>404 not found. Try to login.</div>;
-  }
-
-  // Helper: group by date with sorting
-  const groupAndSortHistory = (items: HistoryItem[]) => {
-    const sorted = [...items].sort((a, b) => {
-      const aTime = new Date((a as any).message?.timestamp).getTime();
-      const bTime = new Date((b as any).message?.timestamp).getTime();
-      return aTime - bTime;
-    });
-
-    // Group by formatted date string
-    const groups: Record<string, HistoryItem[]> = {};
-    for (const item of sorted) {
-      const timestampStr = (item as any).message?.timestamp;
-      if (!timestampStr) continue;
-
-      const dateStr = new Date(timestampStr).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-      if (!groups[dateStr]) groups[dateStr] = [];
-      groups[dateStr].push(item);
+    if (loaderData.page === 0) {
+      setAllConversations(loaderData.conversations);
+    } else {
+      setAllConversations((prev) => [...prev, ...loaderData.conversations]);
     }
+  }, [loaderData]);
 
-    // Return array sorted by date descending (newest dates first)
-    return Object.entries(groups).sort(
-      ([dateA], [dateB]) =>
-        new Date(dateB).getTime() - new Date(dateA).getTime()
-    );
+  const handleLoadMore = () => {
+    navigate(`?page=${loaderData.page + 1}`, { replace: true });
   };
-
-  const groupedHistory = groupAndSortHistory(historial);
 
   return (
     <>
       <section className="h-full overflow-auto scrollbar-hide">
         <ul className="max-w-[600px] pb-56 flex flex-1 flex-col gap-3 overflow-scroll">
-          {groupedHistory.map(([date, entries]) => (
-            <React.Fragment key={date}>
-              <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
-                {date}
-              </li>
-              {entries.map((item, idx) => {
-                const message = (item as any).message;
-                const content = message?.content;
-                const messageType =
-                  message?.type && message.type === "ai"
-                    ? "incoming"
-                    : "outgoing";
+          {allConversations.map((convo, convoIdx) => {
+            const dateStr = new Date(convo.created_at).toLocaleDateString(
+              "en-US",
+              { year: "numeric", month: "long", day: "numeric" },
+            );
+            const prevDateStr =
+              convoIdx > 0
+                ? new Date(
+                    allConversations[convoIdx - 1].created_at,
+                  ).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : null;
+            const showDateHeader = dateStr !== prevDateStr;
 
-                return (
-                  <li className="flex flex-row" key={idx}>
+            return (
+              <React.Fragment key={convo.id}>
+                {showDateHeader && (
+                  <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
+                    {dateStr}
+                  </li>
+                )}
+                {convo.transcript.map((turn, idx) => (
+                  <li className="flex flex-row" key={`${convo.id}-${idx}`}>
                     <ChatMessage
-                      className={
-                        messageType !== "incoming" ? "w-10/12 ml-auto" : ""
+                      className={turn.role !== "agent" ? "w-10/12 ml-auto" : ""}
+                      messageType={
+                        turn.role === "agent" ? "incoming" : "outgoing"
                       }
-                      messageType={messageType}
-                      text={content}
+                      text={turn.message}
                     />
                   </li>
-                );
-              })}
-            </React.Fragment>
-          ))}
+                ))}
+              </React.Fragment>
+            );
+          })}
+
+          {loaderData.hasMore && (
+            <li className="flex justify-center pt-4">
+              <button
+                onClick={handleLoadMore}
+                className="py-2 px-5 bg-black text-white rounded-full"
+              >
+                Load more
+              </button>
+            </li>
+          )}
         </ul>
       </section>
 

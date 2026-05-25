@@ -1,0 +1,152 @@
+import React, { useEffect, useState } from "react";
+import { useLoaderData, Link } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
+import { getSupabaseServerClient } from "~/utils/supabase.server";
+import { redirect } from "react-router";
+import ChatMessage from "components/ChatMessage/ChatMessage";
+
+type HistoryItem = Record<string, unknown>;
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { supabase } = getSupabaseServerClient(request);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/login");
+  }
+
+  const { data: conversations, error } = await supabase
+    .from("elevenlabs_history")
+    .select("user_id, transcript, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to fetch conversations:", error);
+    return { user, conversations: [] };
+  }
+
+  const filtered = (conversations ?? [])
+    .map((convo) => {
+      const turns = (convo.transcript?.transcript ?? []).filter(
+        (turn: { role: string; message: string | null }) =>
+          (turn.role === "user" || turn.role === "agent") &&
+          turn.message !== null &&
+          turn.message.trim() !== "",
+      );
+      return { ...convo, transcript: turns };
+    })
+    .filter((convo) => convo.transcript.length > 0); // drop empty transcripts
+
+  return { user, conversations: filtered };
+}
+
+const HistoryPage: React.FC = () => {
+  const loaderData = useLoaderData<{ user?: { id: string } } | null>();
+  const userId = loaderData?.user?.id;
+  const [historial, setHistorial] = useState<HistoryItem[]>([]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(
+      `https://leonardalonso.app.n8n.cloud/webhook/f4140ee1-ae3d-487a-8487-028196f983b1?session=${encodeURIComponent(
+        userId,
+      )}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setHistorial(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        setHistorial([]);
+      });
+  }, [userId]);
+
+  if (!userId) {
+    return <div>404 not found. Try to login.</div>;
+  }
+
+  // Helper: group by date with sorting
+  const groupAndSortHistory = (items: HistoryItem[]) => {
+    const sorted = [...items].sort((a, b) => {
+      const aTime = new Date((a as any).message?.timestamp).getTime();
+      const bTime = new Date((b as any).message?.timestamp).getTime();
+      return aTime - bTime;
+    });
+
+    // Group by formatted date string
+    const groups: Record<string, HistoryItem[]> = {};
+    for (const item of sorted) {
+      const timestampStr = (item as any).message?.timestamp;
+      if (!timestampStr) continue;
+
+      const dateStr = new Date(timestampStr).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      if (!groups[dateStr]) groups[dateStr] = [];
+      groups[dateStr].push(item);
+    }
+
+    // Return array sorted by date descending (newest dates first)
+    return Object.entries(groups).sort(
+      ([dateA], [dateB]) =>
+        new Date(dateB).getTime() - new Date(dateA).getTime(),
+    );
+  };
+
+  const groupedHistory = groupAndSortHistory(historial);
+
+  return (
+    <>
+      <section className="h-full overflow-auto scrollbar-hide">
+        <ul className="max-w-[600px] pb-56 flex flex-1 flex-col gap-3 overflow-scroll">
+          {groupedHistory.map(([date, entries]) => (
+            <React.Fragment key={date}>
+              <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
+                {date}
+              </li>
+              {entries.map((item, idx) => {
+                const message = (item as any).message;
+                const content = message?.content;
+                const messageType =
+                  message?.type && message.type === "ai"
+                    ? "incoming"
+                    : "outgoing";
+
+                return (
+                  <li className="flex flex-row" key={idx}>
+                    <ChatMessage
+                      className={
+                        messageType !== "incoming" ? "w-10/12 ml-auto" : ""
+                      }
+                      messageType={messageType}
+                      text={content}
+                    />
+                  </li>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </ul>
+      </section>
+
+      <div className="fixed bottom-0 left-0 py-2 z-10 bg-paper-background w-full flex justify-center">
+        <div className="px-8 max-w-[1024px] w-full mx-auto relative">
+          <Link
+            to="/app"
+            className="inline-flex flex-row items-center py-2 px-5 bg-black text-white rounded-full"
+          >
+            <span>Back</span>
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default HistoryPage;

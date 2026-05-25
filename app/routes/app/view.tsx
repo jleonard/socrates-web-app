@@ -158,7 +158,6 @@ const ParentComponent: React.FC = () => {
       );
     },
     onModeChange: (modeObj) => {
-      console.log("onModeChange(", modeObj.mode, ")");
       if (modeObj.mode === "listening") {
         setCircleMode("connected");
         setButtonMode("listening");
@@ -169,7 +168,6 @@ const ParentComponent: React.FC = () => {
       }
     },
     onError: (error: string) => {
-      console.log("elevenlabs error ", error);
       Sentry.captureMessage(error, "error");
       setError(error);
     },
@@ -204,7 +202,6 @@ const ParentComponent: React.FC = () => {
         },
       });
 
-      console.log("log app event from client ");
       logAppEventFromClient({
         event_type: "conversation_started",
         event_message: "New Conversation",
