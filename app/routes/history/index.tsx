@@ -128,7 +128,7 @@ const HistoryPage: React.FC = () => {
             return (
               <React.Fragment key={convo.id}>
                 {showDateHeader && (
-                  <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2">
+                  <li className="mt-4 font-bold border-b border-gray-300 pb-1 mb-2 text-sm">
                     {dateStr}
                   </li>
                 )}

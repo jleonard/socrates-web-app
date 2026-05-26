@@ -1,7 +1,7 @@
 import { tv } from "../../app/utils/tv";
 
 export const chatMessageStyles = tv({
-  base: "flex flex-initial rounded-l-lg rounded-r-lg bg-transparent px-5 py-3 text-primary",
+  base: "flex flex-initial rounded-l-lg rounded-r-lg bg-transparent px-5 py-3 text-primary text-sm",
   variants: {
     messageType: {
       incoming: [
@@ -12,7 +12,7 @@ export const chatMessageStyles = tv({
         "only:rounded-bl-xs only:rounded-tl-lg", // pointed corner on top when message is the only entry in a group
       ],
       outgoing: [
-        "bg-paper-dark",
+        "bg-white",
         "self-end",
         "rounded-r-xs",
         "first:rounded-br-xs first:rounded-tr-lg", // pointed corner for first message

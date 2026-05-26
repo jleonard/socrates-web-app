@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Menu } from "lucide-react";
+import { X, Menu, ChevronRight } from "lucide-react";
 import { Link, useMatches, useLocation } from "react-router";
 import clsx from "clsx";
 
@@ -91,20 +91,30 @@ export const Nav = () => {
             {/* Your menu on top of the overlay */}
             <div className="flex py-4 w-full z-70 was-40">
               <ul className="space-y-2 w-full">
-                <li className="py-3 border-b-slate-600 border-b">
-                  <Link className="block w-full" to="/privacy">
+                <li className="py-3 border-b-[#FAF7F2] border-b">
+                  <Link
+                    className="block w-full flex items-center justify-between text-xl"
+                    to="/privacy"
+                    onClick={() => setIsOpen(false)}
+                  >
                     Privacy Policy
+                    <ChevronRight size={18} strokeWidth={1} color="#000000" />
                   </Link>
                 </li>
-                <li className="py-3 border-b-slate-600 border-b">
-                  <Link className="block w-full" to="/terms">
+                <li className="py-3 border-b-[#FAF7F2] border-b">
+                  <Link
+                    className="block w-full flex items-center justify-between text-xl"
+                    to="/terms"
+                    onClick={() => setIsOpen(false)}
+                  >
                     Terms &amp; Conditions
+                    <ChevronRight size={18} strokeWidth={1} color="#000000" />
                   </Link>
                 </li>
-                <li className="py-3 border-b-slate-600">
+                <li className="py-3 border-b-[#FAF7F2] border-b">
                   {user ? (
                     <Link
-                      className="block w-full"
+                      className="block w-full flex items-center justify-between text-xl"
                       to="/sign-out"
                       onClick={() => setIsOpen(false)}
                     >
@@ -112,7 +122,7 @@ export const Nav = () => {
                     </Link>
                   ) : (
                     <Link
-                      className="block w-full"
+                      className="block w-full flex items-center justify-between text-xl"
                       to="/login"
                       onClick={() => setIsOpen(false)}
                     >
