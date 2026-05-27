@@ -60,6 +60,10 @@ const coreColors = {
     "800": "#DFD9CD",
     "500": "#EDE9E1",
   },
+  brand: {
+    DEFAULT: "#D8296E",
+    400: "#FF79A3",
+  },
 };
 
 export const textColors = {
@@ -95,6 +99,10 @@ export const surfaceColors = {
   inverse: coreColors.granite["1100"],
   "ayapi-grey": "#1F1F1F",
   "ayapi-pink": "#D8296E",
+  brand: {
+    DEFAULT: coreColors.brand.DEFAULT,
+    400: coreColors.brand[400],
+  },
   paper: {
     DEFAULT: coreColors.paper,
     dark: coreColors.paper["dark"],

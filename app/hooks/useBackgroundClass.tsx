@@ -9,6 +9,7 @@ const hiddenNavPage = [
   "/expiration",
   "/confirmation/day",
   "/confirmation/week",
+  "/welcome",
 ];
 
 const darkPages = [
@@ -20,9 +21,9 @@ const darkPages = [
   "/confirmation/week",
 ];
 
-const pinkPages = ["/welcome", "/expiration", "/login"];
+const pinkPages = ["/expiration", "/login"]; // was welcome too
 
-const noLogoPage = ["/login"];
+const noLogoPage = ["/login", "/welcome"];
 
 type GlobalUIConfig = {
   hiddenLogo: boolean;

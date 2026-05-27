@@ -56,19 +56,31 @@ export function Carousel({
         <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center">
           <img
             className="object-center -mt-32"
+            src="/images/welcome/welcome-logo.svg"
+          />
+        </div>
+        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center bg-ayapi-pink">
+          <img
+            className="object-center -mt-48"
             src="/images/welcome/welcome-wifi.svg"
           />
         </div>
-        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center">
+        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center bg-ayapi-pink">
           <img
-            className="w-72 object-center -mt-32"
+            className="w-72 object-center -mt-48"
             src="/images/welcome/welcome-headphones.png"
           />
         </div>
         <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center">
           <img
-            className="object-center -mt-32 max-w-[398px] h-60"
-            src="/images/welcome/welcome-chat-dialog.png"
+            className="object-center -mt-48"
+            src="/images/welcome/welcome-press-to-talk.svg"
+          />
+        </div>
+        <div className="grow-0 shrink-0 basis-full min-w-0 flex items-center justify-center bg-ayapi-pink">
+          <img
+            className="object-center -mt-32 "
+            src="/images/welcome/welcome-chat-dialog.svg"
           />
         </div>
       </div>

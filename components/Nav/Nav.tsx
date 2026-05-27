@@ -68,73 +68,75 @@ export const Nav = () => {
         </button>
       )}
 
-      <nav
-        className={clsx(
-          "sticky top-0 flex flex-col w-full pt-10 pb-4",
-          isOpen ? "z-60" : "z-30",
-          isDarkPage() || isPinkPage()
-            ? "bg-transparent"
-            : "bg-paper-background",
-        )}
-      >
-        {/* Nav Bar */}
-        <div className="flex w-full flex-row gap-2 justify-center items-center pt-[45px]">
-          {!hiddenLogo && (
-            <a href="/app">
-              <img className="w-[263px]" src={logoSrc} alt="Wonder Way" />
-            </a>
+      {!hiddenNav && (
+        <nav
+          className={clsx(
+            "sticky top-0 flex flex-col w-full pt-10 pb-4",
+            isOpen ? "z-60" : "z-30",
+            isDarkPage() || isPinkPage()
+              ? "bg-transparent"
+              : "bg-paper-background",
           )}
-        </div>
+        >
+          {/* Nav Bar */}
+          <div className="flex w-full flex-row gap-2 justify-center items-center pt-[45px]">
+            {!hiddenLogo && (
+              <a href="/app">
+                <img className="w-[263px]" src={logoSrc} alt="Wonder Way" />
+              </a>
+            )}
+          </div>
 
-        {isOpen && (
-          <>
-            {/* Your menu on top of the overlay */}
-            <div className="flex py-4 w-full z-70 was-40">
-              <ul className="space-y-2 w-full">
-                <li className="py-3 border-b-[#FAF7F2] border-b">
-                  <Link
-                    className="block w-full flex items-center justify-between text-xl"
-                    to="/privacy"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Privacy Policy
-                    <ChevronRight size={18} strokeWidth={1} color="#000000" />
-                  </Link>
-                </li>
-                <li className="py-3 border-b-[#FAF7F2] border-b">
-                  <Link
-                    className="block w-full flex items-center justify-between text-xl"
-                    to="/terms"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Terms &amp; Conditions
-                    <ChevronRight size={18} strokeWidth={1} color="#000000" />
-                  </Link>
-                </li>
-                <li className="py-3 border-b-[#FAF7F2] border-b">
-                  {user ? (
+          {isOpen && (
+            <>
+              {/* Your menu on top of the overlay */}
+              <div className="flex py-4 w-full z-70 was-40">
+                <ul className="space-y-2 w-full">
+                  <li className="py-3 border-b-[#FAF7F2] border-b">
                     <Link
                       className="block w-full flex items-center justify-between text-xl"
-                      to="/sign-out"
+                      to="/privacy"
                       onClick={() => setIsOpen(false)}
                     >
-                      Sign Out
+                      Privacy Policy
+                      <ChevronRight size={18} strokeWidth={1} color="#000000" />
                     </Link>
-                  ) : (
+                  </li>
+                  <li className="py-3 border-b-[#FAF7F2] border-b">
                     <Link
                       className="block w-full flex items-center justify-between text-xl"
-                      to="/login"
+                      to="/terms"
                       onClick={() => setIsOpen(false)}
                     >
-                      Sign In
+                      Terms &amp; Conditions
+                      <ChevronRight size={18} strokeWidth={1} color="#000000" />
                     </Link>
-                  )}
-                </li>
-              </ul>
-            </div>
-          </>
-        )}
-      </nav>
+                  </li>
+                  <li className="py-3 border-b-[#FAF7F2] border-b">
+                    {user ? (
+                      <Link
+                        className="block w-full flex items-center justify-between text-xl"
+                        to="/sign-out"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Sign Out
+                      </Link>
+                    ) : (
+                      <Link
+                        className="block w-full flex items-center justify-between text-xl"
+                        to="/login"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                    )}
+                  </li>
+                </ul>
+              </div>
+            </>
+          )}
+        </nav>
+      )}
     </>
   );
 };

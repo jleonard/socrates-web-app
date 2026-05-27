@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Carousel } from "components/Carousel/Carousel";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -17,6 +17,10 @@ const Welcome: React.FC = () => {
 
   const content = [
     {
+      title: "Hi! I'm Wonder",
+      text: "I'm here to help you discover stories about art, science, and culture through conversation.",
+    },
+    {
       title: "Connect to the public WiFi",
       text: "Internet connectivity is essential to maintain an uninterrupted conversation.",
     },
@@ -25,16 +29,16 @@ const Welcome: React.FC = () => {
       text: "We don't want to make it noisy for others.",
     },
     {
+      title: "Press and talk",
+      text: "Press the button to talk and ask questions about where you are and what you are curious about.",
+    },
+    {
       title: "Start by asking",
       text: "Where you are. The name of the art piece. Anything you want to know about it. Switch language on the go.",
     },
-    /*
-    {
-      title: "Your curiosity is the guide",
-      text: "Big questions, quirky thoughts or strange details; WonderWay turns your wonder into conversation.",
-    },
-    */
   ];
+
+  const lightText = currentContent !== 0 && currentContent !== 3;
 
   return (
     <>
@@ -45,11 +49,15 @@ const Welcome: React.FC = () => {
         onSlideChange={slideChange}
       />
 
-      <div className="fixed bottom-7 left-1/2 -translate-x-1/2 flex flex-col w-[366px] pointer-events-none">
-        <h2 className="text-[32px] leading-10 font-semibold text-white text-center mb-5 w-3/4 mx-auto">
+      <div className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-col w-[366px] pointer-events-none">
+        <h2
+          className={`text-[32px] leading-10 font-semibold ${lightText ? "text-white" : "text-black"} text-center mb-5 w-3/4 mx-auto`}
+        >
           {content[currentContent].title}
         </h2>
-        <p className="text-white text-center mb-8 text-balance">
+        <p
+          className={`${lightText ? "text-white" : "text-black"} text-center mb-8 text-balance`}
+        >
           {content[currentContent].text}
         </p>
 
@@ -57,8 +65,10 @@ const Welcome: React.FC = () => {
           {content.map((_, i) => (
             <div
               key={i}
-              className={`h-2 rounded-full ${
-                i === currentContent ? "bg-black w-8" : "bg-white w-2"
+              className={`h-2 rounded-full transition-all ${
+                i === currentContent
+                  ? `w-8 ${lightText ? "bg-black" : "bg-brand"}`
+                  : `w-2 ${lightText ? "bg-white" : "bg-brand-400"}`
               }`}
             />
           ))}
@@ -71,7 +81,7 @@ const Welcome: React.FC = () => {
               <button
                 onClick={prevSlide}
                 disabled={currentContent === 0}
-                className={`${currentContent === 0 ? "opacity-50 cursor-not-allowed" : ""} flex gap-2 px-3 py-3 bg-white text-black rounded-full text-center pointer-events-auto items-center justify-center`}
+                className={`${currentContent === 0 ? "opacity-50 cursor-not-allowed" : ""} flex gap-2 px-3 py-3 bg-white text-black border border-black rounded-full text-center pointer-events-auto items-center justify-center`}
               >
                 <ChevronLeft size={20} strokeWidth={1.5} />
               </button>
