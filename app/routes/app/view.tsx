@@ -397,7 +397,7 @@ const ParentComponent: React.FC = () => {
           <GreetingButton onPress={startGreeting}></GreetingButton>
           <AudioPlayer
             ref={audioRef}
-            src="/audio/greetings/greeting-2.mp3"
+            src="/audio/greetings/greeting-3.mp3"
             onStart={() => setCircleMode("speaking")}
             onEnded={() => handleGreetingEnded()}
           />
