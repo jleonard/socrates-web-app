@@ -97,7 +97,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   }
 
   if (!chunks.length) {
-    console.log(`[webhook] no chunks produced for ${model} id=${entry.id}`);
+    console.log(`[webhook] no chunks produced for ${model} id=${entry}`);
     return;
   }
 
