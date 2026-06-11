@@ -45,7 +45,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const payload: StrapiWebhookPayload = await request.json();
   const { event, model, entry } = payload;
 
-  console.log(`[webhook] ${event} on ${model} id=${entry.id}`);
+  console.log(`[webhook] ${event} on ${model} entry=${entry}`);
 
   try {
     switch (event) {
