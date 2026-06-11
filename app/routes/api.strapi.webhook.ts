@@ -45,8 +45,10 @@ export async function action({ request }: ActionFunctionArgs) {
   const payload: StrapiWebhookPayload = await request.json();
   const { event, model, entry } = payload;
 
-  console.log(`[webhook] ${event} on ${model} entry: ${entry}`);
-
+  console.log(
+    `[webhook] ${event} on ${model} entry:`,
+    JSON.stringify(entry, null, 2),
+  );
   try {
     switch (event) {
       case "entry.publish":
@@ -62,7 +64,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ ok: true });
   } catch (err) {
-    console.error(`[webhook] error processing ${model} entry: ${entry}`, err);
+    console.error(
+      `[webhook] error processing ${model} entry: ${JSON.stringify(entry, null, 2)}`,
+      err,
+    );
     return Response.json({ error: "Processing failed" }, { status: 500 });
   }
 }
