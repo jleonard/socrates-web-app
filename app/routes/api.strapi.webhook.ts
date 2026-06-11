@@ -45,7 +45,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const payload: StrapiWebhookPayload = await request.json();
   const { event, model, entry } = payload;
 
-  console.log(`[webhook] ${event} on ${model} entry: ${entry.id}`);
+  console.log(`[webhook] ${event} on ${model} entry: ${entry}`);
 
   try {
     switch (event) {
@@ -62,7 +62,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ ok: true });
   } catch (err) {
-    console.error(`[webhook] error processing ${model} id=${entry.id}`, err);
+    console.error(`[webhook] error processing ${model} entry: ${entry}`, err);
     return Response.json({ error: "Processing failed" }, { status: 500 });
   }
 }
