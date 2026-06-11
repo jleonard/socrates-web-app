@@ -52,7 +52,6 @@ export async function action({ request }: ActionFunctionArgs) {
     `[webhook] ${event} on ${model} entry:`,
     JSON.stringify(entry, null, 2),
   );
-  return Response.json({ ok: true });
 
   try {
     switch (event) {
