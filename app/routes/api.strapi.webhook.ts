@@ -62,7 +62,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ ok: true });
   } catch (err) {
-    console.error(`[webhook] error processing ${model} id=${entry.id}`, err);
+    console.error(`[webhook] error processing ${model} id=${entry}`, err);
     return Response.json({ error: "Processing failed" }, { status: 500 });
   }
 }
