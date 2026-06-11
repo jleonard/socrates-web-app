@@ -38,9 +38,12 @@ type Chunk = {
 export async function action({ request }: ActionFunctionArgs) {
   // verify webhook secret
   const secret = request.headers.get("x-webhook-secret");
+
   if (secret !== process.env.STRAPI_WEBHOOK_SECRET) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  console.log("authorized");
 
   const payload: StrapiWebhookPayload = await request.json();
   const { event, model, entry } = payload;
