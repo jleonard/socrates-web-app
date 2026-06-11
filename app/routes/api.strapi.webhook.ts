@@ -153,7 +153,7 @@ async function deleteAndReEmbed(chunks: Chunk[]) {
     const vectors = await embedChunks(nsChunks);
 
     // 3. upsert to Pinecone
-    // TODO await index.namespace(ns).upsert(vectors);
+    await index.namespace(ns).upsert(vectors);
 
     console.log(
       `[webhook] upserted ${vectors.length} vectors to namespace=${ns} group_id=${groupId}`,
