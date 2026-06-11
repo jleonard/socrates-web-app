@@ -21,6 +21,8 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     const user_session =
       payload?.conversation_initiation_client_data?.dynamic_variables
         ?.user_session;
+    const dynamic_variables =
+      payload?.conversation_initiation_client_data?.dynamic_variables;
     const user_id = user_session.split("__")[0];
     let transcript = [];
     for (const item of payload?.transcript ?? []) {
@@ -43,6 +45,7 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
       user_id,
       transcript: { transcript },
       duration,
+      dynamic_variables,
     };
     const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
     const { error } = await subabaseServiceRole
