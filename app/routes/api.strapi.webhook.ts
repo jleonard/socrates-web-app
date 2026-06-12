@@ -474,6 +474,28 @@ function buildExhibitionChunks(entry: Record<string, any>): Chunk[] {
     metadata: { ...meta, chunk_type: "identity" },
   });
 
+  // artwork placement chunks
+  for (const item of entry.items ?? []) {
+    const artwork = item.artwork;
+    if (!artwork) continue;
+
+    const title = artwork.name ?? artwork.title;
+    const artworkGroupId = buildGroupId("artwork", artwork);
+
+    chunks.push({
+      chunk_id: `${artworkGroupId}:exhibition`,
+      namespace: "contextual",
+      content: [`${title} is on display at ${entry.name}.`]
+        .filter(Boolean)
+        .join(" "),
+      metadata: {
+        ...meta,
+        chunk_type: "exhibition_placement",
+        artwork_id: artwork.artwork_id,
+      },
+    });
+  }
+
   chunks.push(...parseBody(entry.body, groupId, meta));
   chunks.push(...parseKnowledge(entry.knowledge, groupId, meta));
 
