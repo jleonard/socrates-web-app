@@ -194,10 +194,10 @@ async function embedChunks(chunks: Chunk[]) {
   return chunks.map((chunk, i) => ({
     id: chunk.chunk_id,
     values: response.data[i].embedding,
-    metadata: {
+    metadata: stripNullMetadata({
       ...chunk.metadata,
       text: chunk.content,
-    },
+    }),
   }));
 }
 
@@ -562,4 +562,10 @@ async function fetchStrapiEntry(model: string, documentId: string) {
   );
   const { data } = await res.json();
   return data;
+}
+
+function stripNullMetadata(metadata: Record<string, any>): Record<string, any> {
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, v]) => v !== null && v !== undefined),
+  );
 }
