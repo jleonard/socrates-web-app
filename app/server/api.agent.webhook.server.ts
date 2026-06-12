@@ -49,6 +49,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     const useLegacy = USE_LEGACY || place === "mit" || place === "wonderway";
 
     if (useLegacy) {
+      console.log("using legacy webhook for place:", place);
       return await handleLegacyWebhook({ ...args, request: clonedRequest });
     }
 
