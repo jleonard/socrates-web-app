@@ -4,6 +4,7 @@ const DELAY = 1000; // ms
 
 type AudioPlayerProps = {
   src: string;
+  fallbackSrc?: string;
   onStart: () => void;
   onEnded: () => void;
 };
@@ -14,7 +15,7 @@ export type AudioPlayerHandle = {
 };
 
 export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
-  ({ src, onStart, onEnded }, ref) => {
+  ({ src, fallbackSrc, onStart, onEnded }, ref) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const onStartRef = useRef(onStart);
@@ -31,9 +32,16 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
 
       const handlePlay = () => onStartRef.current();
       const handleEnded = () => onEndedRef.current();
+      const handleError = () => {
+        if (fallbackSrc && audio.src !== fallbackSrc) {
+          audio.src = fallbackSrc;
+          audio.load();
+        }
+      };
 
       audio.addEventListener("play", handlePlay);
       audio.addEventListener("ended", handleEnded);
+      audio.addEventListener("error", handleError);
 
       timerRef.current = setTimeout(() => {
         //audio.play();
@@ -44,8 +52,9 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
         audio.pause();
         audio.removeEventListener("play", handlePlay);
         audio.removeEventListener("ended", handleEnded);
+        audio.removeEventListener("error", handleError);
       };
-    }, [src]);
+    }, [src, fallbackSrc]);
 
     // expose stop/play methods to parent via ref
     useImperativeHandle(ref, () => ({
