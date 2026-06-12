@@ -38,6 +38,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
           console.log("[AudioPlayer] trying fallback:", fallbackSrc);
           audio.src = fallbackSrc;
           audio.load();
+          audio.play();
         }
       };
 
