@@ -47,7 +47,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
       audio.addEventListener("error", handleError);
 
       timerRef.current = setTimeout(() => {
-        //audio.play();
+        audio.play();
       }, DELAY);
 
       return () => {
