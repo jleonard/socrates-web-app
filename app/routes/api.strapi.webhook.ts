@@ -79,26 +79,38 @@ export async function action({ request }: ActionFunctionArgs) {
 // ─── publish handler ─────────────────────────────────────────────────────────
 // checked
 async function handlePublish(model: string, entry: Record<string, any>) {
+  if (!entry.publishedAt) {
+    console.log(
+      `[webhook] skipping unpublished draft for ${model} id=${entry.id}`,
+    );
+    return;
+  }
+
+  const fullEntry = await fetchStrapiEntry(model, entry.documentId);
+  console.log(
+    `[strapi webhook] fetched full entry for ${model} fullEntry: ${JSON.stringify(fullEntry, null, 2)}`,
+  );
+
   let chunks: Chunk[] = [];
 
   switch (model) {
     case "place":
-      chunks = buildPlaceChunks(entry);
+      chunks = buildPlaceChunks(fullEntry);
       break;
     case "artwork":
-      chunks = buildArtworkChunks(entry);
+      chunks = buildArtworkChunks(fullEntry);
       break;
     case "artifact":
-      chunks = buildArtifactChunks(entry);
+      chunks = buildArtifactChunks(fullEntry);
       break;
     case "exhibition":
-      chunks = buildExhibitionChunks(entry);
+      chunks = buildExhibitionChunks(fullEntry);
       break;
     case "person":
-      chunks = buildPersonChunks(entry);
+      chunks = buildPersonChunks(fullEntry);
       break;
     case "topic":
-      chunks = buildTopicChunks(entry);
+      chunks = buildTopicChunks(fullEntry);
       break;
     default:
       console.log(`[webhook] no handler for model: ${model}`);
@@ -541,4 +553,13 @@ function buildTopicChunks(entry: Record<string, any>): Chunk[] {
 function buildArtifactChunks(entry: Record<string, any>): Chunk[] {
   console.log(`[webhook] artifact chunking not yet implemented id=${entry.id}`);
   return [];
+}
+
+async function fetchStrapiEntry(model: string, documentId: string) {
+  const res = await fetch(
+    `${process.env.STRAPI_URL}/api/${model}s/${documentId}?populate=*`,
+    { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } },
+  );
+  const { data } = await res.json();
+  return data;
 }
