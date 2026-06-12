@@ -394,6 +394,7 @@ const ParentComponent: React.FC = () => {
     <>
       {shouldPlayGreeting && (
         <>
+          <h1>{activePlace}</h1>
           <GreetingButton onPress={startGreeting}></GreetingButton>
           <AudioPlayer
             ref={audioRef}
