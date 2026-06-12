@@ -399,7 +399,7 @@ const ParentComponent: React.FC = () => {
           <AudioPlayer
             ref={audioRef}
             src={`/audio/greetings/${activePlace}.mp3`}
-            fallbackSrc="/audio/greetings/greeting-3.mp3"
+            fallbackSrc="/audio/greetings/wonderway.mp3"
             onStart={() => setCircleMode("speaking")}
             onEnded={() => handleGreetingEnded()}
           />
