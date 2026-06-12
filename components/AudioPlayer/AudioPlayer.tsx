@@ -33,7 +33,9 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
       const handlePlay = () => onStartRef.current();
       const handleEnded = () => onEndedRef.current();
       const handleError = () => {
+        console.log("[AudioPlayer] failed to load:", audio.src);
         if (fallbackSrc && audio.src !== fallbackSrc) {
+          console.log("[AudioPlayer] trying fallback:", fallbackSrc);
           audio.src = fallbackSrc;
           audio.load();
         }
