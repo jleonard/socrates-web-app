@@ -5,6 +5,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
+import { getRedis } from "~/utils/redis.server";
 
 // ─── clients ────────────────────────────────────────────────────────────────
 
@@ -42,8 +43,6 @@ export async function action({ request }: ActionFunctionArgs) {
   if (secret !== process.env.STRAPI_WEBHOOK_SECRET) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  console.log("authorized");
 
   const payload: StrapiWebhookPayload = await request.json();
   const { event, model, entry } = payload;
@@ -86,7 +85,11 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     return;
   }
 
+  // TODO error handling please
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
+
+  await storePromptInRedis(model, fullEntry);
+
   console.log(
     `[strapi webhook] fetched full entry for ${model} fullEntry: ${JSON.stringify(fullEntry, null, 2)}`,
   );
@@ -577,10 +580,31 @@ function buildArtifactChunks(entry: Record<string, any>): Chunk[] {
   return [];
 }
 
+/**
+ * When a strapi object has a prompt field
+ * we store that in redis so we can pull it into the agent context when needed.
+ */
+async function storePromptInRedis(model: string, entry: Record<string, any>) {
+  if (!entry?.prompt) return;
+
+  const groupId = buildGroupId(model, entry);
+  if (!groupId) return;
+
+  const redis = await getRedis();
+
+  try {
+    await redis.set(`prompt:${groupId}`, entry.prompt);
+  } catch (err) {
+    // TODO sentry error
+  }
+}
+
+/**
+ * Get the full strapi entry with all relations populated.
+ */
 const PLURAL: Record<string, string> = {
   person: "people",
 };
-
 async function fetchStrapiEntry(model: string, documentId: string) {
   const plural = PLURAL[model] ?? `${model}s`;
   const res = await fetch(
@@ -591,6 +615,10 @@ async function fetchStrapiEntry(model: string, documentId: string) {
   return data;
 }
 
+/**
+ * Null and undefined values can cause Pinecone upsert to fail.
+ * So we strip them out.
+ */
 function stripNullMetadata(metadata: Record<string, any>): Record<string, any> {
   return Object.fromEntries(
     Object.entries(metadata).filter(([, v]) => v !== null && v !== undefined),
