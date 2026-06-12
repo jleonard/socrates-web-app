@@ -117,14 +117,25 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 // checked
 async function handleDelete(model: string, entry: Record<string, any>) {
   const groupId = buildGroupId(model, entry);
-
-  for (const ns of ["contextual", "global"] as const) {
-    await index.namespace(ns).deleteMany({
-      filter: { group_id: { $eq: groupId } },
-    });
-  }
-
+  await deleteByGroupId(groupId);
   console.log(`[webhook] deleted vectors for group_id=${groupId}`);
+}
+
+async function deleteByGroupId(groupId: string) {
+  for (const nsName of ["contextual", "global"] as const) {
+    const ns = index.namespace(nsName);
+    let paginationToken: string | undefined;
+
+    do {
+      const res = await ns.listPaginated({
+        prefix: `${groupId}:`,
+        paginationToken,
+      });
+      const ids = res.vectors?.map((v) => v.id) ?? [];
+      if (ids.length) await ns.deleteMany(ids);
+      paginationToken = res.pagination?.next;
+    } while (paginationToken);
+  }
 }
 
 // ─── delete + re-embed ────────────────────────────────────────────────────────
@@ -145,9 +156,7 @@ async function deleteAndReEmbed(chunks: Chunk[]) {
     const groupId = nsChunks[0].metadata.group_id;
 
     // 1. delete prior vectors for this group in this namespace
-    await index.namespace(ns).deleteMany({
-      filter: { group_id: { $eq: groupId } },
-    });
+    await deleteByGroupId(groupId);
 
     // 2. embed all chunks
     const vectors = await embedChunks(nsChunks);
@@ -183,7 +192,7 @@ async function embedChunks(chunks: Chunk[]) {
 // ─── group id ─────────────────────────────────────────────────────────────────
 // checked
 function buildGroupId(model: string, entry: Record<string, any>): string {
-  const id = entry[`${model}_id`] ?? entry.id;
+  const id = entry[`${model}_id`] ?? entry.documentId;
   return `${model}:${id}`;
 }
 
@@ -284,7 +293,7 @@ function parseBody(
 function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("place", entry);
   const meta = buildBaseMeta("place", entry, {
-    place_id: entry.place_id,
+    // place_id: entry.place_id,
     place_type: entry.place_type,
     city_id: entry.admin_zone?.zone_id ?? null,
     floor_number: entry.location?.floor_number ?? null,
@@ -326,7 +335,7 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
   const meta = buildBaseMeta("artwork", entry, {
     artwork_id: entry.artwork_id,
     artwork_type: entry.artwork_type,
-    place_id: entry.place?.place_id ?? null,
+    // place_id: entry.place?.place_id ?? null,
     on_loan: entry.on_loan ?? false,
     floor_number: entry.location?.floor_number ?? null,
     centroid_lat: entry.location?.centroid_lat ?? null,
@@ -430,7 +439,7 @@ function buildExhibitionChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
-    place_id: entry.place?.place_id ?? null,
+    // place_id: entry.place?.place_id ?? null,
     is_current: entry.is_current ?? true,
     floor_number: entry.place?.location?.floor_number ?? null,
   });
