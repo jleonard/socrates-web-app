@@ -198,6 +198,7 @@ function buildBaseMeta(
     group_id: buildGroupId(model, entry),
     parent_type: model,
     parent_id: entry[`${model}_id`] ?? String(entry.id),
+    place_id: entry.place?.place_id ?? null,
     // @TODO institution_id: entry.institution_id ?? null,
     language: entry.language ?? "en",
     ...extras,
