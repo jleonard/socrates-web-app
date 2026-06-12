@@ -21,11 +21,17 @@ import { HistoryLog } from "~/types";
 import * as Sentry from "@sentry/react-router";
 import { logAppEvent } from "~/utils/events/appEvents.server";
 
+import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
+
+let USE_LEGACY = false;
+
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
 let PROMPT = `${role}\n\n${context}\n\n${goals}\n\n${accuracy}\n\n${guardrails}`;
 
-export const handleWebhook: ActionFunction = async ({ request }) => {
+export const handleWebhook: ActionFunction = async (args) => {
+  const { request } = args;
+  const clonedRequest = request.clone();
   const redis = await getRedis();
 
   try {
@@ -40,294 +46,13 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
      */
     const { query: postedQuery, user_id, place } = body;
 
-    /* log the query */
-    logAppEvent({
-      event_type: "agent_log",
-      event_message: `posted query : ${postedQuery}`,
-      event_details: {
-        user_id,
-        place,
-      },
-    });
+    const useLegacy = USE_LEGACY || place === "mit" || place === "wonderway";
 
-    /*
-     * correct known mispronounciations
-     */
-    const { corrected: correctedQuery, raw: rawQuery } =
-      correctTranscription(postedQuery);
-
-    /*
-     * log mispronounciations
-     */
-    if (correctedQuery !== rawQuery) {
-      logAppEvent({
-        event_type: "agent_log",
-        event_message: `mispronounciations fixed : ${correctedQuery}`,
-        event_details: {
-          user_id,
-          place,
-        },
-      });
+    if (useLegacy) {
+      return await handleLegacyWebhook({ ...args, request: clonedRequest });
     }
 
-    const query = correctedQuery !== rawQuery ? correctedQuery : rawQuery;
-
-    // used to log response times
-    let timer_start = new Date();
-
-    // the object that gets logged to the history table
-    let history_object: HistoryLog = {
-      user_id: user_id,
-      query,
-      query_classification: "on-topic",
-      tool_cache: false,
-      tool_wikipedia: false,
-      tool_rag: false,
-      tool_followup: false,
-      response: "",
-      response_time: 0,
-      text_wikipedia: null,
-      text_rag: null,
-      rag_index: null,
-    };
-
-    if (correctedQuery != rawQuery) {
-      history_object["tool_fix-speech"] = true;
-      history_object["query-before-fixing"] = postedQuery;
-    }
-
-    let pinecone_index, pinecone_namespace;
-
-    switch (place) {
-      case "mit":
-        pinecone_index = "mit-rag";
-        pinecone_namespace = "__default__";
-        PROMPT = `${mitRole}\n\n${mitContext}\n\n${goals}\n\n${accuracy}\n\n${guardrails}`;
-        break;
-      default:
-        pinecone_index = process.env.PINECONE_INDEX!;
-        pinecone_namespace = "met";
-    }
-
-    history_object.rag_index = pinecone_index;
-
-    if (!query || !user_id) {
-      return new Response("Missing required fields", { status: 400 });
-    }
-
-    // --- 2️⃣ Try semantic cache hit first ---
-    const cached = await searchCache(query);
-
-    if (cached) {
-      history_object.tool_cache = true;
-      history_object.response_time = Date.now() - timer_start.getTime();
-      history_object.response = cached.answer;
-      await logAgentHistory(history_object);
-
-      /* log the cached response */
-      logAppEvent({
-        event_type: "agent_log",
-        event_message: `cached response : ${cached.answer}`,
-        event_details: {
-          user_id,
-          place,
-          tool_cache: true,
-        },
-      });
-
-      return new Response(cached.answer, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "no-cache, no-transform",
-          Connection: "keep-alive",
-        },
-      });
-    }
-
-    const memoryKey = `chat:${user_id}`;
-
-    // --- 1️⃣ Load recent history ---
-    const memoryJson = await redis.get(memoryKey);
-    const chatHistory = memoryJson ? JSON.parse(memoryJson) : [];
-
-    // --- 2️⃣ Add new user message ---
-    chatHistory.push({ role: "user", content: query });
-
-    // --- 3️⃣ Keep last N messages ---
-    const trimmedHistory = chatHistory.slice(-MAX_MESSAGES);
-
-    // 🆕 Get conversation summary
-    const summary = await getConversationSummary(redis, user_id, chatHistory);
-
-    // --- 3.5️⃣ Query Pinecone RAG ---
-    const { context, avgScore } = await queryPinecone(
-      query,
-      pinecone_index,
-      pinecone_namespace,
-    );
-    history_object.rag_score = avgScore;
-    history_object.text_rag = context;
-
-    /* log rag response */
-    logAppEvent({
-      event_type: "agent_log",
-      event_message: `rag response : ${context}`,
-      event_details: {
-        rag_used: avgScore > PINECONE_SCORE ? true : false,
-        rag_score: avgScore,
-        user_id,
-      },
-    });
-
-    // --- 3.75️⃣ Wikipedia fallback ---
-    let wikiSummary: string | null = null;
-    const wikiPromise = fetchWikipedia(query);
-
-    if (avgScore <= PINECONE_SCORE) {
-      wikiSummary = await wikiPromise;
-
-      /* log wikipedia summary */
-      logAppEvent({
-        event_type: "agent_log",
-        event_message: `wikipedia response : ${wikiSummary ? wikiSummary : "none"}`,
-        event_details: {
-          rag_used: avgScore > PINECONE_SCORE ? true : false,
-          rag_score: avgScore,
-          user_id,
-          place,
-        },
-      });
-    }
-
-    // --- 4️⃣ Prepare RAG / fallback message ---
-    let ragContent: string;
-
-    if (avgScore > PINECONE_SCORE && context) {
-      history_object.tool_rag = true;
-      // Strong RAG context
-      ragContent = `Verified RAG context (confidence ${avgScore.toFixed(
-        2,
-      )}):\n${context}`;
-    } else if (wikiSummary) {
-      history_object.tool_wikipedia = true;
-      history_object.text_wikipedia = wikiSummary;
-
-      // Wikipedia fallback only if it exists
-      ragContent = `Wikipedia summary for "${query}":\n${wikiSummary}`;
-    } else {
-      // No verified context → GPT must **indicate uncertainty**
-      ragContent = `No RAG or Wikipedia context was found for this query. Use your own trained knowledge to answer, but you MUST:
-- Only state things you are highly confident about
-- Use hedging language for anything uncertain: "It is generally believed...", "Historically...", "Most accounts suggest..."
-- Never fabricate specific names, dates, or attributions
-- If you truly cannot answer confidently, say: "This falls outside what I can verify."`;
-
-      logAppEvent({
-        event_type: "agent_log",
-        event_message: `no agent tool response`,
-        event_details: {
-          user_id,
-          place,
-        },
-      });
-    }
-
-    const systemMessage = { role: "system", content: PROMPT };
-    const ragMessage = { role: "system", content: ragContent };
-
-    const messages = [systemMessage, ragMessage, ...trimmedHistory];
-    // 🆕 Add conversation summary if it exists
-    if (summary) {
-      messages.push({
-        role: "system",
-        content: `Previous conversation context: ${summary}`,
-      });
-    }
-    // console.log("Messages sent to OpenAI:", messages);
-
-    // --- 5️⃣ Streaming response ---
-    const stream = new ReadableStream({
-      async start(controller) {
-        let replyText = "";
-
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages,
-          stream: true,
-          temperature: 0, // deterministic
-          top_p: 1,
-          max_completion_tokens: 150,
-        });
-
-        try {
-          for await (const chunk of completion) {
-            const content = chunk.choices[0]?.delta?.content;
-            if (content) {
-              replyText += content;
-              controller.enqueue(content);
-            }
-          }
-
-          replyText = replyText.trim();
-
-          // --- 6️⃣ Save chat history ---
-          trimmedHistory.push({ role: "assistant", content: replyText });
-          await redis.set(memoryKey, JSON.stringify(trimmedHistory), {
-            EX: 24 * 60 * 60,
-          });
-
-          // --- ✅ 7️⃣ Conditionally store in semantic cache ---
-          const lower = replyText.toLowerCase();
-          const isMeaningful =
-            replyText.length > 20 && // not super short
-            !lower.includes("i do not") && // uncertainty fallback
-            !lower.startsWith("i'm not") &&
-            !lower.startsWith("i can't") &&
-            !lower.startsWith("i cannot") &&
-            !lower.startsWith("i don't");
-
-          // Only store if meaningful AND RAG/wikipedia gave some context
-          if (isMeaningful) {
-            try {
-              await storeCache(query, replyText, "llm");
-            } catch (err) {
-              console.error("Cache store error:", err);
-            }
-          } else {
-            console.log("⚠️ Not storing in cache - response not meaningful");
-          }
-          history_object.response_time = Date.now() - timer_start.getTime();
-          history_object.response = replyText;
-          await logAgentHistory(history_object);
-
-          logAppEvent({
-            event_type: "agent_log",
-            event_message: `agent response : ${replyText}`,
-            event_details: {
-              user_id,
-              place,
-              response_time: history_object.response_time,
-              tool_rag: history_object.tool_rag,
-              tool_wikipedia: history_object.tool_wikipedia,
-              "tool_fix-sppech": history_object["tool_fix-speech"],
-            },
-          });
-          controller.close();
-          generateFollowUps(query, 3, pinecone_index, pinecone_namespace);
-        } catch (err) {
-          console.error("Stream error:", err);
-          controller.error(err);
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
-    });
+    // TODO work in here.
   } catch (err) {
     console.error("Webhook error:", err);
     Sentry.captureException(err);
