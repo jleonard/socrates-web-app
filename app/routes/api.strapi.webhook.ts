@@ -555,9 +555,14 @@ function buildArtifactChunks(entry: Record<string, any>): Chunk[] {
   return [];
 }
 
+const PLURAL: Record<string, string> = {
+  person: "people",
+};
+
 async function fetchStrapiEntry(model: string, documentId: string) {
+  const plural = PLURAL[model] ?? `${model}s`;
   const res = await fetch(
-    `${process.env.STRAPI_URL}/api/${model}s/${documentId}?populate=*`,
+    `${process.env.STRAPI_URL}/api/${plural}/${documentId}?populate=*`,
     { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } },
   );
   const { data } = await res.json();
