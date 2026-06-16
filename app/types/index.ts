@@ -29,17 +29,24 @@ export type HistoryLog = {
   query: string;
   query_classification: string;
   response: string;
-  tool_cache: boolean;
-  tool_rag: boolean;
-  tool_wikipedia: boolean;
-  tool_followup: boolean;
+  tool_cache?: boolean;
+  tool_rag?: boolean;
+  tool_wikipedia?: boolean;
+  tool_followup?: boolean;
   "tool_fix-speech"?: boolean;
   "query-before-fixing"?: string;
   response_time: number;
   rag_score?: number;
   text_wikipedia?: string | null;
   text_rag?: string | null;
-  rag_index: string | null;
+  rag_index?: string | null;
+  tools?: ToolLog[];
+  details?: Record<string, unknown>;
+};
+
+export type ToolLog = {
+  tool: "cache" | "rag" | "wikipedia" | "followup" | "fix-speech";
+  details?: Record<string, unknown>; // score, index, original_query, text, etc.
 };
 
 export type ProductInfo = {
