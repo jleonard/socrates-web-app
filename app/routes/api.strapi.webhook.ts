@@ -107,7 +107,8 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       chunks = buildArtifactChunks(fullEntry);
       break;
     case "exhibition":
-      chunks = buildExhibitionChunks(fullEntry);
+      chunks = await buildExhibitionChunks(fullEntry);
+      // await storeGeoDataForExhibition(fullEntry);
       break;
     case "person":
       chunks = buildPersonChunks(fullEntry);
@@ -450,7 +451,9 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
 
 // ─── exhibition chunks ────────────────────────────────────────────────────────
 
-function buildExhibitionChunks(entry: Record<string, any>): Chunk[] {
+async function buildExhibitionChunks(
+  entry: Record<string, any>,
+): Promise<Chunk[]> {
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
@@ -478,7 +481,7 @@ function buildExhibitionChunks(entry: Record<string, any>): Chunk[] {
   });
 
   // artwork placement chunks
-  for (const item of entry.items ?? []) {
+  for (const item of entry.artworks ?? []) {
     const artwork = item.artwork;
     if (!artwork) continue;
 

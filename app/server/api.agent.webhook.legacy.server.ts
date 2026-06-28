@@ -309,7 +309,7 @@ export const handleLegacyWebhook: ActionFunction = async ({ request }) => {
               response_time: history_object.response_time,
               tool_rag: history_object.tool_rag,
               tool_wikipedia: history_object.tool_wikipedia,
-              "tool_fix-sppech": history_object["tool_fix-speech"],
+              "tool_fix-speech": history_object["tool_fix-speech"],
             },
           });
           controller.close();

@@ -8,6 +8,15 @@ const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
 export const PINECONE_SCORE = 0.6;
 
+export async function getQueryEmbedding(query: string): Promise<number[]> {
+  const embeddingResponse = await openai.embeddings.create({
+    model: "text-embedding-3-large",
+    input: query,
+  });
+
+  return embeddingResponse.data[0].embedding;
+}
+
 export async function queryPinecone(
   query: string,
   _index: string,

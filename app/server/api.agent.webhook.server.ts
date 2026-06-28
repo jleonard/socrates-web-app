@@ -2,32 +2,41 @@ import type { ActionFunction } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 import OpenAI from "openai";
 import {
-  zeroPersonalityPrompt,
-  mitPrompt,
   role,
   context,
   goals,
   accuracy,
   guardrails,
-  mitRole,
-  mitContext,
 } from "~/utils/system.prompt";
-import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
+import {
+  queryPinecone,
+  getQueryEmbedding,
+  PINECONE_SCORE,
+} from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
-import { searchCache, storeCache } from "~/utils/cache.server";
+import { storeCache } from "~/utils/cache.server";
 import { correctTranscription } from "~/utils/query-correction.server";
 import { logAgentHistory } from "~/utils/history.server";
-import { HistoryLog } from "~/types";
+import { HistoryLog, ToolLog } from "~/types";
 import * as Sentry from "@sentry/react-router";
 import { logAppEvent } from "~/utils/events/appEvents.server";
+import {
+  Pinecone,
+  type RecordMetadata,
+  type ScoredPineconeRecord,
+} from "@pinecone-database/pinecone";
 
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
 let USE_LEGACY = false;
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
-const MAX_MESSAGES = 10;
+const MAX_CHAT_MESSAGES = 10;
 let PROMPT = `${role}\n\n${context}\n\n${goals}\n\n${accuracy}\n\n${guardrails}`;
+
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY!,
+});
 
 export const handleWebhook: ActionFunction = async (args) => {
   const { request } = args;
@@ -42,20 +51,281 @@ export const handleWebhook: ActionFunction = async (args) => {
     const body = await request.json();
 
     /*
-     * process body vars
+     * 📦 process body vars
      */
-    const { query: postedQuery, user_id, place } = body;
+    const { query, user_id, place } = body;
 
+    /* 🔷 logging: prep the history log */
+    const timerStart = Date.now();
+    const tools: ToolLog[] = [];
+
+    /* 🔷 logging: log the query */
+    logAppEvent({
+      event_type: "agent_log",
+      event_message: `posted query : ${query}`,
+      event_details: {
+        user_id,
+        place,
+      },
+    });
+
+    /*
+     * 📦 temp route to the legacy webhook until MIT migrates.
+     */
     const useLegacy = USE_LEGACY || place === "mit" || place === "wonderway";
-
     if (useLegacy) {
       console.log("using legacy webhook for place:", place);
       return await handleLegacyWebhook({ ...args, request: clonedRequest });
     }
 
-    // TODO work in here.
+    /*
+     * ✏️ TODO fix mispronounciations
+     */
+
+    /*
+     * ✏️ setup the messages array we'll send to the LLM
+     */
+    let messages = [];
+
+    /*
+     * ✏️ pull the prompt from redis or fallback
+     */
+    const redisPrompt = await redis.get("prompt:" + place);
+    const prompt = redisPrompt || PROMPT;
+    messages.push({ role: "system", content: prompt });
+    console.log("debug: prompt ", prompt);
+
+    /*
+     * 💬 get the conversation history
+     */
+    const memoryKey = `chat:${user_id}`;
+    const redisResponse = await redis.get(memoryKey);
+    const chatHistory = redisResponse ? JSON.parse(redisResponse) : [];
+    const trimmedHistory = chatHistory.slice(-MAX_CHAT_MESSAGES);
+    messages.push(...trimmedHistory);
+    console.log("debug: trimmedHistory ", trimmedHistory);
+
+    /*
+     * 💬 get the conversation summary
+     */
+    const conversationSummary = await getConversationSummary(
+      redis,
+      user_id,
+      chatHistory,
+    );
+    if (conversationSummary) {
+      messages.push({
+        role: "system",
+        content: `Previous conversation summary: ${conversationSummary}`,
+      });
+    }
+    console.log("debug: conversationSummary ", conversationSummary);
+
+    /*
+     * 🌲 pinecone part one: get results
+     */
+    const index = pc.index("wonderway");
+    const queryEmbedding = await getQueryEmbedding(query);
+    const [contextualResults, globalResults] = await Promise.all([
+      index.namespace("contextual").query({
+        vector: queryEmbedding,
+        topK: 5,
+        includeMetadata: true,
+        filter: {
+          $or: [
+            { exhibition_id: { $eq: place } },
+            { place_id: { $eq: place } },
+          ],
+        },
+      }),
+      index.namespace("global").query({
+        vector: queryEmbedding,
+        topK: 3,
+        includeMetadata: true,
+      }),
+    ]);
+    console.log("debug: pinecone contextualResults ", contextualResults);
+    console.log("debug: pinecone globalResults ", globalResults);
+
+    /*
+     * 🌲 pinecone part two: filter results
+     */
+    const SCORE_THRESHOLDS = {
+      contextual: 0.65,
+      global: 0.6,
+    };
+    function filterByScore(
+      matches: ScoredPineconeRecord<RecordMetadata>[],
+      threshold: number,
+    ) {
+      return matches.filter((match) => (match.score ?? 0) >= threshold);
+    }
+
+    const contextualMatches = filterByScore(
+      contextualResults.matches,
+      SCORE_THRESHOLDS.contextual,
+    );
+
+    const globalMatches = filterByScore(
+      globalResults.matches,
+      SCORE_THRESHOLDS.global,
+    );
+
+    const allMatches = [...contextualMatches, ...globalMatches];
+    if (allMatches.length === 0) {
+      messages.push({
+        role: "system",
+        content: `No specific RAG context was found for this query. Answer generally if you can, or let the user know you don't have specific information.`,
+      });
+    } else {
+      messages.push({
+        role: "system",
+        content: `RAG CONTEXT:\n${allMatches
+          .map((m) => m.metadata?.text)
+          .filter(Boolean)
+          .join("\n\n")}`,
+      });
+    }
+    console.log("debug: allMatches filtered ", allMatches);
+
+    if (allMatches.length > 0) {
+      /* 🔷 logging: log the rag tool usage */
+      tools.push({
+        tool: "rag",
+        details: {
+          match_count: allMatches.length,
+          matches: allMatches.map((m) => ({
+            score: m.score,
+            metadata: (() => {
+              const { text, ...rest } = m.metadata ?? {};
+              return rest;
+            })(),
+            text: m.metadata?.text,
+          })),
+        },
+      });
+    }
+
+    /*
+     * 🌍 wikipedia fallback
+     */
+    let wikiSummary: string | null = null;
+    const wikiPromise = fetchWikipedia(query);
+
+    const WIKI_SCORE_THRESHOLD = 0.65;
+    const WIKI_MIN_MATCHES = 2;
+
+    const strongMatches = allMatches.filter(
+      (m) => (m.score ?? 0) >= WIKI_SCORE_THRESHOLD,
+    );
+
+    const shouldFallbackToWiki = strongMatches.length < WIKI_MIN_MATCHES;
+    if (shouldFallbackToWiki) {
+      wikiSummary = await wikiPromise;
+
+      if (wikiSummary) {
+        messages.push({
+          role: "system",
+          content: `WIKIPEDIA CONTEXT:\n${wikiSummary}`,
+        });
+        console.log("debug: wikipedia summary ", wikiSummary);
+      } else {
+        messages.push({
+          role: "system",
+          content: `No relevant information found on Wikipedia.`,
+        });
+      }
+
+      if (wikiSummary) {
+        /* 🔷 logging: log the wikipedia tool usage */
+        tools.push({
+          tool: "wikipedia",
+          details: { summary: wikiSummary },
+        });
+      }
+    }
+
+    /*
+     * ✏️ add the user query at the end of the messages
+     */
+    messages.push({ role: "user", content: query });
+    console.log("debug: user query ", query);
+
+    /*
+     * 🤖 stream the LLM response
+     */
+    const stream = new ReadableStream({
+      async start(controller) {
+        let replyText = "";
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages,
+          stream: true,
+          temperature: 0, // deterministic
+          top_p: 1,
+          max_completion_tokens: 150,
+        });
+
+        try {
+          for await (const chunk of completion) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              replyText += content;
+              controller.enqueue(content);
+            }
+          }
+          replyText = replyText.trim();
+
+          /*
+           * 🔷 logging: write to agent history
+           */
+          const history_object: HistoryLog = {
+            user_id,
+            query,
+            query_classification: "on-topic",
+            response: replyText,
+            response_time: Date.now() - timerStart,
+            tools,
+            details: {
+              place,
+              prompt_source: redisPrompt ? "contextual" : "default",
+            },
+          };
+          await logAgentHistory(history_object);
+
+          /*
+           * 🧾 wrap up: update the chat history in redis
+           */
+          const MAX_STORED_MESSAGES = 100;
+          const updatedHistory = [
+            ...chatHistory,
+            { role: "user", content: query },
+            { role: "assistant", content: replyText },
+          ].slice(-MAX_STORED_MESSAGES);
+          await redis.set(
+            memoryKey,
+            JSON.stringify(updatedHistory),
+            { EX: 60 * 60 * 24 * 30 }, // 30 day TTL
+          );
+
+          controller.close();
+        } catch (err) {
+          console.error("Stream error:", err);
+          controller.error(err);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
   } catch (err) {
-    console.error("Webhook error:", err);
+    console.error("agent webhook error:", err);
     Sentry.captureException(err);
     return new Response("Internal server error", { status: 500 });
   }
@@ -92,8 +362,8 @@ async function getConversationSummary(
         .join("\n");
 
       const prompt = existingSummary
-        ? `Previous summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
-        : `Summarize the main topics discussed in this art conversation in 2-3 sentences:\n\n${recentMessages}`;
+        ? `Previous conversation summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
+        : `Summarize the main topics discussed in this conversation in 2-3 sentences:\n\n${recentMessages}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -111,143 +381,8 @@ async function getConversationSummary(
       await redis.set(summaryKey, existingSummary, { EX: 24 * 60 * 60 });
     } catch (err) {
       Sentry.captureException(err);
-      console.error("Summary generation error:", err);
     }
   }
 
   return existingSummary || "";
-}
-
-/**
- * Generate likely follow-up questions for a query and cache answers for all users.
- */
-export async function generateFollowUps(
-  query: string,
-  n = 3,
-  pinecone_index: string,
-  pinecone_namespace: string,
-) {
-  /**
-   * setup the history object for logging
-   */
-  let botUserId = "00000000-0000-4000-8000-000000000000";
-
-  try {
-    // 1️⃣ Ask GPT for follow-up questions
-    const followUpsRes = await openai.chat.completions.create({
-      model: "gpt-4o", // higher-power model for prediction
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant. Given the question "${query}", generate ${n} likely follow-up questions that a user may ask. Return only a JSON array of strings.`,
-        },
-      ],
-      temperature: 0.7,
-      max_completion_tokens: 200,
-    });
-
-    const followUpsText = followUpsRes.choices[0].message?.content || "[]";
-    let followUpQuestions: string[] = [];
-    try {
-      followUpQuestions = JSON.parse(followUpsText);
-    } catch (e) {
-      Sentry.captureException(e);
-      console.warn(
-        "Failed to parse follow-up questions JSON:",
-        followUpsText,
-        e,
-      );
-    }
-
-    // 2️⃣ Process each follow-up question
-    for (const followUp of followUpQuestions) {
-      // Skip empty or trivial follow-ups
-      if (!followUp || followUp.length < 3) continue;
-
-      /**
-       * prep the history object
-       */
-      let history_object: HistoryLog = {
-        user_id: botUserId,
-        query: followUp,
-        query_classification: "on-topic",
-        tool_cache: false,
-        tool_wikipedia: false,
-        tool_rag: false,
-        tool_followup: true,
-        response: "",
-        response_time: 0,
-        text_wikipedia: null,
-        text_rag: null,
-        rag_index: pinecone_index,
-      };
-
-      // RAG + Wikipedia context
-      const { context, avgScore } = await queryPinecone(
-        followUp,
-        pinecone_index,
-        pinecone_namespace,
-      );
-      let wikiSummary: string | null = null;
-      if (avgScore <= PINECONE_SCORE) {
-        wikiSummary = await fetchWikipedia(followUp);
-      }
-
-      let ragContent: string;
-      if (avgScore > PINECONE_SCORE && context) {
-        history_object.rag_score = avgScore;
-        history_object.text_rag = context;
-        history_object.tool_rag = true;
-        ragContent = `Verified RAG context (confidence ${avgScore.toFixed(2)}):\n${context}`;
-      } else if (wikiSummary) {
-        history_object.tool_wikipedia = true;
-        history_object.text_wikipedia = wikiSummary;
-        ragContent = `Wikipedia summary for "${followUp}":\n${wikiSummary}`;
-      } else {
-        ragContent = `No verified context found. If unsure, respond exactly: "I do not have verified information about this."`;
-      }
-
-      // GPT generates cached answer (no streaming)
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // higher-power model
-        messages: [
-          { role: "system", content: PROMPT },
-          { role: "system", content: ragContent },
-          { role: "user", content: followUp },
-        ],
-        temperature: 0,
-        max_completion_tokens: 150,
-      });
-
-      const answer = completion.choices[0].message?.content?.trim() || "";
-
-      // Only store meaningful answers
-      const lower = answer.toLowerCase();
-      const isMeaningful =
-        answer.length > 20 &&
-        !lower.includes("i do not") &&
-        !lower.startsWith("i'm not") &&
-        !lower.startsWith("i can't") &&
-        !lower.startsWith("i cannot") &&
-        !lower.startsWith("i don't");
-
-      if (isMeaningful) {
-        history_object.response = answer;
-        await storeCache(followUp, answer, "follow-up");
-        await logAgentHistory(history_object);
-        logAppEvent({
-          event_type: "agent_log",
-          event_message: `Auto-generated follow-up : ${followUp}`,
-        });
-        console.log(`✅ Stored follow-up in cache: "${followUp}"`);
-      } else {
-        console.log(
-          `⚠️ Skipped caching follow-up (not meaningful): "${followUp}"`,
-        );
-      }
-    }
-  } catch (err) {
-    console.error("Follow-up generation error:", err);
-    Sentry.captureException(err);
-  }
 }
