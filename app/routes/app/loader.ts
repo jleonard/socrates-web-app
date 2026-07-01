@@ -2,15 +2,22 @@ import { redirect, data, type LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import { userHasAccess } from "~/server/access.manager.server";
-import { setUserPromo } from "~/server/promo.manager.server";
+import { signInGuest, signOutGuest } from "~/server/guest.manager.server";
+import { setUserPromo, getPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 import type { AccessRecord, UserProfile } from "~/types";
+import type { UserProfileInsert } from "~/types";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("try supabase setup");
-  const { supabase } = getSupabaseServerClient(request);
-  console.log("passed supabase setup");
+  const { supabase, headers: supabaseHeaders } =
+    getSupabaseServerClient(request);
   const { session, sessionId } = await getSessionId(request);
+
+  const buildHeaders = async () => {
+    const headers = new Headers(supabaseHeaders);
+    headers.append("Set-Cookie", await sessionStorage.commitSession(session));
+    return headers;
+  };
 
   const url = new URL(request.url);
   const place = url.searchParams.get("place");
@@ -26,21 +33,60 @@ export async function loader({ request }: LoaderFunctionArgs) {
     session.set("promo", promo);
   }
 
+  let user;
+
+  // check for a signed in user
   const {
-    data: { user },
+    data: { user: authUser },
   } = await supabase.auth.getUser();
 
+  if (authUser) {
+    user = authUser;
+    signOutGuest(authUser.id, session);
+  }
+
+  // if there's no user, check if the promo allows guest access before redirecting
+  if (!user && promo) {
+    const { data: promoDeets, error: promoDeetsError } = await getPromo(
+      promo,
+      supabase,
+    );
+
+    if (promoDeets?.allow_guest) {
+      const { user: guestUser, error: guestError } = await signInGuest(
+        supabase,
+        session,
+      );
+      console.log("guest user ", guestUser);
+      if (guestUser) {
+        user = guestUser;
+      }
+    }
+  }
+
+  console.log("last check user ", user?.id);
+
+  // if no signed in user OR no guest access allowed on the promo, redirect
   if (!user) {
     throw redirect("/login", {
-      headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      headers: await buildHeaders(),
+      //headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
     });
   }
 
   // Upsert profile data on every load
-  const { data: profile, error } = await upsertUserProfile(
-    { user_id: user.id, email: user.email },
-    request,
-  );
+  let profileUpsert: UserProfileInsert = {
+    user_id: user.id,
+    email: user.email,
+    role: user.is_anonymous ? "guest" : "user",
+  };
+
+  // corner case for mit. hele doesn't want MIT guests to go through FTUE
+  if (place && place === "mit" && user.is_anonymous) {
+    profileUpsert.has_onboarded = true;
+  }
+
+  const { data: profile, error } = await upsertUserProfile(profileUpsert);
 
   // set the promo for the user
   const { data: promoRecord, error: promoError } = await setUserPromo(
@@ -52,27 +98,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
     session.unset("promo");
   }
 
-  // check if the user has access
+  // check if the user has an access record
   const access = await userHasAccess(user.id, supabase);
 
   // none means this user never had access
   if (access?.category === "none") {
     throw redirect("/purchase", {
-      headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      headers: await buildHeaders(),
+      //headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
     });
   }
 
   // expired access
   if (access?.category === "expired") {
     throw redirect("/expiration", {
-      headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      headers: await buildHeaders(),
+      //headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
     });
   }
 
   // if you haven't onboarded, go do it
   if (!profile.has_onboarded) {
     throw redirect("/welcome", {
-      headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      headers: await buildHeaders(),
+      //headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
     });
   }
 
@@ -94,9 +143,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       place: session.get("place"),
     },
     {
+      headers: await buildHeaders(),
+      /*
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session),
       },
+      */
     },
   );
 }

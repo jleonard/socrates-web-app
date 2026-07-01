@@ -3,6 +3,27 @@ import type { PromoRow } from "~/types";
 import * as Sentry from "@sentry/react-router";
 import { createAccessRecordFromPromoCode } from "./access.manager.server";
 
+export async function getPromo(
+  code: string,
+  supabase: SupabaseClient,
+): Promise<{ data: PromoRow | null; error: any }> {
+  // get promo details
+  const { data, error } = await supabase
+    .from("promos")
+    .select()
+    .eq("code", code.trim())
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    Sentry.captureMessage("promo.manager.server : getPromo() error", {
+      level: "error",
+      extra: { error: error },
+    });
+  }
+  return { data: data as PromoRow, error };
+}
+
 export async function setUserPromo(
   user_id: string,
   promo: string,

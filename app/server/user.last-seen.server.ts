@@ -1,24 +1,18 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/react-router";
-
-type UpdateUserArgs = {
-  user_id: string;
-  email?: string;
-  has_onboarded?: boolean;
-  last_seen?: Date;
-  last_greeted?: Date;
-};
+import type { UserProfileInsert } from "~/types";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 /*
  * todo, refactor out the old upsertUserProfile below.
  * This one is better because it takes an existing supabase client vs a request
  */
 export async function betterUpsertUserProfile(
-  userObj: UpdateUserArgs,
+  userObj: UserProfileInsert,
   supabase: SupabaseClient,
 ) {
   try {
-    userObj.last_seen = new Date();
+    userObj.last_seen = new Date().toISOString();
     const { data, error } = await supabase
       .from("profiles")
       .upsert(userObj, { onConflict: "user_id" })
@@ -41,16 +35,11 @@ export async function betterUpsertUserProfile(
   }
 }
 
-export async function upsertUserProfile(
-  userObj: UpdateUserArgs,
-  request: Request,
-) {
+export async function upsertUserProfile(userObj: UserProfileInsert) {
   try {
-    const { getSupabaseServerClient } = await import("~/utils/supabase.server");
+    const { supabase } = getSupabaseServiceRoleClient();
 
-    const { supabase } = getSupabaseServerClient(request);
-
-    userObj.last_seen = new Date();
+    userObj.last_seen = new Date().toISOString();
 
     const { data, error } = await supabase
       .from("profiles")

@@ -61,6 +61,7 @@ export type Database = {
       agent_history: {
         Row: {
           created_at: string
+          details: Json | null
           id: number
           qa: string | null
           query: string | null
@@ -77,10 +78,12 @@ export type Database = {
           tool_followup: boolean | null
           tool_rag: boolean | null
           tool_wikipedia: boolean | null
+          tools: Json | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          details?: Json | null
           id?: number
           qa?: string | null
           query?: string | null
@@ -97,10 +100,12 @@ export type Database = {
           tool_followup?: boolean | null
           tool_rag?: boolean | null
           tool_wikipedia?: boolean | null
+          tools?: Json | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          details?: Json | null
           id?: number
           qa?: string | null
           query?: string | null
@@ -117,6 +122,7 @@ export type Database = {
           tool_followup?: boolean | null
           tool_rag?: boolean | null
           tool_wikipedia?: boolean | null
+          tools?: Json | null
           user_id?: string | null
         }
         Relationships: []
@@ -125,6 +131,7 @@ export type Database = {
         Row: {
           created_at: string
           duration: number | null
+          dynamic_variables: Json | null
           elevenlabs_tokens: number | null
           id: number
           qa: string | null
@@ -135,6 +142,7 @@ export type Database = {
         Insert: {
           created_at?: string
           duration?: number | null
+          dynamic_variables?: Json | null
           elevenlabs_tokens?: number | null
           id?: number
           qa?: string | null
@@ -145,6 +153,7 @@ export type Database = {
         Update: {
           created_at?: string
           duration?: number | null
+          dynamic_variables?: Json | null
           elevenlabs_tokens?: number | null
           id?: number
           qa?: string | null
@@ -292,27 +301,6 @@ export type Database = {
         }
         Relationships: []
       }
-      places: {
-        Row: {
-          created_at: string
-          id: string
-          message: Json | null
-          name: string | null
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          message?: Json | null
-          name?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: Json | null
-          name?: string | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -351,6 +339,7 @@ export type Database = {
       }
       promos: {
         Row: {
+          allow_guest: boolean | null
           code: string
           created_at: string
           description: string | null
@@ -360,6 +349,7 @@ export type Database = {
           quantity: number | null
         }
         Insert: {
+          allow_guest?: boolean | null
           code: string
           created_at?: string
           description?: string | null
@@ -369,6 +359,7 @@ export type Database = {
           quantity?: number | null
         }
         Update: {
+          allow_guest?: boolean | null
           code?: string
           created_at?: string
           description?: string | null
