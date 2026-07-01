@@ -429,8 +429,8 @@ const ParentComponent: React.FC = () => {
           <p className="font-bold pt-[132px]">Congratulations!</p>
           <p>
             {access.hours <= 24
-              ? `${access.hours} hours`
-              : `${Math.ceil(access.hours / 24)} days`}{" "}
+              ? `${access.hours} ${access.hours === 1 ? "hour" : "hours"}`
+              : `${Math.ceil(access.hours / 24)} ${Math.ceil(access.hours / 24) === 1 ? "day" : "days"}`}{" "}
             access
           </p>
         </div>
