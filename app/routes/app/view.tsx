@@ -31,6 +31,7 @@ import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 import { AvatarConnection, AvatarMode } from "types/avatar";
 
 import { Stopwatch } from "components/Stopwatch/Stopwatch";
+import { UserPen } from "lucide-react";
 
 const ParentComponent: React.FC = () => {
   const { access, elevenLabsId, sessionId, user, user_profile, place } =
@@ -143,7 +144,7 @@ const ParentComponent: React.FC = () => {
       logAppEventFromClient({
         event_type: message.source == "user" ? "user_spoke" : "agent_spoke",
         event_message: message.message,
-        event_details: { user_id: user.id },
+        event_details: { user_id: user_profile.user_id },
       });
 
       addEntry(
@@ -177,7 +178,6 @@ const ParentComponent: React.FC = () => {
     const user_lat = coords?.lat ?? 0;
     const user_long = coords?.long ?? 0;
     const user_session = `${user.id}__${sessionId}`;
-    const user_id = user.id;
     const conversation_id = crypto
       .randomUUID()
       .split("-")
@@ -195,7 +195,7 @@ const ParentComponent: React.FC = () => {
         dynamicVariables: {
           user_lat,
           user_long,
-          user_id: user_profile?.user_id,
+          user_id: user_profile?.id ?? user.id,
           user_session,
           conversation_id,
           place: activePlace,
@@ -205,7 +205,7 @@ const ParentComponent: React.FC = () => {
       logAppEventFromClient({
         event_type: "conversation_started",
         event_message: "New Conversation",
-        event_details: { user_id: user.id },
+        event_details: { user_id: user_profile.user_id },
       });
 
       // TODO: Implementar envío de mensaje contextual cuando tengamos el método correcto
@@ -228,7 +228,7 @@ const ParentComponent: React.FC = () => {
     logAppEventFromClient({
       event_type: "conversation_ended",
       event_message: "Conversation Ended",
-      event_details: { user_id: user.id },
+      event_details: { user_id: user_profile.user_id },
     });
     await conversation.endSession();
   }, [conversation]);
@@ -429,8 +429,8 @@ const ParentComponent: React.FC = () => {
           <p className="font-bold pt-[132px]">Congratulations!</p>
           <p>
             {access.hours <= 24
-              ? `${access.hours} hours`
-              : `${Math.ceil(access.hours / 24)} days`}{" "}
+              ? `${access.hours} ${access.hours === 1 ? "hour" : "hours"}`
+              : `${Math.ceil(access.hours / 24)} ${Math.ceil(access.hours / 24) === 1 ? "day" : "days"}`}{" "}
             access
           </p>
         </div>

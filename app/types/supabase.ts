@@ -301,27 +301,6 @@ export type Database = {
         }
         Relationships: []
       }
-      places: {
-        Row: {
-          created_at: string
-          id: string
-          message: Json | null
-          name: string | null
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          message?: Json | null
-          name?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: Json | null
-          name?: string | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -360,6 +339,7 @@ export type Database = {
       }
       promos: {
         Row: {
+          allow_guest: boolean | null
           code: string
           created_at: string
           description: string | null
@@ -369,6 +349,7 @@ export type Database = {
           quantity: number | null
         }
         Insert: {
+          allow_guest?: boolean | null
           code: string
           created_at?: string
           description?: string | null
@@ -378,6 +359,7 @@ export type Database = {
           quantity?: number | null
         }
         Update: {
+          allow_guest?: boolean | null
           code?: string
           created_at?: string
           description?: string | null

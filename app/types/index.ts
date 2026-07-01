@@ -66,3 +66,5 @@ export type RedisEntry = {
 };
 
 export type UserProfile = Database["public"]["Tables"]["profiles"]["Row"];
+export type UserProfileInsert =
+  Database["public"]["Tables"]["profiles"]["Insert"];
