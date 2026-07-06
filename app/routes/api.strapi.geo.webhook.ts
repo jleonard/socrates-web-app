@@ -80,7 +80,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     `[strapi geo webhook] fetched full entry for ${model} fullEntry: ${JSON.stringify(fullEntry, null, 2)}`,
   );
 
-  if (model === "exhibition") {
+  if (model === "exhibition" || model === "place") {
     await storeGeoDataForExhibition(fullEntry);
   }
 }
@@ -95,9 +95,20 @@ async function handleDelete(model: string, entry: Record<string, any>) {
       `exhibition:members:${entry.exhibition_id}`,
     )) as string[];
 
-    // remove those members from the place's geo set
+    // prefer the tracked place_id — the delete/unpublish payload's own
+    // place_id may be stale or absent
+    const placeId =
+      (await redis.get(`exhibition:place:${entry.exhibition_id}`)) ??
+      entry.place_id;
+
     if (memberIds.length > 0) {
-      await redis.zrem(`place:geo:${entry.place_id}`, ...memberIds);
+      if (!placeId) {
+        console.warn(
+          `[geo webhook] exhibition ${entry.exhibition_id} deleted with no resolvable place_id — place:geo cleanup skipped`,
+        );
+      } else {
+        await redis.zrem(`place:geo:${placeId}`, ...memberIds);
+      }
     }
 
     // now delete the membership set itself
@@ -105,6 +116,9 @@ async function handleDelete(model: string, entry: Record<string, any>) {
 
     // and delete the exhibition's geo set
     await redis.del(`exhibition:geo:${entry.exhibition_id}`);
+
+    // and the tracked place reference
+    await redis.del(`exhibition:place:${entry.exhibition_id}`);
   }
 
   if (model === "place") {
@@ -115,9 +129,23 @@ async function handleDelete(model: string, entry: Record<string, any>) {
 async function storeGeoDataForExhibition(entry: Record<string, any>) {
   const redis = await getRedis();
 
+  // read what this exhibition's members and place WERE, before we wipe
+  // and rebuild — otherwise a removed artwork or a changed place leaves
+  // an orphaned entry behind in the old place:geo set
+  const priorMemberIds = (await redis.smembers(
+    `exhibition:members:${entry.exhibition_id}`,
+  )) as string[];
+  const priorPlaceId = await redis.get(
+    `exhibition:place:${entry.exhibition_id}`,
+  );
+
+  if (priorMemberIds.length > 0 && priorPlaceId) {
+    await redis.zrem(`place:geo:${priorPlaceId}`, ...priorMemberIds);
+  }
+
   // clear prior geo data for this exhibition's artworks and artifacts
 
-  // exhibition:geo stores geo coorindates for all the art and artiracts in the exhibition.
+  // exhibition:geo stores geo coorindates for all the art and artifacts in the exhibition.
   await redis.del(`exhibition:geo:${entry.exhibition_id}`);
 
   // exhibition:members is a set of art and artifact ids only. no geo.
@@ -128,7 +156,8 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
   for (const item of entry.artworks ?? []) {
     const artwork = item.artwork;
     if (!artwork) continue;
-    memberIds.push(artwork.artwork_id);
+    const memberId = `artwork:${artwork.artwork_id}`;
+    memberIds.push(memberId);
 
     // add to geo index if we have coordinates
     if (item?.latitude && item?.longitude) {
@@ -138,7 +167,7 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
           `exhibition:geo:${entry.exhibition_id}`,
           item.longitude,
           item.latitude,
-          artwork.artwork_id,
+          memberId,
         );
       }
       if (entry?.place_id) {
@@ -147,7 +176,7 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
           `place:geo:${entry.place_id}`,
           item.longitude,
           item.latitude,
-          artwork.artwork_id,
+          memberId,
         );
       }
     }
@@ -156,7 +185,8 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
   for (const item of entry.artifacts ?? []) {
     const artifact = item.artifact;
     if (!artifact) continue;
-    memberIds.push(artifact.artifact_id);
+    const memberId = `artifact:${artifact.artifact_id}`;
+    memberIds.push(memberId);
     // add to geo index if we have coordinates
     if (item?.latitude && item?.longitude) {
       if (entry?.exhibition_id) {
@@ -165,7 +195,7 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
           `exhibition:geo:${entry.exhibition_id}`,
           item.longitude,
           item.latitude,
-          artifact.artifact_id,
+          memberId,
         );
       }
       if (entry?.place_id) {
@@ -174,7 +204,7 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
           `place:geo:${entry.place_id}`,
           item.longitude,
           item.latitude,
-          artifact.artifact_id,
+          memberId,
         );
       }
     }
@@ -186,6 +216,12 @@ async function storeGeoDataForExhibition(entry: Record<string, any>) {
     `exhibition:members:${entry.exhibition_id}`,
     ...uniqueMembers,
   );
+
+  // remember current place_id so a future update/delete can find and
+  // clean up place:geo, even if entry.place_id changes or is missing later
+  if (entry.place_id) {
+    await redis.set(`exhibition:place:${entry.exhibition_id}`, entry.place_id);
+  }
 }
 
 /**

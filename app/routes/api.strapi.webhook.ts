@@ -221,8 +221,9 @@ function buildBaseMeta(
 ) {
   return {
     group_id: buildGroupId(model, entry),
+    name: entry.name ?? null,
     parent_type: model,
-    parent_id: entry[`${model}_id`] ?? String(entry.id),
+    parent_id: entry[`${model}_id`] ?? entry.documentId ?? String(entry.id),
     place_id: entry.place?.place_id ?? null,
     // @TODO institution_id: entry.institution_id ?? null,
     language: entry.language ?? "en",
@@ -231,10 +232,36 @@ function buildBaseMeta(
 }
 
 // ─── parsers ──────────────────────────────────────────────────────────────────
+function parseTextBlock(
+  textBlock: string | null,
+  chunkType: string,
+  groupId: string,
+  namespace: "contextual" | "global",
+  meta: Record<string, any>,
+): Chunk[] {
+  if (!textBlock?.trim()) return [];
 
+  return textBlock
+    .split("---")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((text, i) => {
+      return {
+        chunk_id: `${groupId}:${chunkType}:${i}`,
+        content: text,
+        namespace,
+        metadata: { ...meta, chunk_type: chunkType },
+      };
+    });
+}
+
+/*
+ * 'knowledge' is for short facts or FAQs. As in, common knowledge.
+ */
 function parseKnowledge(
   knowledge: string | null,
   groupId: string,
+  namespace: "contextual" | "global",
   meta: Record<string, any>,
 ): Chunk[] {
   if (!knowledge?.trim()) return [];
@@ -245,7 +272,7 @@ function parseKnowledge(
     .filter(Boolean)
     .map((text, i) => {
       const isQuestion = text.startsWith("Q:");
-      const chunkType = isQuestion ? "faq" : "fact";
+      const chunkType = isQuestion ? "faq" : "factual";
 
       // format Q/A for embedding
       const content = isQuestion
@@ -259,10 +286,7 @@ function parseKnowledge(
       return {
         chunk_id: `${groupId}:${chunkType}:${i}`,
         content,
-        namespace:
-          meta.parent_type === "topic" || meta.parent_type === "person"
-            ? "global"
-            : "contextual",
+        namespace,
         metadata: { ...meta, chunk_type: chunkType },
       };
     });
@@ -271,37 +295,29 @@ function parseKnowledge(
 function parseBody(
   body: string | null,
   groupId: string,
+  namespace: "contextual" | "global",
   meta: Record<string, any>,
 ): Chunk[] {
   if (!body?.trim()) return [];
 
-  // split on ## headings
   return body
-    .split(/^## /m)
+    .split("---")
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((section) => {
-      const [heading, ...lines] = section.split("\n");
-      const content = lines.join("\n").trim();
-      if (!content) return null;
-
-      const headingSlug = heading.toLowerCase().replace(/\s+/g, "-");
+    .map((section, i) => {
+      const heading = section.match(/^## (.+)/m)?.[1] ?? null;
 
       return {
-        chunk_id: `${groupId}:body:${headingSlug}`,
-        content: `${heading}\n${content}`,
-        namespace:
-          meta.parent_type === "topic" || meta.parent_type === "person"
-            ? "global"
-            : "contextual",
+        chunk_id: `${groupId}:body:${i}`,
+        content: section, // keep as-is, heading and all
+        namespace,
         metadata: {
           ...meta,
           chunk_type: "body_section",
-          heading,
+          ...(heading ? { heading } : {}),
         },
       };
-    })
-    .filter(Boolean) as Chunk[];
+    });
 }
 
 // ─── place chunks ─────────────────────────────────────────────────────────────
@@ -309,8 +325,6 @@ function parseBody(
 function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("place", entry);
   const meta = buildBaseMeta("place", entry, {
-    // place_id: entry.place_id,
-    place_type: entry.place_type,
     city_id: entry.admin_zone?.zone_id ?? null,
     floor_number: entry.location?.floor_number ?? null,
     centroid_lat: entry.location?.centroid_lat ?? null,
@@ -327,19 +341,30 @@ function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
       entry.name,
       entry.short_name ? `Also known as: ${entry.short_name}` : null,
       entry.aliases?.length ? `Aliases: ${entry.aliases.join(", ")}` : null,
-      entry.place_type,
-      entry.description,
     ]
       .filter(Boolean)
       .join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
 
+  // operational chunk (hours, tickets, accessibility, policies)
+  if (entry.operational_info) {
+    chunks.push(
+      ...parseTextBlock(
+        entry.operational_info,
+        "operational",
+        groupId,
+        "contextual",
+        meta,
+      ),
+    );
+  }
+
   // body sections
-  chunks.push(...parseBody(entry.body, groupId, meta));
+  chunks.push(...parseBody(entry.body, groupId, "contextual", meta));
 
   // knowledge (facts + faqs)
-  chunks.push(...parseKnowledge(entry.knowledge, groupId, meta));
+  chunks.push(...parseKnowledge(entry.knowledge, groupId, "contextual", meta));
 
   return chunks;
 }
@@ -351,100 +376,47 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
   const meta = buildBaseMeta("artwork", entry, {
     artwork_id: entry.artwork_id,
     artwork_type: entry.artwork_type,
-    // place_id: entry.place?.place_id ?? null,
-    on_loan: entry.on_loan ?? false,
-    floor_number: entry.location?.floor_number ?? null,
-    centroid_lat: entry.location?.centroid_lat ?? null,
-    centroid_lng: entry.location?.centroid_lng ?? null,
   });
 
   const chunks: Chunk[] = [];
 
-  // resolve attributions
-  const attributions = (entry.attributions ?? [])
-    .map((a: any) => {
-      const name = a.person?.name ?? a.name_text ?? "Unknown";
-      return `${name} (${a.role})`;
-    })
-    .join(", ");
-
   // identity chunk
   chunks.push({
     chunk_id: `${groupId}:identity`,
-    namespace: "contextual",
+    namespace: "global",
     content: [
-      entry.title,
-      entry.alternate_titles?.length
-        ? `Also known as: ${entry.alternate_titles.join(", ")}`
+      entry.name,
+      entry.aliases?.length
+        ? `Also known as: ${entry.aliases.join(", ")}`
         : null,
-      attributions ? `By: ${attributions}` : null,
+      entry.attribution,
       entry.date,
       entry.medium,
       entry.artwork_type,
-      entry.description,
     ]
       .filter(Boolean)
       .join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
 
-  // visual description chunk
+  // text blocks with --- separators
   if (entry.visual_description) {
-    chunks.push({
-      chunk_id: `${groupId}:visual`,
-      namespace: "contextual",
-      content: entry.visual_description,
-      metadata: { ...meta, chunk_type: "visual_description" },
-    });
-  }
-
-  // style chunk
-  if (entry.style_tags?.length || entry.movements?.length || entry.period) {
-    chunks.push({
-      chunk_id: `${groupId}:style`,
-      namespace: "contextual",
-      content: [
-        entry.title,
-        entry.period ? `Period: ${entry.period}` : null,
-        entry.movements?.length
-          ? `Movements: ${entry.movements.join(", ")}`
-          : null,
-        entry.style_tags?.length
-          ? `Style: ${entry.style_tags.join(", ")}`
-          : null,
-        entry.medium ? `Medium: ${entry.medium}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      metadata: { ...meta, chunk_type: "style" },
-    });
-  }
-
-  // subject chunk
-  if (entry.subject_tags?.length || entry.dominant_colors?.length) {
-    chunks.push({
-      chunk_id: `${groupId}:subject`,
-      namespace: "contextual",
-      content: [
-        entry.title,
-        entry.subject_tags?.length
-          ? `Subject: ${entry.subject_tags.join(", ")}`
-          : null,
-        entry.dominant_colors?.length
-          ? `Colors: ${entry.dominant_colors.join(", ")}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      metadata: { ...meta, chunk_type: "subject" },
-    });
+    chunks.push(
+      ...parseTextBlock(
+        entry.visual_description,
+        "visual",
+        groupId,
+        "global",
+        meta,
+      ),
+    );
   }
 
   // body sections
-  chunks.push(...parseBody(entry.body, groupId, meta));
+  chunks.push(...parseBody(entry.body, groupId, "global", meta));
 
   // knowledge (facts + faqs)
-  chunks.push(...parseKnowledge(entry.knowledge, groupId, meta));
+  chunks.push(...parseKnowledge(entry.knowledge, groupId, "global", meta));
 
   return chunks;
 }
@@ -457,7 +429,6 @@ async function buildExhibitionChunks(
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
-    // place_id: entry.place?.place_id ?? null,
     is_current: entry.is_current ?? true,
     floor_number: entry.place?.location?.floor_number ?? null,
   });
@@ -486,10 +457,9 @@ async function buildExhibitionChunks(
     if (!artwork) continue;
 
     const title = artwork.name ?? artwork.title;
-    const artworkGroupId = buildGroupId("artwork", artwork);
 
     chunks.push({
-      chunk_id: `${artworkGroupId}:exhibition`,
+      chunk_id: `${groupId}:placement:${artwork.artwork_id}`,
       namespace: "contextual",
       content: [`${title} is on display at ${entry.name}.`]
         .filter(Boolean)
@@ -502,8 +472,8 @@ async function buildExhibitionChunks(
     });
   }
 
-  chunks.push(...parseBody(entry.body, groupId, meta));
-  chunks.push(...parseKnowledge(entry.knowledge, groupId, meta));
+  chunks.push(...parseBody(entry.body, groupId, "contextual", meta));
+  chunks.push(...parseKnowledge(entry.knowledge, groupId, "contextual", meta));
 
   return chunks;
 }
@@ -537,8 +507,8 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
     metadata: { ...meta, chunk_type: "identity" },
   });
 
-  chunks.push(...parseBody(entry.body, groupId, meta));
-  chunks.push(...parseKnowledge(entry.knowledge, groupId, meta));
+  chunks.push(...parseBody(entry.body, groupId, "global", meta));
+  chunks.push(...parseKnowledge(entry.knowledge, groupId, "global", meta));
 
   return chunks;
 }
@@ -555,7 +525,7 @@ function buildTopicChunks(entry: Record<string, any>): Chunk[] {
   const chunks: Chunk[] = [];
 
   chunks.push({
-    chunk_id: `${groupId}:body`,
+    chunk_id: `${groupId}:identity`,
     namespace: "global",
     content: [
       entry.name,
@@ -564,14 +534,14 @@ function buildTopicChunks(entry: Record<string, any>): Chunk[] {
         : null,
       entry.summary,
       entry.keywords?.length ? `Keywords: ${entry.keywords.join(", ")}` : null,
-      entry.body,
     ]
       .filter(Boolean)
       .join("\n"),
-    metadata: { ...meta, chunk_type: "topic" },
+    metadata: { ...meta, chunk_type: "identity" },
   });
 
-  chunks.push(...parseKnowledge(entry.knowledge, groupId, meta));
+  chunks.push(...parseBody(entry.body, groupId, "global", meta));
+  chunks.push(...parseKnowledge(entry.knowledge, groupId, "global", meta));
 
   return chunks;
 }
@@ -619,11 +589,45 @@ async function fetchStrapiEntry(model: string, documentId: string) {
 }
 
 /**
- * Null and undefined values can cause Pinecone upsert to fail.
- * So we strip them out.
+ * Pinecone metadata only accepts: string, number, boolean, or string[].
+ * null/undefined values, empty strings, empty arrays, and non-string arrays
+ * either get rejected at upsert or silently corrupt the request — so we
+ * strip/normalize them here rather than finding out at upsert time.
  */
 function stripNullMetadata(metadata: Record<string, any>): Record<string, any> {
-  return Object.fromEntries(
-    Object.entries(metadata).filter(([, v]) => v !== null && v !== undefined),
-  );
+  const result: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(metadata)) {
+    if (value === null || value === undefined) continue;
+
+    if (typeof value === "string") {
+      if (value.trim() === "") continue; // empty string — nothing to filter/boost on
+      result[key] = value;
+      continue;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      result[key] = value;
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      const strArray = value.filter(
+        (v) => typeof v === "string" && v.trim() !== "",
+      );
+      if (strArray.length === 0) continue; // empty array — drop the key entirely
+      result[key] = strArray;
+      continue;
+    }
+
+    // objects, dates, anything else Pinecone metadata doesn't support —
+    // log it so a bad value surfaces in monitoring instead of failing
+    // silently or erroring deep inside the Pinecone SDK
+    console.warn(
+      `[stripNullMetadata] dropping unsupported metadata value for key "${key}":`,
+      value,
+    );
+  }
+
+  return result;
 }

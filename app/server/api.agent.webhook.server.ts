@@ -25,6 +25,8 @@ import {
   type RecordMetadata,
   type ScoredPineconeRecord,
 } from "@pinecone-database/pinecone";
+import { classifyQuery } from "~/server/agent/query.classifier.server";
+import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
 
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
@@ -106,6 +108,12 @@ export const handleWebhook: ActionFunction = async (args) => {
     console.log("debug: trimmedHistory ", trimmedHistory);
 
     /*
+     * ✏️ classify the query
+     */
+    const queryClassification = await classifyQuery(query, trimmedHistory);
+    const agentConfig = QUERY_TYPE_CONFIG[queryClassification.type];
+
+    /*
      * 💬 get the conversation summary
      */
     const conversationSummary = await getConversationSummary(
@@ -126,23 +134,29 @@ export const handleWebhook: ActionFunction = async (args) => {
      */
     const index = pc.index("wonderway");
     const queryEmbedding = await getQueryEmbedding(query);
+    const useContextual = agentConfig.tools.includes("pinecone_contextual");
+    const useGlobal = agentConfig.tools.includes("pinecone_global");
     const [contextualResults, globalResults] = await Promise.all([
-      index.namespace("contextual").query({
-        vector: queryEmbedding,
-        topK: 5,
-        includeMetadata: true,
-        filter: {
-          $or: [
-            { exhibition_id: { $eq: place } },
-            { place_id: { $eq: place } },
-          ],
-        },
-      }),
-      index.namespace("global").query({
-        vector: queryEmbedding,
-        topK: 3,
-        includeMetadata: true,
-      }),
+      useContextual
+        ? index.namespace("contextual").query({
+            vector: queryEmbedding,
+            topK: agentConfig.contextualTopK,
+            includeMetadata: true,
+            filter: {
+              $or: [
+                { exhibition_id: { $eq: place } },
+                { place_id: { $eq: place } },
+              ],
+            },
+          })
+        : Promise.resolve({ matches: [] }),
+      useGlobal
+        ? index.namespace("global").query({
+            vector: queryEmbedding,
+            topK: agentConfig.globalTopK,
+            includeMetadata: true,
+          })
+        : Promise.resolve({ matches: [] }),
     ]);
     console.log("debug: pinecone contextualResults ", contextualResults);
     console.log("debug: pinecone globalResults ", globalResults);
@@ -151,8 +165,8 @@ export const handleWebhook: ActionFunction = async (args) => {
      * 🌲 pinecone part two: filter results
      */
     const SCORE_THRESHOLDS = {
-      contextual: 0.65,
-      global: 0.6,
+      contextual: agentConfig.contextualScoreThreshold ?? 0.65,
+      global: agentConfig.globalScoreThreshold ?? 0.6,
     };
     function filterByScore(
       matches: ScoredPineconeRecord<RecordMetadata>[],
@@ -210,7 +224,9 @@ export const handleWebhook: ActionFunction = async (args) => {
      * 🌍 wikipedia fallback
      */
     let wikiSummary: string | null = null;
-    const wikiPromise = fetchWikipedia(query);
+    const wikiPromise = agentConfig.tools.includes("wiki_fallback")
+      ? fetchWikipedia(query)
+      : Promise.resolve(null);
 
     const WIKI_SCORE_THRESHOLD = 0.65;
     const WIKI_MIN_MATCHES = 2;
@@ -219,7 +235,9 @@ export const handleWebhook: ActionFunction = async (args) => {
       (m) => (m.score ?? 0) >= WIKI_SCORE_THRESHOLD,
     );
 
-    const shouldFallbackToWiki = strongMatches.length < WIKI_MIN_MATCHES;
+    const shouldFallbackToWiki =
+      strongMatches.length < WIKI_MIN_MATCHES &&
+      agentConfig.tools.includes("wiki_fallback");
     if (shouldFallbackToWiki) {
       wikiSummary = await wikiPromise;
 
@@ -264,7 +282,7 @@ export const handleWebhook: ActionFunction = async (args) => {
           stream: true,
           temperature: 0, // deterministic
           top_p: 1,
-          max_completion_tokens: 150,
+          max_completion_tokens: agentConfig.maxResponseTokens ?? 150,
         });
 
         try {
@@ -283,7 +301,7 @@ export const handleWebhook: ActionFunction = async (args) => {
           const history_object: HistoryLog = {
             user_id,
             query,
-            query_classification: "on-topic",
+            query_classification: queryClassification.type,
             response: replyText,
             response_time: Date.now() - timerStart,
             tools,
