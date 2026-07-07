@@ -73,6 +73,8 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     return;
   }
 
+  if (model !== "exhibition") return;
+
   // TODO error handling please
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
 
@@ -80,9 +82,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     `[strapi geo webhook] fetched full entry for ${model} fullEntry: ${JSON.stringify(fullEntry, null, 2)}`,
   );
 
-  if (model === "exhibition" || model === "place") {
-    await storeGeoDataForExhibition(fullEntry);
-  }
+  await storeGeoDataForExhibition(fullEntry);
 }
 
 // ─── delete handler ───────────────────────────────────────────────────────────

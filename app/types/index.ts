@@ -4,7 +4,7 @@ export type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 export type AccessCategory = "active" | "unused" | "expired" | "trial" | "none";
 export type AccessRecord = AccessRow & { category: AccessCategory };
 
-export type AgentChatMesssage = {
+export type AgentChatMessage = {
   role: "user" | "assistant";
   content: string;
 };

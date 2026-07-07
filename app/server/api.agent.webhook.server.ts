@@ -27,6 +27,7 @@ import {
 } from "@pinecone-database/pinecone";
 import { classifyQuery } from "~/server/agent/query.classifier.server";
 import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
+import { AgentConfig } from "~/types";
 
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
@@ -142,12 +143,7 @@ export const handleWebhook: ActionFunction = async (args) => {
             vector: queryEmbedding,
             topK: agentConfig.contextualTopK,
             includeMetadata: true,
-            filter: {
-              $or: [
-                { exhibition_id: { $eq: place } },
-                { place_id: { $eq: place } },
-              ],
-            },
+            filter: buildContextualPineconeFilter(agentConfig, place),
           })
         : Promise.resolve({ matches: [] }),
       useGlobal
@@ -164,25 +160,22 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 🌲 pinecone part two: filter results
      */
-    const SCORE_THRESHOLDS = {
-      contextual: agentConfig.contextualScoreThreshold ?? 0.65,
-      global: agentConfig.globalScoreThreshold ?? 0.6,
-    };
     function filterByScore(
       matches: ScoredPineconeRecord<RecordMetadata>[],
-      threshold: number,
+      threshold: number | null,
     ) {
+      if (threshold === null) return matches; // no score gate — e.g. discovery
       return matches.filter((match) => (match.score ?? 0) >= threshold);
     }
 
     const contextualMatches = filterByScore(
       contextualResults.matches,
-      SCORE_THRESHOLDS.contextual,
+      agentConfig.contextualScoreThreshold,
     );
 
     const globalMatches = filterByScore(
       globalResults.matches,
-      SCORE_THRESHOLDS.global,
+      agentConfig.globalScoreThreshold,
     );
 
     const allMatches = [...contextualMatches, ...globalMatches];
@@ -307,7 +300,7 @@ export const handleWebhook: ActionFunction = async (args) => {
             tools,
             details: {
               place,
-              prompt_source: redisPrompt ? "contextual" : "default",
+              prompt_source: redisPrompt ? "cms" : "default",
             },
           };
           await logAgentHistory(history_object);
@@ -403,4 +396,65 @@ async function getConversationSummary(
   }
 
   return existingSummary || "";
+}
+
+/**
+ * Builds the Pinecone filter for the "contextual" namespace based on the
+ * active query type's config flags.
+ *
+ * CURRENT STATE (placeholder, not final):
+ * - geoFiltered only knows about a single resolved `place` (from request body /
+ *   QR code / venue selector) — not real proximity yet.
+ *
+ * TODO — geoFiltered needs to grow into several distinct strategies:
+ *
+ * 1. Real lat/lng proximity: once resolveNearbyPlaces(userLat, userLng) exists,
+ *    swap the single `place` $eq for `place_id: { $in: nearbyPlaceIds }` /
+ *    `exhibition_id: { $in: nearbyExhibitionIds }`. Keep today's single-place
+ *    $eq as the fallback when lat/lng isn't available yet, so behavior doesn't
+ *    regress for institutions that haven't rolled geo out.
+ *
+ * 2. NOT every type's "nearby" logic should live here:
+ *    - navigational_locate has geoFiltered: false ON PURPOSE — it's an
+ *      institution-wide name lookup, the visitor is asking specifically
+ *      because the thing ISN'T nearby. Don't accidentally geo-scope it.
+ *    - visual_id doesn't use this function's geo clause at all. Its geo
+ *      scoping happens via a separate hop: resolveNearbyArtworks() from
+ *      Redis -> artwork_id: { $in: [...] } filter against the GLOBAL
+ *      namespace, not this contextual filter.
+ *
+ * 3. comparative entity-pair resolution: once the pipeline can resolve a
+ *    query like "compare this room to the Rothko room" into two specific
+ *    place/exhibition IDs, that resolved $in filter should REPLACE the geo
+ *    clause for that call, not stack with it — combining "near me" AND
+ *    "matches these two specific IDs" at once can over-constrain and
+ *    silently return zero results for the entity that isn't nearby.
+ *    This function will need a `resolvedEntityIds?: string[]` param that,
+ *    when present, takes priority over the geoFiltered clause.
+ *
+ * 4. discovery's highlight-filter fallback (retry without is_highlight if
+ *    starved) is a runtime retry that depends on inspecting RESULTS, not
+ *    something this function can express — that logic stays one level up,
+ *    in the pipeline, as a second call to this function / a second query.
+ */
+function buildContextualPineconeFilter(
+  agentConfig: AgentConfig,
+  place: string,
+): Record<string, any> {
+  const clauses: Record<string, any>[] = [];
+
+  if (agentConfig.geoFiltered) {
+    // TODO: replace with nearbyPlaceIds/$in once lat/lng lands — see note 1 above
+    clauses.push({
+      $or: [{ exhibition_id: { $eq: place } }, { place_id: { $eq: place } }],
+    });
+  }
+
+  if (agentConfig.highlightFiltered) {
+    clauses.push({ is_highlight: { $eq: true } });
+  }
+
+  if (clauses.length === 0) return {}; // neither flag set — unfiltered search
+  if (clauses.length === 1) return clauses[0]; // no need for $and wrapper with just one clause
+  return { $and: clauses }; // both flags set — combine with $and
 }

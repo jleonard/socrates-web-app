@@ -565,8 +565,11 @@ async function storePromptInRedis(model: string, entry: Record<string, any>) {
 
   const redis = await getRedis();
 
+  const id = entry[`${model}_id`] ?? entry.documentId;
+  if (!id) return; // nothing to key on
+
   try {
-    await redis.set(`prompt:${groupId}`, entry.prompt);
+    await redis.set(`prompt:${id}`, entry.prompt);
   } catch (err) {
     // TODO sentry error
   }
