@@ -32,6 +32,12 @@ import { AvatarConnection, AvatarMode } from "types/avatar";
 
 import { Stopwatch } from "components/Stopwatch/Stopwatch";
 import { UserPen } from "lucide-react";
+import {
+  requestInitialLocation,
+  getFreshLocation,
+  Coords,
+  resolvePendingPermission,
+} from "~/utils/location.client";
 
 const ParentComponent: React.FC = () => {
   const { access, elevenLabsId, sessionId, user, user_profile, place } =
@@ -175,8 +181,10 @@ const ParentComponent: React.FC = () => {
   });
 
   const startConversation = useCallback(async () => {
-    const user_lat = coords?.lat ?? 0;
-    const user_long = coords?.long ?? 0;
+    const freshCoords = await getFreshLocation(coords);
+    setCoords(freshCoords);
+    const user_lat = freshCoords?.lat ?? 0;
+    const user_long = freshCoords?.long ?? 0;
     const user_session = `${user.id}__${sessionId}`;
     const conversation_id = crypto
       .randomUUID()
@@ -285,70 +293,25 @@ const ParentComponent: React.FC = () => {
     }
   };
 
-  const requestLocationPermission = () => {
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
-      setLocationPermissionStatus("denied");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          lat: position.coords.latitude,
-          long: position.coords.longitude,
-        });
-        setLocationPermissionStatus("granted");
-        setShowLocationModal(false);
-      },
-      () => {
-        // Si el usuario deniega o hay error, usar coordenadas del MET en desarrollo
-        if (
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"
-        ) {
-          setCoords({
-            lat: 40.7794, // MET Museum, NYC
-            long: -73.9632,
-          });
-          setLocationPermissionStatus("granted");
-        } else {
-          setLocationPermissionStatus("denied");
-          setCoords(null);
-        }
-        setShowLocationModal(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutos
-      },
-    );
+  const requestLocationPermission = async () => {
+    const { coords, status } = await requestInitialLocation();
+    setCoords(coords);
+    setLocationPermissionStatus(status);
+    setShowLocationModal(false);
   };
 
   const handleLocationModalClose = () => {
     setShowLocationModal(false);
-    // Si el usuario cierra el modal sin dar permisos, usar coordenadas por defecto en desarrollo
     if (locationPermissionStatus === "pending") {
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-      ) {
-        setCoords({
-          lat: 40.7794, // MET Museum, NYC
-          long: -73.9632,
-        });
-      } else {
-        setCoords(null);
-      }
-      setLocationPermissionStatus("denied");
+      const { coords, status } = resolvePendingPermission();
+      setCoords(coords);
+      setLocationPermissionStatus(status);
     }
   };
 
   // Effect to show location modal on mount
   useEffect(() => {
-    // @todo - turn back on when ready
-    setShowLocationModal(false);
+    setShowLocationModal(true);
   }, []);
 
   useEffect(() => {
