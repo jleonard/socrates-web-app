@@ -45,7 +45,7 @@ export const handleWebhook: ActionFunction = async (args) => {
      * process body vars
      */
     const { query: postedQuery, user_id, place, user_lat, user_long } = body;
-    console.log("agent got location ", user_lat, user_long);
+    console.log("agent got location :: ", user_lat, user_long);
 
     const useLegacy = USE_LEGACY || place === "mit" || place === "wonderway";
 
