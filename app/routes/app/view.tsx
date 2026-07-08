@@ -203,7 +203,7 @@ const ParentComponent: React.FC = () => {
         dynamicVariables: {
           user_lat,
           user_long,
-          user_id: user_profile?.id ?? user.id,
+          user_id: user_profile?.user_id ?? user.id,
           user_session,
           conversation_id,
           place: activePlace,
