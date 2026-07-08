@@ -243,7 +243,7 @@ export const handleLegacyWebhook: ActionFunction = async ({ request }) => {
         content: `Previous conversation context: ${summary}`,
       });
     }
-    // console.log("Messages sent to OpenAI:", messages);
+    console.log("Messages sent to OpenAI:", messages);
 
     // --- 5️⃣ Streaming response ---
     const stream = new ReadableStream({

@@ -56,7 +56,8 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 📦 process body vars
      */
-    const { query, user_id, place } = body;
+    const { query, user_id, place, user_lat, user_long } = body;
+    console.log("agent got location :: ", user_lat, user_long);
 
     /* 🔷 logging: prep the history log */
     const timerStart = Date.now();
@@ -69,6 +70,7 @@ export const handleWebhook: ActionFunction = async (args) => {
       event_details: {
         user_id,
         place,
+        coords: { lat: user_lat, long: user_long },
       },
     });
 
@@ -131,7 +133,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     console.log("debug: conversationSummary ", conversationSummary);
 
     /*
-     * 🌲 pinecone part one: get results
+     * 🌲 pinecone part one: get contextual and global results
      */
     const index = pc.index("wonderway");
     const queryEmbedding = await getQueryEmbedding(query);
