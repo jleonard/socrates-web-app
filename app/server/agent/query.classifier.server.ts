@@ -6,7 +6,7 @@ const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 // Single source of truth for what happens after classifyQuery() returns a type.
 // ============================================================================
 
-import type { AgentChatMesssage, AgentQueryType } from "~/types";
+import type { AgentChatMessage, AgentQueryType } from "~/types";
 
 export interface ClassificationResult {
   type: AgentQueryType;
@@ -65,7 +65,7 @@ function isValidQueryType(value: unknown): value is AgentQueryType {
 
 export async function classifyQuery(
   query: string,
-  recentHistory: AgentChatMesssage[] = [],
+  recentHistory: AgentChatMessage[] = [],
 ): Promise<ClassificationResult> {
   try {
     const response = await openai.chat.completions.create({

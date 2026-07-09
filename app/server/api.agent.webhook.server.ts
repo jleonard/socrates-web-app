@@ -1,34 +1,32 @@
-import type { ActionFunction } from "react-router";
-import { getRedis } from "~/utils/redis.server";
-import OpenAI from "openai";
-import {
-  role,
-  context,
-  goals,
-  accuracy,
-  guardrails,
-} from "~/utils/system.prompt";
-import {
-  queryPinecone,
-  getQueryEmbedding,
-  PINECONE_SCORE,
-} from "~/utils/pinecone";
-import { fetchWikipedia } from "~/utils/wikipedia.tool";
-import { storeCache } from "~/utils/cache.server";
-import { correctTranscription } from "~/utils/query-correction.server";
-import { logAgentHistory } from "~/utils/history.server";
-import { HistoryLog, ToolLog } from "~/types";
-import * as Sentry from "@sentry/react-router";
-import { logAppEvent } from "~/utils/events/appEvents.server";
 import {
   Pinecone,
   type RecordMetadata,
   type ScoredPineconeRecord,
 } from "@pinecone-database/pinecone";
-import { classifyQuery } from "~/server/agent/query.classifier.server";
+import * as Sentry from "@sentry/react-router";
+import OpenAI from "openai";
+import type { ActionFunction } from "react-router";
 import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
-import { AgentConfig } from "~/types";
-
+import { classifyQuery } from "~/server/agent/query.classifier.server";
+import { AgentConfig, HistoryLog, ToolLog } from "~/types";
+import { storeCache } from "~/utils/cache.server";
+import { logAppEvent } from "~/utils/events/appEvents.server";
+import { logAgentHistory } from "~/utils/history.server";
+import {
+  getQueryEmbedding,
+  PINECONE_SCORE,
+  queryPinecone,
+} from "~/utils/pinecone";
+import { correctTranscription } from "~/utils/query-correction.server";
+import { getRedis } from "~/utils/redis.server";
+import {
+  accuracy,
+  context,
+  goals,
+  guardrails,
+  role,
+} from "~/utils/system.prompt";
+import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
 let USE_LEGACY = false;
@@ -57,7 +55,6 @@ export const handleWebhook: ActionFunction = async (args) => {
      * 📦 process body vars
      */
     const { query, user_id, place, user_lat, user_long } = body;
-    console.log("agent got location :: ", user_lat, user_long);
 
     /* 🔷 logging: prep the history log */
     const timerStart = Date.now();
