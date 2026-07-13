@@ -121,9 +121,15 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       return;
   }
 
+  // save mispronounciations to redis for agent context
   if (entry?.mispronounciations) {
     const groupId = buildGroupId(model, entry);
     console.log("mispronounciations", entry.mispronounciations, groupId);
+    const redis = await getRedis();
+    await redis.set(
+      `mispronounciations:${groupId}`,
+      JSON.stringify(entry.mispronounciations),
+    );
   }
 
   if (!chunks.length) {
