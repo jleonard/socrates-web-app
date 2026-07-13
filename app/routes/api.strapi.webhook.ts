@@ -2,9 +2,9 @@
  * Parse strapi body into the RAG
  */
 
-import type { ActionFunctionArgs } from "react-router";
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
+import type { ActionFunctionArgs } from "react-router";
 import { getRedis } from "~/utils/redis.server";
 
 // ─── clients ────────────────────────────────────────────────────────────────
@@ -119,6 +119,11 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     default:
       console.log(`[webhook] no handler for model: ${model}`);
       return;
+  }
+
+  if (entry?.mispronounciations) {
+    const groupId = buildGroupId(model, entry);
+    console.log("mispronounciations", entry.mispronounciations, groupId);
   }
 
   if (!chunks.length) {
