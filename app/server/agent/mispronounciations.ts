@@ -36,6 +36,8 @@ export async function correctMispronunciations(
     corrected = corrected.replace(pattern, entry);
   }
 
+  console.log("correctMispronunciations", { id, query, corrected });
+
   return corrected === query ? null : corrected;
 }
 

@@ -86,8 +86,10 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * ✏️ TODO fix mispronounciations
      */
-    query = await correctMispronunciations(place, query);
-    // todo log it
+    let corrected = await correctMispronunciations(place, query);
+    if (corrected) {
+      query = corrected;
+    }
 
     /*
      * ✏️ setup the messages array we'll send to the LLM
