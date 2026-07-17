@@ -1,6 +1,8 @@
 // import Fuse from "fuse.js";
 // import { doubleMetaphone } from "double-metaphone";
 
+// LEGACY TOOL USED FOR MIT ONLY
+
 // ---------- Entities ----------
 // @todo - implement this later.
 // this was used for more sophisticated phonetic or fuzzy replacements

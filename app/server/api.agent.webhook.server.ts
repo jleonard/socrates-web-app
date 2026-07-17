@@ -27,6 +27,7 @@ import {
   role,
 } from "~/utils/system.prompt";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
+import { correctMispronunciations } from "./agent/mispronounciations";
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
 let USE_LEGACY = false;
@@ -54,7 +55,9 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 📦 process body vars
      */
-    const { query, user_id, place, user_lat, user_long } = body;
+    const { query: postedQuery, user_id, place, user_lat, user_long } = body;
+
+    let query = postedQuery;
 
     /* 🔷 logging: prep the history log */
     const timerStart = Date.now();
@@ -83,6 +86,8 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * ✏️ TODO fix mispronounciations
      */
+    query = await correctMispronunciations(place, query);
+    // todo log it
 
     /*
      * ✏️ setup the messages array we'll send to the LLM

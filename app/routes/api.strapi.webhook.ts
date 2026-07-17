@@ -127,7 +127,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     console.log("mispronounciations", entry.mispronounciations, groupId);
     const redis = await getRedis();
     await redis.set(
-      `mispronounciations:${groupId}`,
+      `mispronounciations:${entry[`${model}_id`]}`,
       JSON.stringify(entry.mispronounciations),
     );
   }
