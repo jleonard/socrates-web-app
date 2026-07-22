@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useLoaderData, Link, redirect, useNavigate } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
-import { getSupabaseServerClient } from "~/utils/supabase.server";
-import type { Json } from "~/types/supabase";
 import ChatMessage from "components/ChatMessage/ChatMessage";
+import { Container } from "components/Container/Container";
+import React, { useEffect, useState } from "react";
+import type { LoaderFunctionArgs } from "react-router";
+import { Link, redirect, useLoaderData, useNavigate } from "react-router";
+import type { Json } from "~/types/supabase";
+import { getSupabaseServerClient } from "~/utils/supabase.server";
+
+// enables scrolling for the view.
+export const handle = { scrollable: true };
 
 const PAGE_SIZE = 25;
 
@@ -106,8 +110,8 @@ const HistoryPage: React.FC = () => {
 
   return (
     <>
-      <section className="h-full overflow-auto scrollbar-hide">
-        <ul className="max-w-[600px] pb-56 flex flex-1 flex-col gap-3 overflow-scroll">
+      <Container>
+        <ul className="max-w-[600px] mx-auto flex flex-1 flex-col gap-3 overflow-scroll">
           {allConversations.map((convo, convoIdx) => {
             const dateStr = new Date(convo.created_at).toLocaleDateString(
               "en-US",
@@ -158,9 +162,9 @@ const HistoryPage: React.FC = () => {
             </li>
           )}
         </ul>
-      </section>
+      </Container>
 
-      <div className="fixed bottom-0 left-0 py-2 z-10 bg-paper-background w-full flex justify-center">
+      <div className="hidden fixed bottom-0 left-0 py-2 z-10 bg-paper-background w-full flex justify-center">
         <div className="px-8 max-w-[1024px] w-full mx-auto relative">
           <Link
             to="/app"

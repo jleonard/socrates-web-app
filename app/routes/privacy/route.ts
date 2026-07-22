@@ -5,6 +5,8 @@ import type { loader } from "./loader";
 export { loader } from "./loader";
 export { default } from "./view";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: data?.pageTitle }];
+export const handle = { scrollable: true };
+
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
+  return [{ title: loaderData?.pageTitle }];
 };

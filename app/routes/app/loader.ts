@@ -1,12 +1,11 @@
-import { redirect, data, type LoaderFunctionArgs } from "react-router";
-import { getSupabaseServerClient } from "~/utils/supabase.server";
-import { getSessionId, sessionStorage } from "~/sessions.server";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { userHasAccess } from "~/server/access.manager.server";
 import { signInGuest, signOutGuest } from "~/server/guest.manager.server";
-import { setUserPromo, getPromo } from "~/server/promo.manager.server";
+import { getPromo, setUserPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
-import type { AccessRecord, UserProfile } from "~/types";
-import type { UserProfileInsert } from "~/types";
+import { getSessionId, sessionStorage } from "~/sessions.server";
+import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
+import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase, headers: supabaseHeaders } =
@@ -64,7 +63,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
-  console.log("last check user ", user?.id);
+  // console.log("last check user ", user?.id);
 
   // if no signed in user OR no guest access allowed on the promo, redirect
   if (!user) {

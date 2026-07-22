@@ -4,10 +4,22 @@
 
 html,
 body {
-  font-family: "Montserrat", sans-serif;
+  font-family: "Inter", sans-serif;
+  /* font-family: "Montserrat", sans-serif; */
 
   @media (prefers-color-scheme: dark) {
     /* color-scheme: dark; */
+  }
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Montserrat", sans-serif;
   }
 }
 
@@ -36,5 +48,7 @@ body {
 .social-button--google {
   background-color: white;
   color: rgba(0, 0, 0, 0.54);
-  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.084), 0 2px 3px 0 rgba(0, 0, 0, 0.168);
+  box-shadow:
+    0 0 3px 0 rgba(0, 0, 0, 0.084),
+    0 2px 3px 0 rgba(0, 0, 0, 0.168);
 }

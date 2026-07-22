@@ -1,4 +1,11 @@
+import { ControlBar } from "components/ControlBar/ControlBar";
+import { ErrorBoundary as RootErrorBoundary } from "components/ErrorBoundary/ErrorBoundary";
+import { Nav } from "components/Nav/Nav";
+import { OverlayNav } from "components/OverlayNav/OverlayNav";
+import { useEffect } from "react";
+import type { LinksFunction, LoaderFunction } from "react-router";
 import {
+  data,
   Links,
   Meta,
   Outlet,
@@ -6,16 +13,13 @@ import {
   ScrollRestoration,
   useLoaderData,
   useLocation,
-  data,
+  useMatches,
 } from "react-router";
-import { useEffect } from "react";
-import type { LinksFunction, LoaderFunction } from "react-router";
+import { NavOverlayProvider } from "./context/nav-overlay";
+import { usePageConfig } from "./hooks/usePageConfig";
 import { usePageViews } from "./hooks/usePageViews";
-import { useBackgroundClass } from "./hooks/useBackgroundClass";
-import { usePlaceStore } from "./stores/placeStore";
-import { ErrorBoundary as RootErrorBoundary } from "components/ErrorBoundary/ErrorBoundary";
 import { sessionStorage } from "./sessions.server";
-import { Nav } from "components/Nav/Nav";
+import { usePlaceStore } from "./stores/placeStore";
 
 import "./tailwind.css";
 
@@ -28,7 +32,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap",
   },
 ];
 
@@ -39,6 +43,8 @@ export const loader = async ({ request }: { request: Request }) => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { backgroundClass } = usePageConfig();
+
   // Handle the case where useLoaderData might fail in error boundaries
   let GA_TRACKING_ID: string | undefined;
   try {
@@ -52,6 +58,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // ✅ Track route changes with google analytics
   usePageViews(GA_TRACKING_ID);
 
+  const matches = useMatches();
+  const scrollable = matches.some((m) => (m.handle as any)?.scrollable);
+  console.log(
+    "scrollable:",
+    scrollable,
+    matches.map((m) => m.handle),
+  );
+
   return (
     <html lang="en">
       <head>
@@ -59,17 +73,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        {/* font */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
-          rel="stylesheet"
-        />
         {GA_TRACKING_ID && (
           <>
             <script
@@ -92,18 +95,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </head>
       {/* px-8 max-w-[1024px] border border-red-600 w-screen h-screen mx-auto my-0 relative overflow-hidden overflow-x-clip z-0 ${useBackgroundClass()}` */}
-      <body className={`m-0 overflow-hidden ${useBackgroundClass()}`}>
-        <div
-          className={`px-8 max-w-[1024px] w-screen h-screen h-svh mx-auto my-0 relative overflow-hidden overflow-x-clip overflow-y-clip z-0 pb-safe`}
-        >
-          <Nav />
-          {children}
-          <ScrollRestoration />
-          <Scripts />
-          <footer className="hidden absolute left-0 right-0 bottom-0 text-center py-2 text-sm text-gray-500 bg-paper-background">
-            © {new Date().getFullYear()} ayapi.ai
-          </footer>
-        </div>
+      <body className={`m-0 ${backgroundClass}`}>
+        <NavOverlayProvider>
+          <div className="flex flex-col h-svh w-screen relative overflow-hidden z-0">
+            <OverlayNav />
+
+            <Nav />
+
+            <main
+              className={`flex-1 min-h-0 pb-safe relative ${
+                scrollable
+                  ? "overflow-y-auto"
+                  : "overflow-hidden overflow-x-clip overflow-y-clip"
+              }`}
+            >
+              {children}
+            </main>
+            <ControlBar />
+            <ScrollRestoration />
+            <Scripts />
+          </div>
+        </NavOverlayProvider>
       </body>
     </html>
   );

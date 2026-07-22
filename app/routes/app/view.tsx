@@ -1,41 +1,42 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
-import type { loader } from "./loader";
-import {
-  useLoaderData,
-  Link,
-  useSubmit,
-  useRevalidator,
-  useNavigate,
-} from "react-router";
-import * as Sentry from "@sentry/react";
 import { useConversation } from "@elevenlabs/react";
+import * as Sentry from "@sentry/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Link,
+  useLoaderData,
+  useNavigate,
+  useRevalidator,
+  useSubmit,
+} from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
+import type { loader } from "./loader";
 
 // stores
-import { useTranscriptStore } from "../../stores/transcriptStore";
 import { usePlaceStore } from "~/stores/placeStore";
+import { useTranscriptStore } from "../../stores/transcriptStore";
 
 import { AudioPlayer } from "components/AudioPlayer/AudioPlayer";
 import { Circles } from "components/Circles/Circles";
 import { CircleMode } from "components/Circles/Circles.types";
-import { GreetingButton } from "components/GreetingButton/GreetingButton";
-import { trackEvent } from "~/utils/googleAnalytics";
-import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { EBMMessage } from "components/EBMMessage/EBMMessage";
+import { GreetingButton } from "components/GreetingButton/GreetingButton";
 import LocationModal from "components/LocationModal/LocationModal";
 import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
+import { useNetworkStatus } from "~/hooks/useNetworkStatus";
+import { trackEvent } from "~/utils/googleAnalytics";
 
 import { AvatarConnection, AvatarMode } from "types/avatar";
 
 import { Stopwatch } from "components/Stopwatch/Stopwatch";
+import { SurveyBanner } from "components/SurveyBanner/SurveyBanner";
 import { UserPen } from "lucide-react";
 import {
-  requestInitialLocation,
-  getFreshLocation,
   Coords,
+  getFreshLocation,
+  requestInitialLocation,
   resolvePendingPermission,
 } from "~/utils/location.client";
 
@@ -367,7 +368,7 @@ const ParentComponent: React.FC = () => {
           />
         </>
       )}
-      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14 z-40">
+      <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14 z-30">
         <Circles key="avatar-circle" mode={circleMode}></Circles>
       </div>
 
@@ -376,6 +377,8 @@ const ParentComponent: React.FC = () => {
           <EBMMessage variant="error" message={error} />
         </div>
       )}
+
+      {place === "mit" && <SurveyBanner />}
 
       {!hasInternet && <OfflineDialog />}
 
@@ -402,7 +405,7 @@ const ParentComponent: React.FC = () => {
       {access?.category !== "expired" ? (
         <>
           <MainButton
-            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-20"
+            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-30"
             onPress={handleMainButtonPress}
             mode={buttonMode}
             userAccess={access?.category ?? "none"}
@@ -413,7 +416,7 @@ const ParentComponent: React.FC = () => {
       ) : (
         <>
           <PurchaseButton
-            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-20"
+            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-10"
             onClick={() => navigate("/purchase")}
             cta={
               <>
@@ -426,7 +429,7 @@ const ParentComponent: React.FC = () => {
           >
             <span className="font-bold">Unlock</span>
           </PurchaseButton>
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-2 z-20 text-center text-sm">
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-2 z-10 text-center text-sm">
             <span className="font-bold">$5</span> Day Pass{"  "}
             <br />
             <span className="font-bold">$15</span> Week Pass <br /> No
@@ -434,34 +437,6 @@ const ParentComponent: React.FC = () => {
           </span>
         </>
       )}
-
-      <div className="fixed bottom-0 left-0 w-full items-center z-10">
-        <div className="max-w-[1024px] mx-auto pb-4 px-8">
-          <Link to="/history">
-            <img
-              src="/icons/Bookmark.svg"
-              className="size-[38px]"
-              alt="view history"
-            />
-          </Link>
-        </div>
-      </div>
-
-      <div className="fixed bottom-5 right-5 z-50 hidden">
-        <span>active place : {activePlace}</span>
-        <Stopwatch />
-      </div>
-      {/*
-      <div className="fixed bottom-2 right-2 w-32 z-40 pointer-events-none bg-black text-white p-2 rounded-sm">
-        <span>
-          conversation status:{" "}
-          <span className="text-green-400">{conversation.status}</span>
-        </span>
-        <br />
-        <span>
-          avatar state: <span className="text-green-400">{avatarState}</span>
-        </span>
-      </div>*/}
     </>
   );
 };
