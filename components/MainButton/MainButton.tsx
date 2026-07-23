@@ -2,10 +2,9 @@ import React from "react";
 
 import { Button as ReactAriaButton } from "react-aria-components";
 
-import { MainButtonProps, MainButtonModes } from "./MainButton.types";
 import { MainButtonStyles } from "./MainButton.styles";
+import { MainButtonModes, MainButtonProps } from "./MainButton.types";
 
-import MicrophoneIcon from "./icons/Microphone.png";
 import { LoaderCircle } from "lucide-react";
 
 export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
@@ -24,7 +23,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
     const stateText: Record<MainButtonModes, string | null> = {
       disconnected: `Press to ${label.toLowerCase()}`,
       listening: "Ask away",
-      speaking: "Talking",
+      speaking: "Stop response",
       connecting: "Just a moment",
     };
 
@@ -76,7 +75,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
               <LoaderCircle className="animate-spin" size={24} />
             )}
             {mode === "listening" && (
-              <img className="size-[36px]" src={MicrophoneIcon} />
+              <img className="size-[36px]" src="/icons/EQ.svg" />
             )}
 
             {mode === "speaking" && (
