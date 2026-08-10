@@ -104,6 +104,8 @@ export type HistoryLog = {
   details?: Record<string, unknown>;
 };
 
+export type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
+
 export type ToolLog = {
   tool: "cache" | "rag" | "wikipedia" | "followup" | "fix-speech";
   details?: Record<string, unknown>; // score, index, original_query, text, etc.

@@ -26,6 +26,20 @@ export const ControlBar = ({ className }: { className?: string }) => {
         {/* left side */}
         <div className="flex flex-row gap-3">
           <Link
+            to="/map"
+            className="pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
+          >
+            <div className="w-6 h-6 flex items-center justify-center">
+              {/* icon img */}
+              <img src="/icons/Map.svg" alt="Map" />
+            </div>
+            Map
+          </Link>
+        </div>
+
+        {/* right side */}
+        <div className="flex flex-row gap-3">
+          <Link
             to="/history"
             className="pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
           >
@@ -35,10 +49,6 @@ export const ControlBar = ({ className }: { className?: string }) => {
             </div>
             History
           </Link>
-        </div>
-
-        {/* right side */}
-        <div className="flex flex-row gap-3">
           <button
             onClick={toggle}
             className="pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
