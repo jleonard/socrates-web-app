@@ -11,7 +11,7 @@ interface DropboxFile {
   id: string;
   name: string;
   dropbox_path: string;
-  client_modified: string;
+  dropbox_file_id: string;
 }
 
 interface ExifPayload {
@@ -49,7 +49,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({
       dropbox_file_id: file.id,
-      modified_time: file.client_modified,
       status: "success",
       latitude: gps?.latitude ?? null,
       longitude: gps?.longitude ?? null,
@@ -59,7 +58,6 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json(
       {
         dropbox_file_id: file.id,
-        modified_time: file.client_modified,
         status: "failed",
         latitude: null,
         longitude: null,
