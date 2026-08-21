@@ -16,11 +16,9 @@ interface ExifPayload {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const authHeader = request.headers.get("Authorization");
-  if (authHeader !== `Bearer ${SHARED_SECRET}`) {
+  if (request.headers.get("x-api-key") !== "wonderway-2026") {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-
   let payload: ExifPayload;
   try {
     payload = await request.json();
