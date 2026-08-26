@@ -127,6 +127,117 @@ export type Database = {
         }
         Relationships: []
       }
+      content_locations: {
+        Row: {
+          created_at: string
+          dropbox_file_id: string | null
+          geom: unknown
+          group_id: string | null
+          id: number
+          latitude: number | null
+          longitude: number | null
+          modified_at: string | null
+          object_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          geom?: unknown
+          group_id?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          modified_at?: string | null
+          object_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          geom?: unknown
+          group_id?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          modified_at?: string | null
+          object_id?: string | null
+        }
+        Relationships: []
+      }
+      dropbox_assets: {
+        Row: {
+          created_at: string
+          dropbox_file_id: string | null
+          dropbox_folder: string | null
+          dropbox_path: string | null
+          id: number
+          latitude: number | null
+          longitude: number | null
+          metadata: Json | null
+          mime_type: string | null
+          modified_time: string | null
+          name: string | null
+          pinecone_ids: Json | null
+          processed_at: string | null
+          status: string | null
+          strapi_documentId: string | null
+        }
+        Insert: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          dropbox_folder?: string | null
+          dropbox_path?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          mime_type?: string | null
+          modified_time?: string | null
+          name?: string | null
+          pinecone_ids?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          strapi_documentId?: string | null
+        }
+        Update: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          dropbox_folder?: string | null
+          dropbox_path?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          mime_type?: string | null
+          modified_time?: string | null
+          name?: string | null
+          pinecone_ids?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          strapi_documentId?: string | null
+        }
+        Relationships: []
+      }
+      dropbox_sync_cursor: {
+        Row: {
+          created_at: string
+          cursor: string | null
+          id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          cursor?: string | null
+          id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          cursor?: string | null
+          id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       elevenlabs_history: {
         Row: {
           created_at: string
@@ -187,6 +298,60 @@ export type Database = {
           event_type?: string | null
           id?: number
           qa?: string | null
+        }
+        Relationships: []
+      }
+      locations: {
+        Row: {
+          category: string
+          city: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          geom: unknown
+          id: number
+          image_url: string | null
+          lat: number
+          lng: number
+          name: string
+          source: string
+          updated_at: string
+          wikidata_qid: string
+          wikipedia_url: string | null
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          geom: unknown
+          id?: number
+          image_url?: string | null
+          lat: number
+          lng: number
+          name: string
+          source?: string
+          updated_at?: string
+          wikidata_qid: string
+          wikipedia_url?: string | null
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          geom?: unknown
+          id?: number
+          image_url?: string | null
+          lat?: number
+          lng?: number
+          name?: string
+          source?: string
+          updated_at?: string
+          wikidata_qid?: string
+          wikipedia_url?: string | null
         }
         Relationships: []
       }
@@ -417,6 +582,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_nearby_content: {
+        Args: {
+          p_group_id: string
+          p_latitude: number
+          p_limit?: number
+          p_longitude: number
+          p_radius_meters?: number
+        }
+        Returns: {
+          distance_meters: number
+          group_id: string
+          object_id: string
+        }[]
+      }
       match_documents: {
         Args: { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {

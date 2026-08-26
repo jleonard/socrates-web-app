@@ -69,6 +69,10 @@ export type AgentResponse =
 
 export type AppEventLog = Database["public"]["Tables"]["event_log"]["Row"];
 
+// used for RAG ingest
+export type DropboxAssetRow =
+  Database["public"]["Tables"]["dropbox_assets"]["Insert"];
+
 export type ElevenLabsConversation =
   Database["public"]["Tables"]["elevenlabs_history"]["Row"];
 

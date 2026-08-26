@@ -23,6 +23,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "double-metaphone": "^2.0.1",
+    "dropbox": "^10.34.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "exifr": "^7.1.3",
