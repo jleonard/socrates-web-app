@@ -106,6 +106,40 @@ export async function deleteByMetadata(
 }
 
 /**
+ * Delete one or more records by ID, regardless of which namespace
+ * they're in. Since Pinecone requires a namespace to delete by ID,
+ * this checks every namespace in the index and deletes matching IDs
+ * from wherever they're actually found.
+ * @param _index
+ * @param ids one or more vector IDs to delete
+ */
+export async function deleteByIds(
+  _index: string,
+  ids: string | string[],
+): Promise<number> {
+  const idList = Array.isArray(ids) ? ids : [ids];
+  if (idList.length === 0) return 0;
+
+  const index = pc.index(_index);
+  const stats = await index.describeIndexStats();
+  const namespaces = Object.keys(stats.namespaces ?? {});
+  let totalDeleted = 0;
+  for (const namespace of namespaces) {
+    const fetchResult = await index.namespace(namespace).fetch(idList);
+    const foundIds = Object.keys(fetchResult.records ?? {});
+
+    if (foundIds.length > 0) {
+      await index.namespace(namespace).deleteMany(foundIds);
+      console.log(
+        `Deleted ${foundIds.length} record(s) from namespace "${namespace}": ${foundIds.join(", ")}`,
+      );
+      totalDeleted += foundIds.length;
+    }
+  }
+  return totalDeleted;
+}
+
+/**
  * Upsert a chunk of text into the rag
  * @param text
  * @param metadata

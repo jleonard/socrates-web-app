@@ -4,6 +4,8 @@ import { Dropbox } from "dropbox";
 import { ActionFunctionArgs, data } from "react-router";
 import type { DropboxAssetRow } from "~/types";
 import type { Json } from "~/types/supabase";
+import { deleteByIds } from "~/utils/pinecone";
+import { describeImage } from "~/utils/ragIngest/vision.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -139,12 +141,38 @@ export async function action({ request }: ActionFunctionArgs) {
     );
 
     for (const file of filesToDelete) {
+      // delete any content_locations with matching dropbox_file_id
+      const { error: locationError } = await supabaseServiceRole
+        .from("content_locations")
+        .delete()
+        .eq("dropbox_path", file.path_lower);
+
+      const { data, error: recordError } = await supabaseServiceRole
+        .from("dropbox_assets")
+        .select("*")
+        .eq("dropbox_path", file.path_lower)
+        .single();
+      const record = data as DropboxAssetRow;
+      if (record.pinecone_ids && record.pinecone_ids.length > 0) {
+        await deleteByIds("wonderway", record.pinecone_ids);
+      }
+      if (recordError) {
+        processingErrors.push(
+          `file ${file.path_lower}: ${recordError.message}`,
+        );
+      }
+
       const { error } = await supabaseServiceRole
         .from("dropbox_assets")
         .delete()
         .eq("dropbox_path", file.path_lower);
       if (error) {
         processingErrors.push(`file ${file.path_lower}: ${error.message}`);
+      }
+      if (locationError) {
+        processingErrors.push(
+          `file ${file.path_lower}: ${locationError.message}`,
+        );
       }
     }
 

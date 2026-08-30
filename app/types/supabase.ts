@@ -131,6 +131,7 @@ export type Database = {
         Row: {
           created_at: string
           dropbox_file_id: string | null
+          dropbox_path: string | null
           geom: unknown
           group_id: string | null
           id: number
@@ -142,6 +143,7 @@ export type Database = {
         Insert: {
           created_at?: string
           dropbox_file_id?: string | null
+          dropbox_path?: string | null
           geom?: unknown
           group_id?: string | null
           id?: number
@@ -153,6 +155,7 @@ export type Database = {
         Update: {
           created_at?: string
           dropbox_file_id?: string | null
+          dropbox_path?: string | null
           geom?: unknown
           group_id?: string | null
           id?: number
@@ -176,7 +179,7 @@ export type Database = {
           mime_type: string | null
           modified_time: string | null
           name: string | null
-          pinecone_ids: Json | null
+          pinecone_ids: string[] | null
           processed_at: string | null
           status: string | null
           strapi_documentId: string | null
@@ -193,7 +196,7 @@ export type Database = {
           mime_type?: string | null
           modified_time?: string | null
           name?: string | null
-          pinecone_ids?: Json | null
+          pinecone_ids?: string[] | null
           processed_at?: string | null
           status?: string | null
           strapi_documentId?: string | null
@@ -210,7 +213,7 @@ export type Database = {
           mime_type?: string | null
           modified_time?: string | null
           name?: string | null
-          pinecone_ids?: Json | null
+          pinecone_ids?: string[] | null
           processed_at?: string | null
           status?: string | null
           strapi_documentId?: string | null
