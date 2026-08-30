@@ -8,6 +8,8 @@ const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
 export const PINECONE_SCORE = 0.6;
 
+const PINECONE_NAMESPACES = ["global", "contextual", "__default__"];
+
 export async function getQueryEmbedding(query: string): Promise<number[]> {
   const embeddingResponse = await openai.embeddings.create({
     model: "text-embedding-3-large",
@@ -117,26 +119,23 @@ export async function deleteByIds(
   _index: string,
   ids: string | string[],
 ): Promise<number> {
-  const idList = Array.isArray(ids) ? ids : [ids];
+  const idList = [...new Set(Array.isArray(ids) ? ids : [ids])].filter(Boolean);
+
   if (idList.length === 0) return 0;
 
   const index = pc.index(_index);
-  const stats = await index.describeIndexStats();
-  const namespaces = Object.keys(stats.namespaces ?? {});
-  let totalDeleted = 0;
-  for (const namespace of namespaces) {
-    const fetchResult = await index.namespace(namespace).fetch(idList);
-    const foundIds = Object.keys(fetchResult.records ?? {});
 
-    if (foundIds.length > 0) {
-      await index.namespace(namespace).deleteMany(foundIds);
+  await Promise.all(
+    PINECONE_NAMESPACES.map(async (namespace) => {
+      await index.namespace(namespace).deleteMany(idList);
+
       console.log(
-        `Deleted ${foundIds.length} record(s) from namespace "${namespace}": ${foundIds.join(", ")}`,
+        `Requested deletion of ${idList.length} record(s) from namespace "${namespace}"`,
       );
-      totalDeleted += foundIds.length;
-    }
-  }
-  return totalDeleted;
+    }),
+  );
+
+  return idList.length;
 }
 
 /**
