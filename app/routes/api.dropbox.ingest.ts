@@ -153,9 +153,10 @@ export async function action({ request }: ActionFunctionArgs) {
         .eq("dropbox_path", file.path_lower)
         .single();
       const record = data as DropboxAssetRow;
-      if (record.pinecone_ids && record.pinecone_ids.length > 0) {
+      if (record && record.pinecone_ids && record.pinecone_ids.length > 0) {
         await deleteByIds("wonderway", record.pinecone_ids);
       }
+
       if (recordError) {
         processingErrors.push(
           `file ${file.path_lower}: ${recordError.message}`,
