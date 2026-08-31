@@ -42,6 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .select("*")
       .eq("status", "process")
       .neq("name", "metadata.json")
+      .order("id", { ascending: false })
       .limit(2);
 
     if (fetchError) {
