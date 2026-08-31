@@ -14,7 +14,7 @@ import mammoth from "mammoth";
 import OpenAI from "openai";
 import { ActionFunctionArgs } from "react-router";
 import { deleteByIds } from "~/utils/pinecone";
-import { describeImage } from "~/utils/ragIngest/vision.server";
+import { describeImage, ocrImage } from "~/utils/ragIngest/vision.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
@@ -107,6 +107,9 @@ export async function action({ request }: ActionFunctionArgs) {
         } else if (file.dropbox_folder.includes("vision")) {
           let processed = await processImageDescription(file, supabase);
           status = processed ? "success" : "process";
+        } else if (file.dropbox_folder.includes("ocr")) {
+          let processed = await processImageOcr(file, supabase);
+          status = processed ? "success" : "process";
         } else {
           status = "skipped";
         }
@@ -192,7 +195,20 @@ async function processImageDescription(file: any, supabase: SupabaseClient) {
       ? file.metadata?.object_type
       : "artifact";
     const text = await describeImage(file.download_link, type);
-    file.metadata.chunk_type = "visual-description";
+    file.metadata.chunk_type = "visual_description";
+    return await pushTextToPinecone(file, text, supabase);
+  } else {
+    return false;
+  }
+}
+
+async function processImageOcr(file: any, supabase: SupabaseClient) {
+  if (file?.download_link) {
+    const text = await ocrImage(file.download_link);
+    if (text === "NO_TEXT_FOUND") {
+      return true; // nothing to index, but not a failure — don't retry forever
+    }
+    file.metadata.chunk_type = "ocr";
     return await pushTextToPinecone(file, text, supabase);
   } else {
     return false;

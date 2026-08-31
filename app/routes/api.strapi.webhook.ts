@@ -108,7 +108,6 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       break;
     case "exhibition":
       chunks = await buildExhibitionChunks(fullEntry);
-      // await storeGeoDataForExhibition(fullEntry);
       break;
     case "person":
       chunks = buildPersonChunks(fullEntry);
@@ -231,6 +230,8 @@ function buildBaseMeta(
   extras: Record<string, any> = {},
 ) {
   return {
+    doc_source: "strapi",
+    strapi_id: entry.documentId,
     group_id: buildGroupId(model, entry),
     name: entry.name ?? null,
     parent_type: model,
@@ -509,7 +510,7 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
         : null,
       entry.nationality,
       entry.birth_year && entry.death_year
-        ? `${entry.birth_year}–${entry.death_year}`
+        ? `${entry.birth_year}-${entry.death_year}`
         : (entry.birth_year ?? null),
       entry.bio,
     ]

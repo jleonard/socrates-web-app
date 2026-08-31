@@ -101,6 +101,28 @@ semantic search and matching against a visitor's natural-language
 description.`,
 };
 
+const OCR_PROMPT = `You are transcribing visible text from an image for a museum guide's search index.
+
+Transcribe all text that is visibly legible in the image, exactly as it
+appears — including labels, wall text, captions, signage, plaques,
+inscriptions, handwriting, and printed text.
+
+Rules:
+
+- Transcribe text verbatim. Do not paraphrase, summarize, correct spelling,
+  or modernize wording.
+- Preserve line breaks where they are meaningful (e.g. separate lines of a
+  label or heading), but you do not need to preserve exact visual layout.
+- If the image contains multiple distinct blocks of text (e.g. a title and a
+  separate paragraph), separate them with a blank line.
+- If a word or passage is illegible, indicate it with [illegible] rather than
+  guessing.
+- Do not describe the image, the object, or anything that is not text.
+- Do not add commentary, translation, or interpretation.
+- If there is no legible text in the image, return exactly: NO_TEXT_FOUND
+
+Return only the transcribed text (or NO_TEXT_FOUND), nothing else.`;
+
 export async function describeImage(
   url: string,
   type: keyof typeof prompts = "artifact",
@@ -132,4 +154,34 @@ export async function describeImage(
   }
 
   return description.trim();
+}
+
+export async function ocrImage(url: string): Promise<string> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: OCR_PROMPT,
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url },
+          },
+        ],
+      },
+    ],
+    max_tokens: 1500,
+  });
+
+  const text = response.choices[0]?.message?.content;
+
+  if (!text) {
+    throw new Error("OpenAI returned no OCR result for image");
+  }
+
+  return text.trim();
 }
