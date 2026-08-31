@@ -156,7 +156,7 @@ async function processLocationImage(file: any, supabase: SupabaseClient) {
     return false;
   }
 
-  const object_id = file.metadata["object-id"] ?? file.dropbox_file_id;
+  const object_id = file.metadata["object_id"] ?? file.dropbox_file_id;
 
   const baseRecord = {
     object_id,
@@ -169,8 +169,8 @@ async function processLocationImage(file: any, supabase: SupabaseClient) {
   };
 
   const groupIds = [
-    file.metadata["exhibition-id"],
-    file.metadata["place-id"],
+    file.metadata["exhibition_id"],
+    file.metadata["place_id"],
   ].filter(Boolean);
 
   for (const group_id of groupIds) {
