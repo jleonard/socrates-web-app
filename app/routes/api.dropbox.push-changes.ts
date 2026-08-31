@@ -206,6 +206,7 @@ async function processImageDescription(file: any, supabase: SupabaseClient) {
 async function processImageOcr(file: any, supabase: SupabaseClient) {
   if (file?.download_link) {
     const text = await ocrImage(file.download_link);
+    console.log("OCR : ", text);
     if (text === "NO_TEXT_FOUND") {
       return true; // nothing to index, but not a failure — don't retry forever
     }
