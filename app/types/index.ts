@@ -40,8 +40,13 @@ export interface AgentConfig {
   /** Apply { place_id: { $in: nearbyPlaceIds } } filter on the contextual query. */
   geoFiltered: boolean;
 
-  /** Apply { is_highlight: { $eq: true } } filter (with highlight_rank sort) on the contextual query. */
-  highlightFiltered: boolean;
+  /** When set, narrows geoFiltered types to real lat/lng proximity via
+   *  resolveNearbyItems(), replacing the plain place/exhibition $eq.
+   *  Omit to keep geoFiltered institution-scoping without proximity narrowing. */
+  nearbyRadiusMeters?: number;
+
+  /* used for geoFilter to limit how many responses to consider. filter out noise */
+  nearbyLimit?: number;
 
   /** Text appended to the system prompt for this query type — controls response shape/tone.
    *  Empty string = use the base system prompt with no addition. */
@@ -59,9 +64,7 @@ export type AgentQueryType =
   | "contextual" //— narrative background on one thing
   | "interpretive" //— meaning, significance, or story of one thing
   | "discovery" //— recommend/rank across many things
-  | "navigational_facility" //— amenities, pure Redis
   | "navigational_locate" //— find a specific named thing
-  | "navigational_route" //— multi-stop itinerary
   | "operational"; //— hours, tickets, accessibility, pure metadata (new)
 
 export type AgentResponse =

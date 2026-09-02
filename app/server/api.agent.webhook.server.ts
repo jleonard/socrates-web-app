@@ -27,6 +27,7 @@ import {
   role,
 } from "~/utils/system.prompt";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
+import { resolveNearbyItems } from "./agent/geo.search";
 import { correctMispronunciations } from "./agent/mispronounciations";
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
@@ -445,24 +446,48 @@ async function getConversationSummary(
  *    something this function can express — that logic stays one level up,
  *    in the pipeline, as a second call to this function / a second query.
  */
-function buildContextualPineconeFilter(
+async function buildContextualPineconeFilter(
   agentConfig: AgentConfig,
   place: string,
-): Record<string, any> {
+  userLat?: number,
+  userLong?: number,
+): Promise<Record<string, any>> {
   const clauses: Record<string, any>[] = [];
 
   if (agentConfig.geoFiltered) {
-    // TODO: replace with nearbyPlaceIds/$in once lat/lng lands — see note 1 above
-    clauses.push({
-      $or: [{ exhibition_id: { $eq: place } }, { place_id: { $eq: place } }],
-    });
+    const wantsProximity = agentConfig.nearbyRadiusMeters != null;
+    const hasCoords = userLat != null && userLong != null;
+    let nearbyIds: string[] = [];
+
+    if (wantsProximity && hasCoords) {
+      const resolved = await resolveNearbyItems(
+        place,
+        userLat,
+        userLong,
+        agentConfig.nearbyRadiusMeters!,
+      );
+      nearbyIds = agentConfig.nearbyLimit
+        ? resolved.slice(0, agentConfig.nearbyLimit)
+        : resolved;
+    }
+
+    if (nearbyIds.length > 0) {
+      clauses.push({
+        $or: [
+          { exhibition_id: { $in: nearbyIds } },
+          { place_id: { $in: nearbyIds } },
+        ],
+      });
+    } else {
+      // No proximity requested, no coords, or nothing resolved nearby —
+      // plain institution-scoped $eq.
+      clauses.push({
+        $or: [{ exhibition_id: { $eq: place } }, { place_id: { $eq: place } }],
+      });
+    }
   }
 
-  if (agentConfig.highlightFiltered) {
-    clauses.push({ is_highlight: { $eq: true } });
-  }
-
-  if (clauses.length === 0) return {}; // neither flag set — unfiltered search
-  if (clauses.length === 1) return clauses[0]; // no need for $and wrapper with just one clause
-  return { $and: clauses }; // both flags set — combine with $and
+  if (clauses.length === 0) return {};
+  if (clauses.length === 1) return clauses[0];
+  return { $and: clauses };
 }
