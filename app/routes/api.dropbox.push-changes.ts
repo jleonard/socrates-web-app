@@ -43,7 +43,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .eq("status", "process")
       .neq("name", "metadata.json")
       .order("id", { ascending: true })
-      .limit(2);
+      .limit(1);
 
     console.log("RAG Ingest : ", filesToProcess);
 
