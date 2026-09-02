@@ -152,7 +152,12 @@ export const handleWebhook: ActionFunction = async (args) => {
             vector: queryEmbedding,
             topK: agentConfig.contextualTopK,
             includeMetadata: true,
-            filter: buildContextualPineconeFilter(agentConfig, place),
+            filter: buildContextualPineconeFilter(
+              agentConfig,
+              place,
+              user_lat,
+              user_long,
+            ),
           })
         : Promise.resolve({ matches: [] }),
       useGlobal
