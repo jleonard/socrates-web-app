@@ -60,16 +60,19 @@ export async function action({ request }: ActionFunctionArgs) {
     // Process each file
     for (const file of filesToProcess) {
       let status = file.status;
+
       const dbx = new Dropbox({
         clientId: process.env.DROPBOX_APP_KEY,
         clientSecret: process.env.DROPBOX_APP_SECRET,
         refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
       });
 
-      // get the metadata for this file
+      // Get the metadata for this file
       let metadata = metadataCache.get(file.dropbox_folder);
+
       if (metadata === undefined) {
         metadata = await getMetadataForFolder(file.dropbox_folder, supabase);
+
         if (metadata === null) {
           await updateProcessingStatus(
             "skipped",
@@ -78,40 +81,59 @@ export async function action({ request }: ActionFunctionArgs) {
           );
           continue;
         }
+
         metadataCache.set(file.dropbox_folder, metadata);
       }
+
       file.metadata = metadata;
-
       file.extension = file.name.split(".").pop()?.toLowerCase();
-
-      const response = await dbx.filesDownload({
-        path: file.dropbox_path!,
-      });
-
-      // get download link from dropbox for the file
-      const downloadLink = await dbx.filesGetTemporaryLink({
-        path: file.dropbox_path!,
-      });
-      file.download_link = downloadLink.result.link;
       file.doc_source = "dropbox";
 
-      file.binary = (
-        response.result as unknown as { fileBinary: Buffer }
-      ).fileBinary;
-
       if (TEXT_EXTENSIONS.has(file.extension ?? "")) {
-        // send this for text processing
-        let processed = await processTextFile(file, supabase);
+        // Text files need the binary
+        const response = await dbx.filesDownload({
+          path: file.dropbox_path!,
+        });
+
+        file.binary = (
+          response.result as unknown as { fileBinary: Buffer }
+        ).fileBinary;
+
+        const processed = await processTextFile(file, supabase);
         status = processed ? "success" : "process";
       } else if (IMAGE_EXTENSIONS.has(file.extension ?? "")) {
         if (file.dropbox_folder.includes("location")) {
-          let processed = await processLocationImage(file, supabase);
+          // Location images need the binary for EXIF/GPS
+          const response = await dbx.filesDownload({
+            path: file.dropbox_path!,
+          });
+
+          file.binary = (
+            response.result as unknown as { fileBinary: Buffer }
+          ).fileBinary;
+
+          const processed = await processLocationImage(file, supabase);
           status = processed ? "success" : "process";
-        } else if (file.dropbox_folder.includes("vision")) {
-          let processed = await processImageDescription(file, supabase);
-          status = processed ? "success" : "process";
-        } else if (file.dropbox_folder.includes("ocr")) {
-          let processed = await processImageOcr(file, supabase);
+        } else if (
+          file.dropbox_folder.includes("vision") ||
+          file.dropbox_folder.includes("ocr")
+        ) {
+          // Vision/OCR only need a URL.
+          // Don't download the image into the Vercel function.
+          const downloadLink = await dbx.filesGetTemporaryLink({
+            path: file.dropbox_path!,
+          });
+
+          file.download_link = downloadLink.result.link;
+
+          let processed: boolean;
+
+          if (file.dropbox_folder.includes("vision")) {
+            processed = await processImageDescription(file, supabase);
+          } else {
+            processed = await processImageOcr(file, supabase);
+          }
+
           status = processed ? "success" : "process";
         } else {
           status = "skipped";
@@ -119,7 +141,8 @@ export async function action({ request }: ActionFunctionArgs) {
       } else {
         status = "skipped";
       }
-      // set the status for the file
+
+      // Set the status for the file
       await updateProcessingStatus(status, file.dropbox_file_id, supabase);
     }
     return new Response(JSON.stringify({ processed: filesToProcess.length }), {
