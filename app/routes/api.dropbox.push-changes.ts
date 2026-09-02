@@ -45,6 +45,8 @@ export async function action({ request }: ActionFunctionArgs) {
       .order("id", { ascending: true })
       .limit(2);
 
+    console.log("RAG Ingest : ", filesToProcess);
+
     if (fetchError) {
       throw fetchError;
     }

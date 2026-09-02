@@ -120,6 +120,8 @@ export const handleWebhook: ActionFunction = async (args) => {
     const queryClassification = await classifyQuery(query, trimmedHistory);
     const agentConfig = QUERY_TYPE_CONFIG[queryClassification.type];
 
+    console.log("AGENT classification : ", queryClassification);
+
     /*
      * 💬 get the conversation summary
      */
