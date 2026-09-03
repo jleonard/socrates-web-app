@@ -478,10 +478,7 @@ async function buildContextualPineconeFilter(
 
     if (nearbyIds.length > 0) {
       clauses.push({
-        $or: [
-          { exhibition_id: { $in: nearbyIds } },
-          { place_id: { $in: nearbyIds } },
-        ],
+        object_id: { $in: nearbyIds },
       });
     } else {
       // No proximity requested, no coords, or nothing resolved nearby —
