@@ -20,6 +20,15 @@ export async function resolveNearbyItems(
     throw new Error(`resolveNearbyItems failed: ${error.message}`);
   }
 
+  console.log("[resolveNearbyItems] results", {
+    count: data?.length ?? 0,
+    results: (data ?? []).map((row) => ({
+      object_id: row.object_id,
+      group_id: row.group_id,
+      distance_meters: row.distance_meters,
+    })),
+  });
+
   return (data ?? []).map((row) => row.object_id);
 }
 
