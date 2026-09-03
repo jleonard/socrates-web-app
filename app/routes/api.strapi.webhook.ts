@@ -232,7 +232,7 @@ function buildBaseMeta(
   return {
     doc_source: "strapi",
     strapi_id: entry.documentId,
-    object_id: entry[`${model}_id`],
+    object_id: entry[`${model}_id`] ?? null,
     group_id: buildGroupId(model, entry),
     name: entry.name ?? null,
     parent_type: model,
