@@ -67,16 +67,16 @@ export async function action({ request }: ActionFunctionArgs) {
       download_link?: string;
     };
 
+    const dbx = new Dropbox({
+      clientId: process.env.DROPBOX_APP_KEY,
+      clientSecret: process.env.DROPBOX_APP_SECRET,
+      refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
+    });
+
     // Process each file
     for (const row of filesToProcess) {
       const file: ProcessingFile = { ...row };
       let status = file.status;
-
-      const dbx = new Dropbox({
-        clientId: process.env.DROPBOX_APP_KEY,
-        clientSecret: process.env.DROPBOX_APP_SECRET,
-        refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
-      });
 
       if (!file.dropbox_folder) {
         await updateProcessingStatus("skipped", file.dropbox_file_id, supabase);

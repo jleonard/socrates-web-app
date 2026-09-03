@@ -174,7 +174,7 @@ export async function ocrImage(url: string): Promise<string> {
         ],
       },
     ],
-    max_tokens: 1500,
+    max_tokens: 1200,
   });
 
   const text = response.choices[0]?.message?.content;
