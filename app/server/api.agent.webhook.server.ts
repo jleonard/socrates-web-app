@@ -477,6 +477,7 @@ async function buildContextualPineconeFilter(
     }
 
     if (nearbyIds.length > 0) {
+      console.log("nearbyIds ", nearbyIds);
       clauses.push({
         object_id: { $in: nearbyIds },
       });
