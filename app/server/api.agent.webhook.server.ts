@@ -146,18 +146,19 @@ export const handleWebhook: ActionFunction = async (args) => {
     const queryEmbedding = await getQueryEmbedding(query);
     const useContextual = agentConfig.tools.includes("pinecone_contextual");
     const useGlobal = agentConfig.tools.includes("pinecone_global");
+    const filter = await buildContextualPineconeFilter(
+      agentConfig,
+      place,
+      user_lat,
+      user_long,
+    );
     const [contextualResults, globalResults] = await Promise.all([
       useContextual
         ? index.namespace("contextual").query({
             vector: queryEmbedding,
             topK: agentConfig.contextualTopK,
             includeMetadata: true,
-            filter: buildContextualPineconeFilter(
-              agentConfig,
-              place,
-              user_lat,
-              user_long,
-            ),
+            filter,
           })
         : Promise.resolve({ matches: [] }),
       useGlobal
