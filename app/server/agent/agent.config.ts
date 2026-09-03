@@ -32,7 +32,7 @@ export const QUERY_TYPE_CONFIG: Record<AgentQueryType, AgentConfig> = {
     tools: ["pinecone_contextual"],
     contextualTopK: 8,
     globalTopK: 0,
-    contextualScoreThreshold: 0.7, // higher bar — a confident wrong ID is worse than a wrong fact
+    contextualScoreThreshold: 0.6, // higher bar — a confident wrong ID is worse than a wrong fact
     globalScoreThreshold: null,
     geoFiltered: true,
     nearbyRadiusMeters: 15,
