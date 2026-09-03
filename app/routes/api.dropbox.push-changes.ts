@@ -42,6 +42,8 @@ export async function action({ request }: ActionFunctionArgs) {
       .select("*")
       .eq("status", "process")
       .neq("name", "metadata.json")
+      .not("dropbox_file_id", "is", null)
+      .not("name", "is", null)
       .order("id", { ascending: true })
       .limit(1);
 
@@ -57,8 +59,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
     let metadataCache = new Map<string, any>();
 
+    type ProcessingFile = (typeof filesToProcess)[number] & {
+      metadata?: any;
+      extension?: string;
+      doc_source?: string;
+      binary?: Buffer;
+      download_link?: string;
+    };
+
     // Process each file
-    for (const file of filesToProcess) {
+    for (const row of filesToProcess) {
+      const file: ProcessingFile = { ...row };
       let status = file.status;
 
       const dbx = new Dropbox({
@@ -66,6 +77,11 @@ export async function action({ request }: ActionFunctionArgs) {
         clientSecret: process.env.DROPBOX_APP_SECRET,
         refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
       });
+
+      if (!file.dropbox_folder) {
+        await updateProcessingStatus("skipped", file.dropbox_file_id, supabase);
+        continue;
+      }
 
       // Get the metadata for this file
       let metadata = metadataCache.get(file.dropbox_folder);
@@ -162,7 +178,10 @@ async function updateProcessingStatus(
 ) {
   const { error } = await supabase
     .from("dropbox_assets")
-    .upsert({ status, dropbox_file_id }, { onConflict: "dropbox_file_id" });
+    .upsert(
+      { status, dropbox_file_id, processed_at: new Date().toISOString() },
+      { onConflict: "dropbox_file_id" },
+    );
   if (error) {
     throw new Error(
       `Failed to upsert status for ${dropbox_file_id}: ${error.message}`,
