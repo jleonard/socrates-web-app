@@ -169,8 +169,19 @@ export const handleWebhook: ActionFunction = async (args) => {
           })
         : Promise.resolve({ matches: [] }),
     ]);
+
     console.log("debug: pinecone contextualResults ", contextualResults);
     console.log("debug: pinecone globalResults ", globalResults);
+
+    console.log(
+      `debug: raw contextual scores for type=${queryClassification.type} query="${query}":`,
+      contextualResults.matches.map((m) => ({
+        score: m.score,
+        object_id: m.metadata?.object_id,
+        exhibition_id: m.metadata?.exhibition_id,
+        place_id: m.metadata?.place_id,
+      })),
+    );
 
     /*
      * 🌲 pinecone part two: filter results
