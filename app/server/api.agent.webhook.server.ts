@@ -61,6 +61,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     let query = postedQuery;
 
     /* 🔷 logging: prep the history log */
+    const requestId = crypto.randomUUID();
     const timerStart = Date.now();
     const tools: ToolLog[] = [];
 
@@ -121,7 +122,14 @@ export const handleWebhook: ActionFunction = async (args) => {
     const queryClassification = await classifyQuery(query, trimmedHistory);
     const agentConfig = QUERY_TYPE_CONFIG[queryClassification.type];
 
-    console.log("AGENT classification : ", queryClassification);
+    // @TEMP
+    console.log(`[${requestId}] agent request started`, {
+      query: postedQuery,
+      user_id,
+      place,
+      coords: { lat: user_lat, long: user_long },
+      classification: queryClassification.type,
+    });
 
     /*
      * 💬 get the conversation summary
@@ -170,9 +178,23 @@ export const handleWebhook: ActionFunction = async (args) => {
         : Promise.resolve({ matches: [] }),
     ]);
 
-    console.log("debug: pinecone contextualResults ", contextualResults);
-    console.log("debug: pinecone globalResults ", globalResults);
+    console.log(
+      `[${requestId}] Pinecone contextual results`,
+      contextualResults.matches.map((m, index) => ({
+        rank: index + 1,
+        score: m.score,
+        id: m.id,
+        object_id: m.metadata?.object_id,
+        exhibition_id: m.metadata?.exhibition_id,
+        place_id: m.metadata?.place_id,
+        chunk_type: m.metadata?.chunk_type,
+        source_name: m.metadata?.source_name,
+      })),
+    );
 
+    console.log(`[${requestId}] Pinecone global results`, globalResults);
+
+    //@TEMP
     console.log(
       `debug: raw contextual scores for type=${queryClassification.type} query="${query}":`,
       contextualResults.matches.map((m) => ({
@@ -182,6 +204,22 @@ export const handleWebhook: ActionFunction = async (args) => {
         place_id: m.metadata?.place_id,
       })),
     );
+
+    //@TEMP
+    const scores = contextualResults.matches
+      .map((m) => m.score)
+      .filter((s): s is number => s != null);
+
+    //@TEMP
+    console.log(`[${requestId}] Pinecone score distribution`, {
+      count: scores.length,
+      max: Math.max(...scores),
+      min: Math.min(...scores),
+      average:
+        scores.length > 0
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : null,
+    });
 
     /*
      * 🌲 pinecone part two: filter results
