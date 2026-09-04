@@ -1,8 +1,6 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getRedis } from "~/utils/redis.server";
 
-const redis = await getRedis();
-
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
 });
@@ -13,6 +11,7 @@ const S3_FOLDER = "greetings";
 const ELEVENLABS_VOICE_ID = "FUfBrNit0NNZAwb58KWH";
 
 export async function processGreeting(greeting: string, entity_id: string) {
+  const redis = await getRedis();
   const startTime = Date.now();
   const redisKey = `greeting:${entity_id}`;
   const s3Key = `${S3_FOLDER}/${entity_id}.mp3`;
