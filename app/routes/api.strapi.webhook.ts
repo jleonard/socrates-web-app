@@ -139,8 +139,10 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   await deleteAndReEmbed(chunks);
 
   if (fullEntry?.greeting) {
+    console.log("has greeting");
     try {
       await processGreeting(fullEntry.greeting, fullEntry[`${model}_id`]);
+      console.log("greeing processed");
     } catch (err) {
       console.log(
         `[webhook] error processing greeting for id=${entry.id}`,
