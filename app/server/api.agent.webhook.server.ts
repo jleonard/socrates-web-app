@@ -242,6 +242,14 @@ export const handleWebhook: ActionFunction = async (args) => {
       agentConfig.globalScoreThreshold,
     );
 
+    const RAG_METADATA_KEYS_TO_EXCLUDE = [
+      "dropbox_file_id",
+      "dropbox_path",
+      "chunk_index",
+      "chunk_count",
+      "namespace",
+    ];
+
     const allMatches = [...contextualMatches, ...globalMatches];
     if (allMatches.length === 0) {
       messages.push({
@@ -252,7 +260,17 @@ export const handleWebhook: ActionFunction = async (args) => {
       messages.push({
         role: "system",
         content: `RAG CONTEXT:\n${allMatches
-          .map((m) => m.metadata?.text)
+          .map((m) => {
+            if (!m.metadata) return null;
+
+            const metadata = Object.fromEntries(
+              Object.entries(m.metadata).filter(
+                ([key]) => !RAG_METADATA_KEYS_TO_EXCLUDE.includes(key),
+              ),
+            );
+
+            return JSON.stringify(metadata);
+          })
           .filter(Boolean)
           .join("\n\n")}`,
       });
