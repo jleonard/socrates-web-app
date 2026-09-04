@@ -1,10 +1,10 @@
 /**
  * Parse strapi body into the RAG
  */
-
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
 import type { ActionFunctionArgs } from "react-router";
+import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
 
 // ─── clients ────────────────────────────────────────────────────────────────
@@ -137,6 +137,10 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   }
 
   await deleteAndReEmbed(chunks);
+
+  if (fullEntry?.greeting) {
+    await processGreeting(fullEntry.greeting, fullEntry[`${model}_id`]);
+  }
 }
 
 // ─── delete handler ───────────────────────────────────────────────────────────
