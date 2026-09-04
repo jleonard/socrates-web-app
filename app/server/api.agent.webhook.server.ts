@@ -326,6 +326,11 @@ export const handleWebhook: ActionFunction = async (args) => {
     messages.push({ role: "user", content: query });
     console.log("debug: user query ", query);
 
+    console.log(
+      "DEBUG: FINAL CONTEXT SENT TO AGENT",
+      JSON.stringify(messages, null, 2),
+    );
+
     /*
      * 🤖 stream the LLM response
      */
