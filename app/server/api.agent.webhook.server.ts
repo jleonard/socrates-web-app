@@ -550,13 +550,20 @@ async function buildContextualPineconeFilter(
     }
 
     if (nearbyIds.length > 0) {
-      console.log("nearbyIds ", nearbyIds);
       clauses.push({
-        object_id: { $in: nearbyIds },
+        $and: [
+          {
+            object_id: { $in: nearbyIds },
+          },
+          {
+            $or: [
+              { exhibition_id: { $eq: place } },
+              { place_id: { $eq: place } },
+            ],
+          },
+        ],
       });
     } else {
-      // No proximity requested, no coords, or nothing resolved nearby —
-      // plain institution-scoped $eq.
       clauses.push({
         $or: [{ exhibition_id: { $eq: place } }, { place_id: { $eq: place } }],
       });
