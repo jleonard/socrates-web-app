@@ -15,6 +15,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return headers;
   };
 
+  // TODO - if we have a location: use it.
+
   const viewState = { longitude: -73.935242, latitude: 40.73061, zoom: 11 };
 
   const { data: locations, error } = await supabase
