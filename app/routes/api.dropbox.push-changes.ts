@@ -239,7 +239,7 @@ async function processImageDescription(file: any, supabase: SupabaseClient) {
     const type = file.metadata?.object_type
       ? file.metadata?.object_type
       : "artifact";
-    const text = await describeImage(file.download_link, type);
+    const text = await describeImage(file.download_link, type, file.metadata);
     file.metadata.chunk_type = "visual_description";
     return await pushTextToPinecone(file, text, supabase);
   } else {

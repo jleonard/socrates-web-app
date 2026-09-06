@@ -248,6 +248,7 @@ export const handleWebhook: ActionFunction = async (args) => {
       "chunk_index",
       "chunk_count",
       "namespace",
+      "ingest_instructions",
     ];
 
     const allMatches = [...contextualMatches, ...globalMatches];

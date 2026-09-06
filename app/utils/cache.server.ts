@@ -1,10 +1,10 @@
-import { getRedis } from "./redis.server";
-import {
-  getEmbedding,
-  float32ToBuffer,
-  EMBEDDING_DIM,
-} from "./embeddings.server";
 import { SCHEMA_FIELD_TYPE } from "redis";
+import {
+  EMBEDDING_DIM,
+  float32ToBuffer,
+  getEmbedding,
+} from "./embeddings.server";
+import { getRedis } from "./redis.server";
 
 interface SearchResult {
   documents: {
@@ -38,17 +38,18 @@ export async function initIndex() {
         question: { type: SCHEMA_FIELD_TYPE.TEXT },
         tool: { type: SCHEMA_FIELD_TYPE.TAG },
       },
-      { ON: "HASH", PREFIX: "cache:" }
+      { ON: "HASH", PREFIX: "cache:" },
     );
   } catch (e: any) {
     if (!String(e).includes("Index already exists")) throw e;
   }
 }
 
-export async function searchCache(query: string, threshold = 0.86) {
+export async function searchCache(rawQuery: string, threshold = 0.86) {
   const redis = await getRedis();
   await initIndex();
 
+  const query = normalizeQuery(rawQuery);
   const vec = float32ToBuffer(await getEmbedding(query));
 
   const raw = await redis.ft.search(
@@ -59,7 +60,7 @@ export async function searchCache(query: string, threshold = 0.86) {
       SORTBY: "score",
       DIALECT: 2,
       RETURN: ["answer", "question", "tool", "score", "hits"],
-    }
+    },
   );
 
   const result = raw as unknown as SearchResult;
@@ -93,13 +94,14 @@ export async function searchCache(query: string, threshold = 0.86) {
 // --- STORE CACHE ---
 // ------------------------
 export async function storeCache(
-  query: string,
+  rawQuery: string,
   answer: string,
   tool: string,
-  ttlSeconds: number = 90 * 24 * 60 * 60
+  ttlSeconds: number = 90 * 24 * 60 * 60,
 ) {
   const redis = await getRedis();
   await initIndex();
+  const query = normalizeQuery(rawQuery);
 
   const emb = float32ToBuffer(await getEmbedding(query));
   const id = `cache:${Buffer.from(`${tool}|${query}`).toString("base64url")}`;
@@ -117,4 +119,8 @@ export async function storeCache(
   }
 
   return id;
+}
+
+function normalizeQuery(query: string) {
+  return query.trim().replace(/\s+/g, " ").toLowerCase();
 }

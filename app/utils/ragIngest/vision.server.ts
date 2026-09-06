@@ -126,13 +126,18 @@ Return only the transcribed text (or NO_TEXT_FOUND), nothing else.`;
 export async function describeImage(
   url: string,
   type: keyof typeof prompts = "artifact",
+  metadata: Record<string, string> = {},
 ): Promise<string> {
+  let prompt = prompts[type];
+  if (metadata?.ingest_instructions) {
+    prompt += "/n /N Special instructions for this item: /n";
+  }
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       {
         role: "system",
-        content: prompts[type],
+        content: prompt,
       },
       {
         role: "user",
