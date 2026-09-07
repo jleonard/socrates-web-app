@@ -216,7 +216,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const { error } = await supabaseServiceRole
         .from("dropbox_assets")
         .upsert(metadataRecords, {
-          onConflict: "dropbox_file_id",
+          onConflict: "dropbox_path",
         });
 
       if (error) {
@@ -255,7 +255,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const { error } = await supabaseServiceRole
         .from("dropbox_assets")
         .upsert(fileRecords, {
-          onConflict: "dropbox_file_id",
+          onConflict: "dropbox_path",
         });
 
       if (error) {
