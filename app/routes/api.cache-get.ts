@@ -1,15 +1,19 @@
 import { data, type LoaderFunctionArgs } from "react-router";
-import { searchCache } from "~/utils/cache.server";
+import { searchCache } from "~/utils/cache/cache.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = url.searchParams.get("query")?.trim();
+  const placeId = url.searchParams.get("placeId")?.trim();
 
   if (!query) {
     return data({ error: "query parameter is required" }, { status: 400 });
   }
+  if (!placeId) {
+    return data({ error: "placeId parameter is required" }, { status: 400 });
+  }
 
-  const cached = await searchCache(query);
+  const cached = await searchCache(query, { placeId });
   console.log(cached);
 
   if (cached) {

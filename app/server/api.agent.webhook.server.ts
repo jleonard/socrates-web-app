@@ -9,7 +9,8 @@ import type { ActionFunction } from "react-router";
 import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
 import { classifyQuery } from "~/server/agent/query.classifier.server";
 import { AgentConfig, HistoryLog, ToolLog } from "~/types";
-import { storeCache } from "~/utils/cache.server";
+import { determineCacheDecision } from "~/utils/cache/cache-decision";
+import { searchCache, storeCache } from "~/utils/cache/cache.server";
 import { logAppEvent } from "~/utils/events/appEvents.server";
 import { logAgentHistory } from "~/utils/history.server";
 import {
@@ -91,6 +92,37 @@ export const handleWebhook: ActionFunction = async (args) => {
     let corrected = await correctMispronunciations(place, query);
     if (corrected) {
       query = corrected;
+    }
+
+    /*
+     * ⚡ check semantic cache before doing expensive agent work
+     */
+    const cached = await searchCache(query, {
+      placeId: place,
+    });
+
+    if (cached) {
+      console.log(`[${requestId}] cache hit`, {
+        question: query,
+        cachedQuestion: cached.question,
+        similarity: cached.similarity,
+      });
+
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(cached.answer);
+            controller.close();
+          },
+        }),
+        {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+          },
+        },
+      );
     }
 
     /*
@@ -409,6 +441,11 @@ export const handleWebhook: ActionFunction = async (args) => {
           );
 
           controller.close();
+          void cacheResponse({
+            question: query,
+            answer: replyText,
+            placeId: place,
+          });
         } catch (err) {
           console.error("Stream error:", err);
           controller.error(err);
@@ -574,4 +611,42 @@ async function buildContextualPineconeFilter(
   if (clauses.length === 0) return {};
   if (clauses.length === 1) return clauses[0];
   return { $and: clauses };
+}
+
+async function cacheResponse({
+  question,
+  answer,
+  placeId,
+}: {
+  question: string;
+  answer: string;
+  placeId: string;
+}) {
+  try {
+    const decision = await determineCacheDecision(question, answer);
+
+    console.log(
+      "cacheResponse: decision",
+      decision,
+      "question:",
+      question,
+      "answer:",
+      answer,
+    );
+
+    if (!decision.cacheable) {
+      return;
+    }
+
+    await storeCache(
+      question,
+      answer,
+      {
+        placeId,
+      },
+      decision,
+    );
+  } catch (error) {
+    console.error("Failed to cache response:", error);
+  }
 }

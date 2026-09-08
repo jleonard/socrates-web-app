@@ -1,25 +1,25 @@
-import type { ActionFunction } from "react-router";
-import { getRedis } from "~/utils/redis.server";
+import * as Sentry from "@sentry/react-router";
 import OpenAI from "openai";
+import type { ActionFunction } from "react-router";
+import { HistoryLog } from "~/types";
+import { searchCache, storeCache } from "~/utils/cache/cache.server";
+import { logAppEvent } from "~/utils/events/appEvents.server";
+import { logAgentHistory } from "~/utils/history.server";
+import { PINECONE_SCORE, queryPinecone } from "~/utils/pinecone";
+import { correctTranscription } from "~/utils/query-correction.server";
+import { getRedis } from "~/utils/redis.server";
 import {
-  zeroPersonalityPrompt,
-  mitPrompt,
-  role,
+  accuracy,
   context,
   goals,
-  accuracy,
   guardrails,
-  mitRole,
   mitContext,
+  mitPrompt,
+  mitRole,
+  role,
+  zeroPersonalityPrompt,
 } from "~/utils/system.prompt";
-import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
-import { searchCache, storeCache } from "~/utils/cache.server";
-import { correctTranscription } from "~/utils/query-correction.server";
-import { logAgentHistory } from "~/utils/history.server";
-import { HistoryLog } from "~/types";
-import * as Sentry from "@sentry/react-router";
-import { logAppEvent } from "~/utils/events/appEvents.server";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
@@ -116,7 +116,7 @@ export const handleLegacyWebhook: ActionFunction = async ({ request }) => {
     }
 
     // --- 2️⃣ Try semantic cache hit first ---
-    const cached = await searchCache(query);
+    const cached = await searchCache(query, { placeId: place });
 
     if (cached) {
       history_object.tool_cache = true;
@@ -286,16 +286,16 @@ export const handleLegacyWebhook: ActionFunction = async ({ request }) => {
             !lower.startsWith("i cannot") &&
             !lower.startsWith("i don't");
 
-          // Only store if meaningful AND RAG/wikipedia gave some context
+          /* Only store if meaningful AND RAG/wikipedia gave some context
           if (isMeaningful) {
             try {
-              await storeCache(query, replyText, "llm");
+              //await storeCache(query, replyText, "llm");
             } catch (err) {
               console.error("Cache store error:", err);
             }
           } else {
             console.log("⚠️ Not storing in cache - response not meaningful");
-          }
+          }*/
           history_object.response_time = Date.now() - timer_start.getTime();
           history_object.response = replyText;
           await logAgentHistory(history_object);
@@ -505,6 +505,7 @@ export async function generateFollowUps(
         !lower.startsWith("i cannot") &&
         !lower.startsWith("i don't");
 
+      /*
       if (isMeaningful) {
         history_object.response = answer;
         await storeCache(followUp, answer, "follow-up");
@@ -518,7 +519,7 @@ export async function generateFollowUps(
         console.log(
           `⚠️ Skipped caching follow-up (not meaningful): "${followUp}"`,
         );
-      }
+      }*/
     }
   } catch (err) {
     console.error("Follow-up generation error:", err);
