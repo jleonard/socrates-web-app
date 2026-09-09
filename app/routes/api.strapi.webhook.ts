@@ -452,6 +452,9 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
 async function buildExhibitionChunks(
   entry: Record<string, any>,
 ): Promise<Chunk[]> {
+  console.log(
+    `[webhook] building exhibition chunks for id=${entry.id} ${entry.place}`,
+  );
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
