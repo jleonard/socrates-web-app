@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import type { CacheDecision } from "./cache.types";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPEN_AI_KEY,
 });
 
 /**
