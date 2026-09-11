@@ -167,7 +167,7 @@ export async function searchCache(
     context.placeId,
   )}} | @scope:{global})`;*/
 
-  const filter = `(@place_id:{${context.placeId}} | @scope:{global})`;
+  const filter = `(@place_id:{${escapeTagValue(context.placeId)}} | @scope:{global})`;
 
   const raw = await redis.ft.search(
     INDEX_NAME,
@@ -176,7 +176,7 @@ export async function searchCache(
       PARAMS: {
         vec,
       },
-      SORTBY: "score",
+      SORTBY: { BY: "score", DIRECTION: "ASC" },
       DIALECT: 2,
       RETURN: ["answer", "question", "place_id", "scope", "hits", "score"],
     },
@@ -407,5 +407,5 @@ function normalizeQuery(query: string) {
  * makes the cache lookup safer if the ID format changes later.
  */
 function escapeTagValue(value: string) {
-  return value.replace(/([\\{}[\],.|<>?;:])/g, "\\$1");
+  return value.replace(/([\\{}[\],.|<>?;:\s])/g, "\\$1");
 }
