@@ -161,9 +161,13 @@ export async function searchCache(
    *
    *   place_id:{currentPlace} | scope:{global}
    */
+  /*
+  
   const filter = `(@place_id:{${escapeTagValue(
     context.placeId,
-  )}} | @scope:{global})`;
+  )}} | @scope:{global})`;*/
+
+  const filter = `(@place_id:{${context.placeId}} | @scope:{global})`;
 
   const raw = await redis.ft.search(
     INDEX_NAME,
