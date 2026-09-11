@@ -408,5 +408,5 @@ function normalizeQuery(query: string) {
  * makes the cache lookup safer if the ID format changes later.
  */
 function escapeTagValue(value: string) {
-  return value.replace(/([\\{}[\],.|<>?;:\s])/g, "\\$1");
+  return value.replace(/([,.<>{}[\]"':;!@#$%^&*()\-+=~/\s|\\])/g, "\\$1");
 }
