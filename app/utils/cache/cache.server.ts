@@ -166,8 +166,9 @@ export async function searchCache(
   const filter = `(@place_id:{${escapeTagValue(
     context.placeId,
   )}} | @scope:{global})`;*/
-
+  console.log("placeId for cache filter:", JSON.stringify(context.placeId));
   const filter = `(@place_id:{${escapeTagValue(context.placeId)}} | @scope:{global})`;
+  console.log("filter:", filter);
 
   const raw = await redis.ft.search(
     INDEX_NAME,
