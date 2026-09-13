@@ -10,10 +10,10 @@ const openai = new OpenAI({
  * be stored in the reusable response cache.
  *
  * This utility does NOT interact with Redis and does not need to
- * know the current place. It only determines:
+ * know the current location. It only determines:
  *
  * 1. Is this Q&A worth caching?
- * 2. If so, should it be reusable globally or only at a place?
+ * 2. If so, should it be reusable globally or only at a location?
  *
  * If classification fails, we fail closed and don't cache.
  * Cache classification should never break the main agent flow.
@@ -29,7 +29,7 @@ export async function determineCacheDecision(
   if (!normalizedQuestion || !normalizedAnswer) {
     return {
       cacheable: false,
-      scope: "place",
+      scope: "location",
     };
   }
 
@@ -65,7 +65,7 @@ export async function determineCacheDecision(
               },
               scope: {
                 type: "string",
-                enum: ["place", "global"],
+                enum: ["location", "global"],
               },
             },
             required: ["cacheable", "scope"],
@@ -82,7 +82,7 @@ export async function determineCacheDecision(
 
       return {
         cacheable: false,
-        scope: "place",
+        scope: "location",
       };
     }
 
@@ -91,13 +91,13 @@ export async function determineCacheDecision(
     // Defensive validation even though structured output is used.
     if (
       typeof decision.cacheable !== "boolean" ||
-      (decision.scope !== "place" && decision.scope !== "global")
+      (decision.scope !== "location" && decision.scope !== "global")
     ) {
       console.warn("Invalid cache decision:", decision);
 
       return {
         cacheable: false,
-        scope: "place",
+        scope: "location",
       };
     }
 
@@ -105,7 +105,7 @@ export async function determineCacheDecision(
     if (!decision.cacheable) {
       return {
         cacheable: false,
-        scope: "place",
+        scope: "location",
       };
     }
 
@@ -116,7 +116,7 @@ export async function determineCacheDecision(
 
     return {
       cacheable: false,
-      scope: "place",
+      scope: "location",
     };
   }
 }
@@ -133,7 +133,7 @@ export async function determineCacheDecision(
  * "Would another visitor plausibly ask this question and
  * benefit from receiving this same answer?"
  *
- * We bias toward place-scoped caching because AYAPI is
+ * We bias toward location-scoped caching because Wonderway is
  * a site-specific visitor experience.
  */
 const CACHE_DECISION_SYSTEM_PROMPT = `
@@ -149,7 +149,7 @@ Return exactly:
 
 {
   "cacheable": boolean,
-  "scope": "place" | "global"
+  "scope": "location" | "global"
 }
 
 ## CACHEABLE
@@ -203,13 +203,13 @@ that another visitor could receive incorrectly or out of context.
 ## CACHE SCOPE
 
 If "cacheable": true, determine whether the answer should be
-scoped to a place or available globally.
+scoped to a location or available globally.
 
-### PLACE
+### LOCATION
 
 Use:
 
-"scope": "place"
+"scope": "location"
 
 when the answer depends on the visitor's current institution
 or exhibition context.
@@ -251,21 +251,21 @@ Examples:
 Do NOT choose global simply because the answer happens to be
 generally true.
 
-If the current place could meaningfully affect the answer,
-choose "place".
+If the current location could meaningfully affect the answer,
+choose "location".
 
 ## IMPORTANT DECISION RULES
 
 1. Evaluate both the question AND the answer.
 2. Do not cache merely because a question sounds interesting.
 3. The answer must provide reusable value to another visitor.
-4. Prefer place-scoped caching when context matters.
+4. Prefer location-scoped caching when context matters.
 5. Only use global scope when the answer is clearly independent
-   of the current place.
+   of the current location.
 6. When uncertain whether something is reusable, choose:
    "cacheable": false
-7. When uncertain between place and global, choose:
-   "place"
+7. When uncertain between location and global, choose:
+   "location"
 
 Return JSON only.
 `;

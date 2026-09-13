@@ -4,6 +4,7 @@ import {
   type ScoredPineconeRecord,
 } from "@pinecone-database/pinecone";
 import * as Sentry from "@sentry/react-router";
+import { SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import type { ActionFunction } from "react-router";
 import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
@@ -20,6 +21,7 @@ import {
 } from "~/utils/pinecone";
 import { correctTranscription } from "~/utils/query-correction.server";
 import { getRedis } from "~/utils/redis.server";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import {
   accuracy,
   context,
@@ -46,6 +48,7 @@ export const handleWebhook: ActionFunction = async (args) => {
   const { request } = args;
   const clonedRequest = request.clone();
   const redis = await getRedis();
+  const { supabase } = getSupabaseServiceRoleClient();
 
   try {
     if (request.method !== "POST") {
@@ -57,7 +60,15 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 📦 process body vars
      */
-    const { query: postedQuery, user_id, place, user_lat, user_long } = body;
+    const {
+      query: postedQuery,
+      user_id,
+      place: locationId,
+      user_lat,
+      user_long,
+    } = body;
+
+    const locationContext = await resolveLocationId(locationId, supabase);
 
     let query = postedQuery;
 
@@ -72,7 +83,7 @@ export const handleWebhook: ActionFunction = async (args) => {
       event_message: `posted query : ${query}`,
       event_details: {
         user_id,
-        place,
+        locationContext,
         coords: { lat: user_lat, long: user_long },
       },
     });
@@ -80,25 +91,46 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 📦 temp route to the legacy webhook until MIT migrates.
      */
-    const useLegacy = USE_LEGACY || place === "mit" || place === "wonderway";
+    const useLegacy =
+      USE_LEGACY ||
+      locationContext.locationId === "mit" ||
+      locationContext.locationId === "wonderway";
     if (useLegacy) {
-      console.log("using legacy webhook for place:", place);
+      console.log(
+        "using legacy webhook for location:",
+        locationContext.locationId,
+      );
       return await handleLegacyWebhook({ ...args, request: clonedRequest });
     }
 
     /*
-     * ✏️ TODO fix mispronounciations
+     * ✏️ TODO fix mispronounciations at the exhibition and place level
      */
-    let corrected = await correctMispronunciations(place, query);
-    if (corrected) {
-      query = corrected;
+    let corrected;
+    if (locationContext?.exhibitionId) {
+      corrected = await correctMispronunciations(
+        locationContext.exhibitionId,
+        query,
+      );
+      if (corrected) {
+        query = corrected;
+      }
+    }
+    if (locationContext?.placeId) {
+      corrected = await correctMispronunciations(
+        locationContext.placeId,
+        query,
+      );
+      if (corrected) {
+        query = corrected;
+      }
     }
 
     /*
      * ⚡ check semantic cache before doing expensive agent work
      */
     const cached = await searchCache(query, {
-      placeId: place,
+      locationId: locationContext?.locationId,
     });
 
     if (cached) {
@@ -133,7 +165,9 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * ✏️ pull the prompt from redis or fallback
      */
-    const redisPrompt = await redis.get("prompt:" + place);
+    const redisPrompt = await redis.get(
+      "prompt:" + locationContext?.locationId,
+    );
     const prompt = redisPrompt || PROMPT;
     messages.push({ role: "system", content: prompt });
     console.log("debug: prompt ", prompt);
@@ -158,7 +192,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     console.log(`[${requestId}] agent request started`, {
       query: postedQuery,
       user_id,
-      place,
+      locationContext,
       coords: { lat: user_lat, long: user_long },
       classification: queryClassification.type,
     });
@@ -188,7 +222,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     const useGlobal = agentConfig.tools.includes("pinecone_global");
     const filter = await buildContextualPineconeFilter(
       agentConfig,
-      place,
+      locationContext,
       user_lat,
       user_long,
     );
@@ -419,7 +453,7 @@ export const handleWebhook: ActionFunction = async (args) => {
             response_time: Date.now() - timerStart,
             tools,
             details: {
-              place,
+              locationContext,
               prompt_source: redisPrompt ? "cms" : "default",
             },
           };
@@ -444,7 +478,7 @@ export const handleWebhook: ActionFunction = async (args) => {
           void cacheResponse({
             question: query,
             answer: replyText,
-            placeId: place,
+            locationId: locationContext?.locationId,
           });
         } catch (err) {
           console.error("Stream error:", err);
@@ -564,11 +598,18 @@ async function getConversationSummary(
  */
 async function buildContextualPineconeFilter(
   agentConfig: AgentConfig,
-  place: string,
+  locationContext: LocationContext,
   userLat?: number,
   userLong?: number,
 ): Promise<Record<string, any>> {
   const clauses: Record<string, any>[] = [];
+
+  let placeId = locationContext?.placeId
+    ? locationContext.placeId
+    : locationContext?.locationId;
+  let exhibitionId = locationContext?.exhibitionId
+    ? locationContext.exhibitionId
+    : locationContext?.locationId;
 
   if (agentConfig.geoFiltered) {
     const wantsProximity = agentConfig.nearbyRadiusMeters != null;
@@ -577,7 +618,7 @@ async function buildContextualPineconeFilter(
 
     if (wantsProximity && hasCoords) {
       const resolved = await resolveNearbyItems(
-        place,
+        locationContext?.locationId,
         userLat,
         userLong,
         agentConfig.nearbyRadiusMeters!,
@@ -595,15 +636,18 @@ async function buildContextualPineconeFilter(
           },
           {
             $or: [
-              { exhibition_id: { $eq: place } },
-              { place_id: { $eq: place } },
+              { exhibition_id: { $eq: exhibitionId } },
+              { place_id: { $eq: placeId } },
             ],
           },
         ],
       });
     } else {
       clauses.push({
-        $or: [{ exhibition_id: { $eq: place } }, { place_id: { $eq: place } }],
+        $or: [
+          { exhibition_id: { $eq: exhibitionId } },
+          { place_id: { $eq: placeId } },
+        ],
       });
     }
   }
@@ -616,11 +660,11 @@ async function buildContextualPineconeFilter(
 async function cacheResponse({
   question,
   answer,
-  placeId,
+  locationId,
 }: {
   question: string;
   answer: string;
-  placeId: string;
+  locationId: string;
 }) {
   try {
     const decision = await determineCacheDecision(question, answer);
@@ -642,11 +686,49 @@ async function cacheResponse({
       question,
       answer,
       {
-        placeId,
+        locationId,
       },
       decision,
     );
   } catch (error) {
     console.error("Failed to cache response:", error);
   }
+}
+
+// This function takes the single location id
+// and resolves it to a place id and exhibition id if applicable.
+type LocationContext = {
+  locationId: string;
+  placeId: string;
+  exhibitionId?: string;
+};
+async function resolveLocationId(
+  locationId: string,
+  supabase: SupabaseClient,
+): Promise<LocationContext> {
+  // Look for locationId as a child
+  const { data, error } = await supabase
+    .from("content_relationships")
+    .select("child_id, parent_id, child_type, parent_type")
+    .eq("child_id", locationId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (data) {
+    return {
+      locationId,
+      placeId: data.parent_id,
+      exhibitionId:
+        data.child_type === "exhibition" ? data.child_id : undefined,
+    };
+  }
+
+  // No parent means this is already the parent/place
+  return {
+    locationId,
+    placeId: locationId,
+  };
 }

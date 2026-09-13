@@ -12,7 +12,7 @@ import type { CacheContext, CacheDecision, CacheScope } from "./cache.types";
  *
  * Cache entries are stored as Redis hashes with the `cache:` prefix.
  */
-const INDEX_NAME = "ayapi_cache";
+const INDEX_NAME = "wonderway_cache"; // was "ayapi_cache"
 const CACHE_PREFIX = "cache:";
 
 /**
@@ -49,8 +49,8 @@ interface SearchResult {
     value: {
       answer: string;
       question: string;
-      place_id?: string;
-      scope?: "place" | "global";
+      location_id?: string;
+      scope?: "location" | "global";
       hits?: string;
       score: number;
     };
@@ -61,7 +61,7 @@ interface SearchResult {
  * Create the Redis search index if it doesn't already exist.
  *
  * The vector field is used for semantic question matching.
- * `place_id` and `scope` are TAG fields so Redis can efficiently
+ * `location_id` and `scope` are TAG fields so Redis can efficiently
  * restrict searches to the appropriate context.
  */
 export async function initIndex() {
@@ -87,7 +87,7 @@ export async function initIndex() {
           type: SCHEMA_FIELD_TYPE.TEXT,
         },
 
-        place_id: {
+        location_id: {
           type: SCHEMA_FIELD_TYPE.TAG,
         },
 
@@ -124,17 +124,17 @@ export async function initIndex() {
  * Cache lookup behavior:
  *
  * 1. Look for a matching question.
- * 2. Prefer a cache entry scoped to the current place.
+ * 2. Prefer a cache entry scoped to the current location.
  * 3. Also allow global cache entries.
  * 4. Require the semantic similarity to exceed the threshold.
  * 5. When a cached answer is used:
  *      - increment its hit count
  *      - increase/refresh its TTL based on the new hit count
  *
- * Place-specific cache entries are NEVER returned for a different
- * place.
+ * Location-specific cache entries are NEVER returned for a different
+ * location.
  *
- * Global cache entries can be returned from any place.
+ * Global cache entries can be returned from any location.
  */
 export async function searchCache(
   rawQuery: string,
@@ -144,7 +144,7 @@ export async function searchCache(
   const redis = await getRedis();
   await initIndex();
 
-  if (!context.placeId) {
+  if (!context.locationId) {
     return null;
   }
 
@@ -154,20 +154,23 @@ export async function searchCache(
   /**
    * Search both:
    *
-   *   1. entries belonging to the current place
+   *   1. entries belonging to the current location
    *   2. globally reusable entries
    *
    * Redis TAG syntax allows us to express this as:
    *
-   *   place_id:{currentPlace} | scope:{global}
+   *   location_id:{currentLocation} | scope:{global}
    */
   /*
   
-  const filter = `(@place_id:{${escapeTagValue(
-    context.placeId,
+  const filter = `(@location_id:{${escapeTagValue(
+    context.locationId,
   )}} | @scope:{global})`;*/
-  console.log("placeId for cache filter:", JSON.stringify(context.placeId));
-  const filter = `(@place_id:{${escapeTagValue(context.placeId)}} | @scope:{global})`;
+  console.log(
+    "locationId for cache filter:",
+    JSON.stringify(context.locationId),
+  );
+  const filter = `(@location_id:{${escapeTagValue(context.locationId)}} | @scope:{global})`;
   console.log("filter:", filter);
 
   const raw = await redis.ft.search(
@@ -179,7 +182,7 @@ export async function searchCache(
       },
       SORTBY: { BY: "score", DIRECTION: "ASC" },
       DIALECT: 2,
-      RETURN: ["answer", "question", "place_id", "scope", "hits", "score"],
+      RETURN: ["answer", "question", "location_id", "scope", "hits", "score"],
     },
   );
 
@@ -232,7 +235,7 @@ export async function searchCache(
     question: doc.value.question,
     similarity,
     scope: doc.value.scope as CacheScope,
-    placeId: doc.value.place_id,
+    locationId: doc.value.location_id,
     hits,
   };
 }
@@ -251,14 +254,14 @@ export async function searchCache(
  *
  *   const decision = {
  *     cacheable: true,
- *     scope: "place"
+ *     scope: "location"
  *   };
  *
  *   await storeCache(
  *     question,
  *     answer,
  *     {
- *       placeId,
+ *       locationId,
  *     },
  *     decision
  *   );
@@ -280,8 +283,8 @@ export async function storeCache(
     return null;
   }
 
-  if (!context.placeId) {
-    throw new Error("placeId is required when storing a cache entry");
+  if (!context.locationId) {
+    throw new Error("locationId is required when storing a cache entry");
   }
 
   const redis = await getRedis();
@@ -292,15 +295,16 @@ export async function storeCache(
   const embedding = float32ToBuffer(await getEmbedding(query));
 
   /**
-   * Include the place, scope, and question in the Redis key.
+   * Include the location, scope, and question in the Redis key.
    *
-   * This prevents identical questions at different places from
+   * This prevents identical questions at different locations from
    * overwriting one another.
    *
-   * Global entries intentionally use the same place-independent
-   * key so they can be reused across places.
+   * Global entries intentionally use the same location-independent
+   * key so they can be reused across locations.
    */
-  const keyContext = decision.scope === "global" ? "global" : context.placeId;
+  const keyContext =
+    decision.scope === "global" ? "global" : context.locationId;
 
   const id = `${CACHE_PREFIX}${Buffer.from(`${keyContext}|${query}`).toString(
     "base64url",
@@ -312,13 +316,13 @@ export async function storeCache(
     question: query,
 
     /**
-     * For global entries we still store the place where the
+     * For global entries we still store the location where the
      * question originated for debugging/analytics purposes.
      *
-     * The `scope` field determines whether that place restricts
+     * The `scope` field determines whether that location restricts
      * retrieval.
      */
-    place_id: context.placeId,
+    location_id: context.locationId,
 
     scope: decision.scope,
 
@@ -355,8 +359,8 @@ export async function storeCache(
  *
  * Current schedule:
  *
- *   0 hits    → 7 days
- *   1 hit     → 14 days
+ *   0 hits    → 14 days
+ *   1 hit     → 20 days
  *   3 hits    → 30 days
  *   10 hits   → 60 days
  *   25 hits   → 90 days
@@ -404,7 +408,7 @@ function normalizeQuery(query: string) {
  * Escape characters that have special meaning in Redis TAG
  * expressions.
  *
- * Place IDs are normally UUIDs, but keeping this escaping here
+ * Location IDs are normally UUIDs, but keeping this escaping here
  * makes the cache lookup safer if the ID format changes later.
  */
 function escapeTagValue(value: string) {
