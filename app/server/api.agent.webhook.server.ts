@@ -232,7 +232,7 @@ export const handleWebhook: ActionFunction = async (args) => {
             vector: queryEmbedding,
             topK: agentConfig.contextualTopK,
             includeMetadata: true,
-            filter,
+            ...(filter && { filter }),
           })
         : Promise.resolve({ matches: [] }),
       useGlobal
@@ -601,7 +601,7 @@ async function buildContextualPineconeFilter(
   locationContext: LocationContext,
   userLat?: number,
   userLong?: number,
-): Promise<Record<string, any>> {
+): Promise<Record<string, any> | undefined> {
   const clauses: Record<string, any>[] = [];
 
   let placeId = locationContext?.placeId
@@ -652,7 +652,7 @@ async function buildContextualPineconeFilter(
     }
   }
 
-  if (clauses.length === 0) return {};
+  if (clauses.length === 0) return undefined;
   if (clauses.length === 1) return clauses[0];
   return { $and: clauses };
 }
