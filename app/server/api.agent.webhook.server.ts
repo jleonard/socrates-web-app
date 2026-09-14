@@ -168,7 +168,11 @@ export const handleWebhook: ActionFunction = async (args) => {
     const redisPrompt = await redis.get(
       "prompt:" + locationContext?.locationId,
     );
-    const prompt = redisPrompt || PROMPT;
+
+    let prompt = PROMPT;
+    if (redisPrompt) {
+      prompt += "\n" + redisPrompt;
+    }
     messages.push({ role: "system", content: prompt });
     console.log("debug: prompt ", prompt);
 
@@ -604,12 +608,17 @@ async function buildContextualPineconeFilter(
 ): Promise<Record<string, any> | undefined> {
   const clauses: Record<string, any>[] = [];
 
-  let placeId = locationContext?.placeId
-    ? locationContext.placeId
-    : locationContext?.locationId;
-  let exhibitionId = locationContext?.exhibitionId
-    ? locationContext.exhibitionId
-    : locationContext?.locationId;
+  const placeId = locationContext?.placeId;
+  const exhibitionId = locationContext?.exhibitionId;
+
+  // Build the place/exhibition scope clause without fabricating ids —
+  // only include a sub-clause for the ones we actually have.
+  const scopeClause = [
+    exhibitionId ? { exhibition_id: { $eq: exhibitionId } } : null,
+    placeId ? { place_id: { $eq: placeId } } : null,
+  ].filter(Boolean) as Record<string, any>[];
+
+  const scope = scopeClause.length > 1 ? { $or: scopeClause } : scopeClause[0];
 
   if (agentConfig.geoFiltered) {
     const wantsProximity = agentConfig.nearbyRadiusMeters != null;
@@ -628,27 +637,16 @@ async function buildContextualPineconeFilter(
         : resolved;
     }
 
-    if (nearbyIds.length > 0) {
+    if (nearbyIds.length > 0 && scope) {
       clauses.push({
-        $and: [
-          {
-            object_id: { $in: nearbyIds },
-          },
-          {
-            $or: [
-              { exhibition_id: { $eq: exhibitionId } },
-              { place_id: { $eq: placeId } },
-            ],
-          },
-        ],
+        $and: [{ object_id: { $in: nearbyIds } }, scope],
       });
-    } else {
-      clauses.push({
-        $or: [
-          { exhibition_id: { $eq: exhibitionId } },
-          { place_id: { $eq: placeId } },
-        ],
-      });
+    } else if (nearbyIds.length > 0) {
+      // Have nearby ids but no place/exhibition scope at all — filter on
+      // proximity alone rather than silently dropping the geo filter.
+      clauses.push({ object_id: { $in: nearbyIds } });
+    } else if (scope) {
+      clauses.push(scope);
     }
   }
 
@@ -708,7 +706,7 @@ async function resolveLocationId(
 ): Promise<LocationContext> {
   // Look for locationId as a child
   const { data, error } = await supabase
-    .from("content_relationships")
+    .from("location_relationships")
     .select("child_id, parent_id, child_type, parent_type")
     .eq("child_id", locationId)
     .maybeSingle();

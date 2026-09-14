@@ -2,10 +2,12 @@
  * Parse strapi body into the RAG
  */
 import { Pinecone } from "@pinecone-database/pinecone";
+import { l } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import OpenAI from "openai";
 import type { ActionFunctionArgs } from "react-router";
 import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 // ─── clients ────────────────────────────────────────────────────────────────
 
@@ -108,6 +110,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       break;
     case "exhibition":
       chunks = await buildExhibitionChunks(fullEntry);
+      await buildLocationRelationship(fullEntry);
       break;
     case "person":
       chunks = buildPersonChunks(fullEntry);
@@ -662,4 +665,33 @@ function stripNullMetadata(metadata: Record<string, any>): Record<string, any> {
   }
 
   return result;
+}
+
+async function buildLocationRelationship(entry: Record<string, any>) {
+  const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient();
+
+  const childId = entry?.exhibition_id;
+  const parentId = entry?.place?.place_id;
+
+  if (childId && parentId) {
+    const childType = "exhibition";
+    const parentType = "place";
+
+    const { error } = await supabaseAdmin.from("location_relationships").upsert(
+      {
+        child_id: childId,
+        parent_id: parentId,
+        child_type: childType,
+        parent_type: parentType,
+      },
+      {
+        onConflict: "child_id,parent_id",
+      },
+    );
+
+    if (error) {
+      console.error("Failed to upsert content relationship:", error);
+      throw error;
+    }
+  }
 }
