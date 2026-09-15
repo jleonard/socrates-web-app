@@ -116,7 +116,7 @@ export const handleLegacyWebhook: ActionFunction = async ({ request }) => {
     }
 
     // --- 2️⃣ Try semantic cache hit first ---
-    const cached = await searchCache(query, { placeId: place });
+    const cached = await searchCache(query, { locationId: place });
 
     if (cached) {
       history_object.tool_cache = true;
