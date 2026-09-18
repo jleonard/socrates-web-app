@@ -263,35 +263,6 @@ export const handleWebhook: ActionFunction = async (args) => {
       })),
     );
 
-    console.log(`[${requestId}] Pinecone global results`, globalResults);
-
-    //@TEMP
-    console.log(
-      `debug: raw contextual scores for type=${queryClassification.type} query="${query}":`,
-      contextualResults.matches.map((m) => ({
-        score: m.score,
-        object_id: m.metadata?.object_id,
-        exhibition_id: m.metadata?.exhibition_id,
-        place_id: m.metadata?.place_id,
-      })),
-    );
-
-    //@TEMP
-    const scores = contextualResults.matches
-      .map((m) => m.score)
-      .filter((s): s is number => s != null);
-
-    //@TEMP
-    console.log(`[${requestId}] Pinecone score distribution`, {
-      count: scores.length,
-      max: Math.max(...scores),
-      min: Math.min(...scores),
-      average:
-        scores.length > 0
-          ? scores.reduce((a, b) => a + b, 0) / scores.length
-          : null,
-    });
-
     /*
      * 🌲 pinecone part two: filter results
      */
@@ -458,11 +429,106 @@ export const handleWebhook: ActionFunction = async (args) => {
             response_time: Date.now() - timerStart,
             tools,
             details: {
+              requestId,
               locationContext,
               prompt_source: redisPrompt ? "cms" : "default",
             },
           };
           await logAgentHistory(history_object);
+          logAppEvent({
+            event_type: "agent_webhook",
+            event_message: "agent request completed",
+            event_details: {
+              request_id: requestId,
+              user_id,
+
+              query: {
+                original: postedQuery,
+                final: query,
+                corrected: postedQuery !== query,
+              },
+
+              location: locationContext,
+
+              classification: {
+                type: queryClassification.type,
+              },
+
+              conversation: {
+                history_count: trimmedHistory.length,
+                summary_used: Boolean(conversationSummary),
+              },
+
+              retrieval: {
+                contextual_requested: useContextual,
+                global_requested: useGlobal,
+
+                filter: filter ?? null,
+
+                contextual_raw: contextualResults.matches.length,
+                global_raw: globalResults.matches.length,
+
+                contextual_after_threshold: contextualMatches.length,
+                global_after_threshold: globalMatches.length,
+
+                final_matches: allMatches.length,
+                highest_score:
+                  allMatches.length > 0
+                    ? Math.max(...allMatches.map((m) => m.score ?? 0))
+                    : null,
+              },
+
+              wikipedia: {
+                enabled: agentConfig.tools.includes("wiki_fallback"),
+                fallback_triggered: shouldFallbackToWiki,
+                found: Boolean(wikiSummary),
+              },
+
+              response: {
+                source:
+                  allMatches.length > 0
+                    ? "rag"
+                    : wikiSummary
+                      ? "wikipedia"
+                      : "none",
+                length: replyText.length,
+                response_time_ms: Date.now() - timerStart,
+              },
+
+              prompt_source: redisPrompt ? "cms" : "default",
+            },
+          });
+          logAppEvent({
+            event_type: "agent_webhook_rag",
+            event_message: `RAG results for: ${query}`,
+            event_details: {
+              request_id: requestId,
+              query,
+              classification: queryClassification.type,
+
+              contextual: contextualResults.matches.map((m) => ({
+                score: m.score,
+                id: m.id,
+                object_id: m.metadata?.object_id,
+                exhibition_id: m.metadata?.exhibition_id,
+                place_id: m.metadata?.place_id,
+                chunk_type: m.metadata?.chunk_type,
+                source_name: m.metadata?.source_name,
+                text: m.metadata?.text,
+              })),
+
+              global: globalResults.matches.map((m) => ({
+                score: m.score,
+                id: m.id,
+                object_id: m.metadata?.object_id,
+                exhibition_id: m.metadata?.exhibition_id,
+                place_id: m.metadata?.place_id,
+                chunk_type: m.metadata?.chunk_type,
+                source_name: m.metadata?.source_name,
+                text: m.metadata?.text,
+              })),
+            },
+          });
 
           /*
            * 🧾 wrap up: update the chat history in redis

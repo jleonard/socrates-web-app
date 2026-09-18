@@ -149,13 +149,13 @@ Instead, briefly acknowledge the limitation and, when useful, tell the visitor w
 
 export const noRagFallbackMessage = `No specific RAG context was found for this query.
 
-Use verified fallback sources when available.
+For questions about the specific artwork, object, person, exhibition, place, or event being discussed, do not use unsupported information from your general knowledge to fill gaps.
 
-You may answer general questions using established knowledge when you are confident the information is accurate. Do not invent, speculate, or fill gaps with unsupported specific details.
+Answer only with information supported by the available RAG context or a verified fallback source such as Wikipedia.
 
-For questions about specific artworks, objects, artists, exhibitions, places, or events, do not provide factual claims unless they are supported by the available sources or are reliably established knowledge.
+If the available sources do not establish the answer, say that you don't have enough verified information.
 
-If you cannot answer reliably, briefly explain that you don't have enough verified information.`;
+Do not speculate, infer, or provide a likely explanation simply because it seems plausible.`;
 
 // deprecated 9/13/26 after amnh qa
 export const oldAccuracy = `# Accuracy Rules 

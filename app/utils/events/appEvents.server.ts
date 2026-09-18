@@ -12,6 +12,8 @@ export type LogAppEventType =
   | "user_spoke"
   | "agent_spoke"
   | "agent_log"
+  | "agent_webhook"
+  | "agent_webhook_rag"
   | "purchase";
 
 export type LogAppEventProps = {
