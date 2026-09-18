@@ -537,8 +537,37 @@ async function getConversationSummary(
         .join("\n");
 
       const prompt = existingSummary
-        ? `Previous conversation summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
-        : `Summarize the main topics discussed in this conversation in 2-3 sentences:\n\n${recentMessages}`;
+        ? `Previous conversation summary:
+${existingSummary}
+
+Recent messages:
+${recentMessages}
+
+Update the conversation summary for future turns.
+
+Preserve important subjects from the previous summary and incorporate new information from the recent messages.
+
+Focus on:
+- artworks, objects, people, artists, exhibitions, places, and subjects being discussed
+- important facts established during the conversation
+- relationships between subjects that may matter for follow-up questions
+- unresolved questions or topics the visitor is still discussing
+
+Do not summarize every message or describe the conversation generally. Capture the context needed to understand future follow-up questions such as "why?", "what about him?", "was that intentional?", or "what else is in it?"
+
+Keep the summary concise, 2-3 sentences.`
+        : `Summarize this conversation for future follow-up questions.
+
+Identify the important artworks, objects, people, artists, exhibitions, places, and subjects being discussed.
+
+Include important context or relationships established in the conversation and any unresolved questions the visitor is pursuing.
+
+Do not summarize every message. Capture only the context needed to understand future follow-up questions.
+
+Keep the summary concise, 2-3 sentences.
+
+Conversation:
+${recentMessages}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
