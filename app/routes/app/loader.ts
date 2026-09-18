@@ -21,10 +21,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const place = url.searchParams.get("place");
   const promo = url.searchParams.get("promo");
-  let agentId = url.searchParams.get("aid");
+  const agentCode = url.searchParams.get("aid");
+  let agentId;
 
-  if (!agentId) {
+  if (!agentCode) {
     agentId = process.env.ELEVENLABS_AGENT!;
+  }
+
+  if (agentCode == "bee") {
+    agentId = "agent_7401m2tn9ewrfm5rrz73js20ecqw";
   }
 
   // save place before any redirects
