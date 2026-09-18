@@ -147,6 +147,16 @@ Instead, briefly acknowledge the limitation and, when useful, tell the visitor w
 **A short "I don't have enough verified information to say" is always preferable to an invented answer.**
 `;
 
+export const noRagFallbackMessage = `No specific RAG context was found for this query.
+
+Use verified fallback sources when available.
+
+You may answer general questions using established knowledge when you are confident the information is accurate. Do not invent, speculate, or fill gaps with unsupported specific details.
+
+For questions about specific artworks, objects, artists, exhibitions, places, or events, do not provide factual claims unless they are supported by the available sources or are reliably established knowledge.
+
+If you cannot answer reliably, briefly explain that you don't have enough verified information.`;
+
 // deprecated 9/13/26 after amnh qa
 export const oldAccuracy = `# Accuracy Rules 
 

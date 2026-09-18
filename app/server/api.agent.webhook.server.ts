@@ -27,6 +27,7 @@ import {
   context,
   goals,
   guardrails,
+  noRagFallbackMessage,
   role,
 } from "~/utils/system.prompt";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
@@ -325,7 +326,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     if (allMatches.length === 0) {
       messages.push({
         role: "system",
-        content: `No specific RAG context was found for this query. Answer generally if you can, or let the user know you don't have specific information.`,
+        content: noRagFallbackMessage,
       });
     } else {
       messages.push({
