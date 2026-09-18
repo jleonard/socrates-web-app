@@ -30,7 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (agentCode == "bee") {
     agentId = "agent_7401m2tn9ewrfm5rrz73js20ecqw";
-    console.log("bee!");
+    console.log("bee! SET");
   }
 
   // save place before any redirects
