@@ -24,13 +24,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const agentCode = url.searchParams.get("aid");
   let agentId;
 
-  if (!agentCode) {
-    agentId = process.env.ELEVENLABS_AGENT!;
-  }
-
   if (agentCode == "bee") {
     agentId = "agent_7401m2tn9ewrfm5rrz73js20ecqw";
     console.log("bee! SET");
+  }
+
+  if (!agentId) {
+    agentId = process.env.ELEVENLABS_AGENT!;
   }
 
   // save place before any redirects
