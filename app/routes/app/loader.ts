@@ -21,6 +21,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const place = url.searchParams.get("place");
   const promo = url.searchParams.get("promo");
+  let agentId = url.searchParams.get("aid");
+
+  if (!agentId) {
+    agentId = process.env.ELEVENLABS_AGENT!;
+  }
 
   // save place before any redirects
   if (place) {
@@ -138,7 +143,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       sessionId,
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
-      elevenLabsId: process.env.ELEVENLABS_AGENT!,
+      elevenLabsId: agentId,
       place: session.get("place"),
     },
     {
