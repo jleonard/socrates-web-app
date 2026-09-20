@@ -1,5 +1,6 @@
 import { usePageConfig } from "app/hooks/usePageConfig";
 import clsx from "clsx";
+import { Agent } from "components/Agent/Agent";
 import { Container } from "components/Container/Container";
 import { X } from "lucide-react";
 import { Link } from "react-router";
@@ -35,6 +36,11 @@ export const ControlBar = ({ className }: { className?: string }) => {
             </div>
             Map
           </Link>
+        </div>
+
+        {/* center */}
+        <div className="pointer-events-auto absolute inset-x-0 flex justify-center">
+          <Agent />
         </div>
 
         {/* right side */}

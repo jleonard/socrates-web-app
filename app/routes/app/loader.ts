@@ -151,6 +151,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: agentId,
       place: session.get("place"),
+      agentContext: {
+        elevenLabsId: agentId,
+        place: session.get("place"),
+      },
     },
     {
       headers: await buildHeaders(),

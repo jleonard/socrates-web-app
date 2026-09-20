@@ -9,9 +9,9 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
       <div
         ref={ref}
         {...rest}
-        className={`relative flex items-center justify-center size-[60px] ${className ?? ""}`}
+        className={`relative flex items-center justify-center size-[72px] ${className ?? ""}`}
       >
-        <div className="relative size-[60px]">
+        <div className="relative size-[72px]">
           {/* XL Circle */}
           <motion.div
             key="xl-circle"
@@ -21,7 +21,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               processing: {
                 x: 0,
-                y: -25,
+                y: -30,
                 transition: {
                   x: {
                     duration: 0.6,
@@ -36,7 +36,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               idle: {
                 x: 0,
-                y: [-25, -29, -25],
+                y: [-30, -35, -30],
                 scale: 1,
                 transition: {
                   x: {
@@ -56,7 +56,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               preconnect: {
                 x: 0,
-                y: -34,
+                y: -41,
                 scale: 0.85,
                 transition: {
                   x: { duration: 0.1, ease: "easeInOut" },
@@ -67,7 +67,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               connected: {
                 x: 0,
-                y: [-34, -36, -34],
+                y: [-41, -43, -41],
                 scale: 0.85,
                 transition: {
                   x: {
@@ -89,7 +89,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               speaking: {
                 x: 0,
-                y: -34,
+                y: -41,
                 scale: [0.8, 0.85, 0.8, 0.75, 0.8, 0.85, 0.8],
                 transition: {
                   x: {
@@ -109,7 +109,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
               },
             }}
           >
-            <div className="bg-black rounded-full size-[60px]" />
+            <div className="bg-black rounded-full size-[72px]" />
           </motion.div>
 
           {/* L Circle */}
@@ -120,7 +120,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
             initial="idle"
             variants={{
               processing: {
-                y: -25,
+                y: -30,
                 scale: 0.95,
                 transition: {
                   scale: {
@@ -132,7 +132,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               idle: {
                 x: 0,
-                y: [-25, -20, -25],
+                y: [-30, -24, -30],
                 scale: 1,
                 transition: {
                   x: {
@@ -153,7 +153,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
               },
 
               preconnect: {
-                y: 6,
+                y: 7,
                 scale: 0.75,
                 transition: {
                   y: {
@@ -169,7 +169,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               connected: {
                 x: 0,
-                y: [6, 5, 6],
+                y: [7, 6, 7],
                 scale: 0.75,
                 transition: {
                   x: {
@@ -187,7 +187,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               speaking: {
                 x: 0,
-                y: 6,
+                y: 7,
                 scale: [0.75, 0.8, 0.75, 0.7, 0.75, 0.8, 0.75],
                 transition: {
                   x: {
@@ -209,7 +209,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
           >
             <div
               className={`
-                absolute rounded-full size-[30px]
+                absolute rounded-full size-[36px]
                 top-1/2 left-1/2
                 -translate-y-1/2 -translate-x-1/2
                 ${
@@ -232,7 +232,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               processing: {
                 rotate: 360,
-                y: -25,
+                y: -30,
                 scale: 1,
                 transition: {
                   rotate: {
@@ -253,7 +253,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               idle: {
                 x: 0,
-                y: [-25, -21, -25],
+                y: [-30, -25, -30],
                 scale: 1.2,
                 transition: {
                   x: {
@@ -274,7 +274,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
               },
 
               preconnect: {
-                y: 28,
+                y: 34,
                 scale: 0.75,
                 transition: {
                   y: {
@@ -290,7 +290,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               connected: {
                 x: 0,
-                y: [28, 25, 28],
+                y: [34, 30, 34],
                 scale: 0.8,
                 transition: {
                   x: {
@@ -312,7 +312,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               speaking: {
                 x: 0,
-                y: 28,
+                y: 34,
                 scale: [0.8, 0.85, 0.8, 0.75, 0.8, 0.85, 0.8],
                 transition: {
                   x: {
@@ -334,10 +334,10 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
           >
             <div
               className={`
-                absolute origin-center rounded-full size-2.5
+                absolute origin-center rounded-full size-3
                 left-1/2 -translate-x-1/2
                 top-1/2 -translate-y-1/2
-                ${mode === "processing" ? "top-[5px]" : ""}
+                ${mode === "processing" ? "top-[6px]" : ""}
                 ${
                   mode === "speaking" ||
                   mode === "idle" ||
@@ -359,7 +359,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
             variants={{
               idle: {
                 x: 0,
-                y: [-50, -45, -50],
+                y: [-60, -54, -60],
                 scale: 1,
                 transition: {
                   x: {
@@ -381,8 +381,8 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               processing: {
                 rotate: -360,
-                y: -25,
-                left: -5,
+                y: -30,
+                left: -6,
                 transition: {
                   rotate: {
                     repeat: Infinity,
@@ -393,7 +393,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
               },
 
               preconnect: {
-                y: -54,
+                y: -65,
                 scale: 0.75,
                 transition: {
                   y: {
@@ -409,7 +409,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               connected: {
                 x: 0,
-                y: [-54, -16, -54],
+                y: [-65, -19, -65],
                 scale: 1.3,
                 transition: {
                   x: {
@@ -427,7 +427,7 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
 
               speaking: {
                 x: 0,
-                y: -48,
+                y: -58,
                 scale: [1.3, 1.1, 1.2, 1.1, 1.2, 1, 1.3],
                 transition: {
                   x: {
@@ -449,11 +449,11 @@ export const MiniCircles = forwardRef<HTMLDivElement, CirclesProps>(
           >
             <div
               className={`
-                absolute origin-center rounded-full size-[4px]
+                absolute origin-center rounded-full size-[5px]
                 top-1/2 -translate-y-1/2
                 ${
                   mode === "processing"
-                    ? "left-[-4px]"
+                    ? "left-[-5px]"
                     : "left-1/2 -translate-x-1/2"
                 }
                 ${mode === "processing" ? "bg-fuchsia-600" : "bg-paper"}
