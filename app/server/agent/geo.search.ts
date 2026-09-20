@@ -1,5 +1,38 @@
 import { getRedis } from "~/utils/redis.server";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
+export async function resolveNearbyItems(
+  groupId: string,
+  lat: number,
+  lng: number,
+  radiusMeters = 2,
+): Promise<string[]> {
+  const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
+
+  const { data, error } = await subabaseServiceRole.rpc("find_nearby_content", {
+    p_group_id: groupId,
+    p_latitude: lat,
+    p_longitude: lng,
+    p_radius_meters: radiusMeters,
+  });
+
+  if (error) {
+    throw new Error(`resolveNearbyItems failed: ${error.message}`);
+  }
+
+  console.log("[resolveNearbyItems] results", {
+    count: data?.length ?? 0,
+    results: (data ?? []).map((row) => ({
+      object_id: row.object_id,
+      group_id: row.group_id,
+      distance_meters: row.distance_meters,
+    })),
+  });
+
+  return (data ?? []).map((row) => row.object_id);
+}
+
+/* @deprecated. not using redis. moved on to a supabase table with a geo Point column and an rpc function.  */
 export async function resolveNearbyArtworks(
   placeId: string,
   lat: number,
@@ -24,6 +57,7 @@ export async function resolveNearbyArtworks(
     .map((id) => id.replace("artwork:", ""));
 }
 
+/* @deprecated. not using redis. moved on to a supabase table with a geo Point column and an rpc function.  */
 export async function resolveNearbyArtifacts(
   placeId: string,
   lat: number,

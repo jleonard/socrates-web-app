@@ -16,7 +16,7 @@ export const MainButtonStyles = tv({
     },
     mode: {
       connecting: "",
-      speaking: "",
+      speaking: "bg-red-600 delay-100",
       disconnected: "",
       listening: "bg-green-600 delay-100",
     },

@@ -1,11 +1,13 @@
 /**
  * Parse strapi body into the RAG
  */
-
 import { Pinecone } from "@pinecone-database/pinecone";
+import { l } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import OpenAI from "openai";
 import type { ActionFunctionArgs } from "react-router";
+import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 // ─── clients ────────────────────────────────────────────────────────────────
 
@@ -108,7 +110,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       break;
     case "exhibition":
       chunks = await buildExhibitionChunks(fullEntry);
-      // await storeGeoDataForExhibition(fullEntry);
+      await buildLocationRelationship(fullEntry);
       break;
     case "person":
       chunks = buildPersonChunks(fullEntry);
@@ -138,6 +140,19 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   }
 
   await deleteAndReEmbed(chunks);
+
+  if (fullEntry?.greeting) {
+    console.log("has greeting");
+    try {
+      await processGreeting(fullEntry.greeting, fullEntry[`${model}_id`]);
+      console.log("greeing processed");
+    } catch (err) {
+      console.log(
+        `[webhook] error processing greeting for id=${entry.id}`,
+        err,
+      );
+    }
+  }
 }
 
 // ─── delete handler ───────────────────────────────────────────────────────────
@@ -231,6 +246,9 @@ function buildBaseMeta(
   extras: Record<string, any> = {},
 ) {
   return {
+    doc_source: "strapi",
+    strapi_id: entry.documentId,
+    object_id: entry[`${model}_id`] ?? null,
     group_id: buildGroupId(model, entry),
     name: entry.name ?? null,
     parent_type: model,
@@ -437,6 +455,9 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
 async function buildExhibitionChunks(
   entry: Record<string, any>,
 ): Promise<Chunk[]> {
+  console.log(
+    `[webhook] building exhibition chunks for id=${entry.id} ${entry.place}`,
+  );
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
@@ -509,7 +530,7 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
         : null,
       entry.nationality,
       entry.birth_year && entry.death_year
-        ? `${entry.birth_year}–${entry.death_year}`
+        ? `${entry.birth_year}-${entry.death_year}`
         : (entry.birth_year ?? null),
       entry.bio,
     ]
@@ -644,4 +665,33 @@ function stripNullMetadata(metadata: Record<string, any>): Record<string, any> {
   }
 
   return result;
+}
+
+async function buildLocationRelationship(entry: Record<string, any>) {
+  const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient();
+
+  const childId = entry?.exhibition_id;
+  const parentId = entry?.place?.place_id;
+
+  if (childId && parentId) {
+    const childType = "exhibition";
+    const parentType = "place";
+
+    const { error } = await supabaseAdmin.from("location_relationships").upsert(
+      {
+        child_id: childId,
+        parent_id: parentId,
+        child_type: childType,
+        parent_type: parentType,
+      },
+      {
+        onConflict: "child_id,parent_id",
+      },
+    );
+
+    if (error) {
+      console.error("Failed to upsert content relationship:", error);
+      throw error;
+    }
+  }
 }

@@ -3,14 +3,15 @@ import {
   parseCookieHeader,
   serializeCookieHeader,
 } from "@supabase/ssr";
+import type { Database } from "~/types/supabase";
 
-import { serialize } from "cookie";
 import type { Session } from "@supabase/supabase-js";
+import { serialize } from "cookie";
 
 export function getSupabaseServiceRoleClient() {
   const headers = new Headers();
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SECRET_KEY!,
     {

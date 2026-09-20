@@ -13,19 +13,24 @@
   },
   "dependencies": {
     "@11labs/react": "^0.2.0",
+    "@aws-sdk/client-s3": "^3.1126.0",
+    "@elevenlabs/elevenlabs-js": "^2.65.0",
     "@elevenlabs/react": "^0.6.1",
     "@pinecone-database/pinecone": "^6.1.2",
     "@react-router/node": "^7.0.0",
     "@react-router/serve": "^7.0.0",
     "@sentry/react-router": "^10.26.0",
-    "@supabase/ssr": "^0.5.2",
+    "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.48.1",
     "clsx": "^2.1.1",
+    "cookie": "^1.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.4.2",
     "double-metaphone": "^2.0.1",
+    "dropbox": "^10.46.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "exifr": "^7.1.3",
     "franc": "^6.2.0",
     "fuse.js": "^7.3.0",
     "gray-matter": "^4.0.3",
@@ -33,6 +38,7 @@
     "isbot": "^4.1.0",
     "lucide-react": "^0.525.0",
     "mapbox-gl": "^3.27.0",
+    "mammoth": "^1.12.1",
     "motion": "^12.38.0",
     "openai": "^5.16.0",
     "pg": "^8.22.0",
@@ -79,6 +85,6 @@
     "vite-tsconfig-paths": "^4.2.1"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   }
 }

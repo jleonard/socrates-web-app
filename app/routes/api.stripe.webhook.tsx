@@ -1,11 +1,11 @@
 // app/routes/webhooks/stripe.ts
+import * as Sentry from "@sentry/react-router";
 import type { ActionFunction } from "react-router";
 import { data } from "react-router";
 import Stripe from "stripe";
-import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import { validate as isUUID } from "uuid";
-import * as Sentry from "@sentry/react-router";
 import { sendPurchaseToGA } from "~/utils/googleAnalytics.server";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -35,19 +35,83 @@ export const action: ActionFunction = async ({ request }) => {
     // Your internal user ID
     const userId = session.client_reference_id;
 
-    if (!isUUID(userId)) {
-      throw new Error(`Invalid UUID: ${userId}`);
+    if (!userId || !isUUID(userId)) {
+      return data({ error: "Missing or invalid userId" }, { status: 400 });
     }
 
     // Product purchased
     const productCode = session.metadata?.productCode;
-    const productHours = session.metadata?.productHours;
-    let gaClientId = session.metadata?.gaClientId; // google analtyics client id tracking
 
-    if (!userId || !productCode) {
-      console.warn("Missing userId or productCode in session metadata");
+    if (!productCode) {
+      console.warn("Missing productCode in session metadata");
       return data({ error: "Missing metadata" }, { status: 400 });
     }
+
+    // set product hours and error if not there
+    const productHours = session.metadata?.productHours;
+    const productHoursNum = productHours ? Number(productHours) : NaN;
+    // error if not prouct hours
+    if (!Number.isFinite(productHoursNum)) {
+      Sentry.captureException(
+        new Error("Missing or invalid productHours in Stripe session metadata"),
+        {
+          level: "error",
+          tags: {
+            source: "api.stripe.webhook",
+            feature: "post_purchase",
+            action: "validate_metadata",
+          },
+          extra: { userId, productCode, productHours, sessionId: session.id },
+        },
+      );
+      return data(
+        { error: "Missing or invalid productHours" },
+        { status: 400 },
+      );
+    }
+
+    // set payment intent and error if not avail
+    const paymentIntentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent?.id ?? null);
+
+    if (!paymentIntentId) {
+      Sentry.captureException(
+        new Error("Missing payment_intent on Stripe session"),
+        {
+          level: "error",
+          tags: {
+            source: "api.stripe.webhook",
+            feature: "post_purchase",
+            action: "validate_metadata",
+          },
+          extra: { userId, productCode, sessionId: session.id },
+        },
+      );
+      return data({ error: "Missing payment_intent" }, { status: 400 });
+    }
+
+    // set amountTotal and error if not there
+    const amountTotal = session.amount_total;
+    // error if no amount total
+    if (amountTotal == null) {
+      Sentry.captureException(
+        new Error("Missing amount_total on Stripe session"),
+        {
+          level: "error",
+          tags: {
+            source: "api.stripe.webhook",
+            feature: "post_purchase",
+            action: "validate_metadata",
+          },
+          extra: { userId, productCode, sessionId: session.id },
+        },
+      );
+      return data({ error: "Missing amount_total" }, { status: 400 });
+    }
+
+    let gaClientId = session.metadata?.gaClientId; // google analtyics client id tracking
 
     if (!gaClientId) {
       gaClientId = "unknown";
@@ -56,7 +120,7 @@ export const action: ActionFunction = async ({ request }) => {
     sendPurchaseToGA({
       clientId: gaClientId,
       transactionId: session.id,
-      value: session.amount_total ?? 0, // fallback to 0 if null
+      value: amountTotal,
     });
 
     try {
@@ -69,7 +133,7 @@ export const action: ActionFunction = async ({ request }) => {
         .insert({
           user_id: userId,
           product_code: productCode,
-          hours: productHours,
+          hours: productHoursNum,
         })
         .select()
         .single();
@@ -96,21 +160,21 @@ export const action: ActionFunction = async ({ request }) => {
         .from("purchases")
         .insert({
           user_id: userId,
-          access_id: accessRecord?.access_id ?? 0,
-          stripe_payment_intent: session.payment_intent,
+          access_id: accessRecord?.access_id ?? null,
+          stripe_payment_intent: paymentIntentId,
           stripe_session_id: session.id,
           stripe_product_code: productCode,
-          stripe_amount_total: session.amount_total,
-          stripe_currency: session.currency,
+          stripe_amount_total: amountTotal,
+          stripe_currency: session.currency ?? "unknown",
           stripe_payment_status: session.payment_status,
-          product_hours: productHours,
+          product_hours: productHoursNum,
         })
         .select()
         .single();
 
       // user made a purchase but we didn't create a record of it
       if (purchaseRecordError) {
-        Sentry.captureException(accessError, {
+        Sentry.captureException(purchaseRecordError, {
           level: "error",
           tags: {
             source: "api.stripe.webhook",
@@ -121,9 +185,9 @@ export const action: ActionFunction = async ({ request }) => {
             userId,
             productCode,
             productHours,
-            stripePaymentIntent: session.payment_intent,
+            stripePaymentIntent: paymentIntentId,
             stripeSessionId: session.id,
-            stripeAmountTotal: session.amount_total,
+            stripeAmountTotal: amountTotal,
             stripeCurrency: session.currency,
           },
         });

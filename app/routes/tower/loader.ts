@@ -1,10 +1,10 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
-import {
-  getSupabaseServiceRoleClient,
-  getSupabaseServerClient,
-} from "~/utils/supabase.server";
-import { getSessionId, sessionStorage } from "~/sessions.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
+import { getSessionId, sessionStorage } from "~/sessions.server";
+import {
+  getSupabaseServerClient,
+  getSupabaseServiceRoleClient,
+} from "~/utils/supabase.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
@@ -20,10 +20,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // Upsert profile data on every load
-  const { data: profile, error } = await upsertUserProfile(
-    { user_id: user.id, email: user.email },
-    request,
-  );
+  const { data: profile, error } = await upsertUserProfile({
+    user_id: user.id,
+    email: user.email,
+  });
 
   // @todo sentry
   if (error) {

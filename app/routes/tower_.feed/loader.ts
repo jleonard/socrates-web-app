@@ -1,11 +1,11 @@
-import { redirect, data, type LoaderFunctionArgs } from "react-router";
-import {
-  getSupabaseServiceRoleClient,
-  getSupabaseServerClient,
-} from "~/utils/supabase.server";
-import { getSessionId, sessionStorage } from "~/sessions.server";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
+import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AppEventLog } from "~/types";
+import {
+  getSupabaseServerClient,
+  getSupabaseServiceRoleClient,
+} from "~/utils/supabase.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase: userSupabase } = getSupabaseServerClient(request);
@@ -22,16 +22,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/login");
   }
 
-  const { data: profile, error } = await upsertUserProfile(
-    { user_id: user.id, email: user.email },
-    request,
-  );
+  const { data: profile, error } = await upsertUserProfile({
+    user_id: user.id,
+    email: user.email,
+  });
 
   if (error) {
     console.log("sb error: ", error);
   }
 
-  if (profile.role !== "admin" && profile.role !== "client") {
+  if (!profile || (profile.role !== "admin" && profile.role !== "client")) {
     return redirect("/app");
   }
   /**

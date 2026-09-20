@@ -23,9 +23,7 @@ const VALID_QUERY_TYPES: AgentQueryType[] = [
   "contextual",
   "interpretive",
   "discovery",
-  "navigational_facility",
   "navigational_locate",
-  "navigational_route",
   "operational",
 ];
 
@@ -38,9 +36,7 @@ contextual                  - narrative background on ONE specific place/artwork
 interpretive                - broad philosophical, cultural, historical, or theoretical questions
                              ("why does this movement matter", "what was the artist reacting against")
 discovery                    - recommend or rank across MANY things ("what should I see", "highlights")
-navigational_facility          - amenities: bathrooms, exits, cafes, entrances
 navigational_locate             - find the location of a specific named place/artwork/exhibition
-navigational_route                - multi-stop itinerary or route planning
 operational                        - hours, tickets, pricing, accessibility, policies
  
 Distinguish interpretive from contextual: contextual asks "tell me about this place/thing,"

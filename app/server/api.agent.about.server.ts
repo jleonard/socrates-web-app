@@ -1,13 +1,13 @@
-import type { ActionFunction } from "react-router";
-import { getRedis } from "~/utils/redis.server";
-import OpenAI from "openai";
-import { aboutPrompt } from "~/utils/system.prompt";
-import { queryPinecone, PINECONE_SCORE } from "~/utils/pinecone";
-import { searchCache, storeCache } from "~/utils/cache.server";
-import { logAgentHistory } from "~/utils/history.server";
-import { HistoryLog } from "~/types";
 import * as Sentry from "@sentry/react-router";
+import OpenAI from "openai";
+import type { ActionFunction } from "react-router";
+import { HistoryLog } from "~/types";
+import { searchCache, storeCache } from "~/utils/cache/cache.server";
 import { logAppEvent } from "~/utils/events/appEvents.server";
+import { logAgentHistory } from "~/utils/history.server";
+import { PINECONE_SCORE, queryPinecone } from "~/utils/pinecone";
+import { getRedis } from "~/utils/redis.server";
+import { aboutPrompt } from "~/utils/system.prompt";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 const MAX_MESSAGES = 10;
@@ -65,34 +65,6 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     if (!query || !user_id) {
       return new Response("Missing required fields", { status: 400 });
-    }
-
-    // --- 2️⃣ Try semantic cache hit first ---
-    const cached = await searchCache(query);
-
-    if (cached) {
-      history_object.tool_cache = true;
-      history_object.response_time = Date.now() - timer_start.getTime();
-      history_object.response = cached.answer;
-      await logAgentHistory(history_object);
-
-      /* log the cached response */
-      logAppEvent({
-        event_type: "agent_log",
-        event_message: `cached response : ${cached.answer}`,
-        event_details: {
-          user_id,
-          tool_cache: true,
-        },
-      });
-
-      return new Response(cached.answer, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "no-cache, no-transform",
-          Connection: "keep-alive",
-        },
-      });
     }
 
     const memoryKey = `chat:${user_id}`;
@@ -195,26 +167,6 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
             EX: 24 * 60 * 60,
           });
 
-          // --- ✅ 7️⃣ Conditionally store in semantic cache ---
-          const lower = replyText.toLowerCase();
-          const isMeaningful =
-            replyText.length > 20 && // not super short
-            !lower.includes("i do not") && // uncertainty fallback
-            !lower.startsWith("i'm not") &&
-            !lower.startsWith("i can't") &&
-            !lower.startsWith("i cannot") &&
-            !lower.startsWith("i don't");
-
-          // Only store if meaningful AND RAG/wikipedia gave some context
-          if (isMeaningful) {
-            try {
-              await storeCache(query, replyText, "llm");
-            } catch (err) {
-              console.error("Cache store error:", err);
-            }
-          } else {
-            console.log("⚠️ Not storing in cache - response not meaningful");
-          }
           history_object.response_time = Date.now() - timer_start.getTime();
           history_object.response = replyText;
           await logAgentHistory(history_object);

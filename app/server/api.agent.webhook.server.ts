@@ -4,12 +4,14 @@ import {
   type ScoredPineconeRecord,
 } from "@pinecone-database/pinecone";
 import * as Sentry from "@sentry/react-router";
+import { SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import type { ActionFunction } from "react-router";
 import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
 import { classifyQuery } from "~/server/agent/query.classifier.server";
 import { AgentConfig, HistoryLog, ToolLog } from "~/types";
-import { storeCache } from "~/utils/cache.server";
+import { determineCacheDecision } from "~/utils/cache/cache-decision";
+import { searchCache, storeCache } from "~/utils/cache/cache.server";
 import { logAppEvent } from "~/utils/events/appEvents.server";
 import { logAgentHistory } from "~/utils/history.server";
 import {
@@ -19,14 +21,17 @@ import {
 } from "~/utils/pinecone";
 import { correctTranscription } from "~/utils/query-correction.server";
 import { getRedis } from "~/utils/redis.server";
+import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import {
   accuracy,
   context,
   goals,
   guardrails,
+  noRagFallbackMessage,
   role,
 } from "~/utils/system.prompt";
 import { fetchWikipedia } from "~/utils/wikipedia.tool";
+import { resolveNearbyItems } from "./agent/geo.search";
 import { correctMispronunciations } from "./agent/mispronounciations";
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
@@ -44,6 +49,7 @@ export const handleWebhook: ActionFunction = async (args) => {
   const { request } = args;
   const clonedRequest = request.clone();
   const redis = await getRedis();
+  const { supabase } = getSupabaseServiceRoleClient();
 
   try {
     if (request.method !== "POST") {
@@ -55,11 +61,20 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 📦 process body vars
      */
-    const { query: postedQuery, user_id, place, user_lat, user_long } = body;
+    const {
+      query: postedQuery,
+      user_id,
+      place: locationId,
+      user_lat,
+      user_long,
+    } = body;
+
+    const locationContext = await resolveLocationId(locationId, supabase);
 
     let query = postedQuery;
 
     /* 🔷 logging: prep the history log */
+    const requestId = crypto.randomUUID();
     const timerStart = Date.now();
     const tools: ToolLog[] = [];
 
@@ -69,7 +84,7 @@ export const handleWebhook: ActionFunction = async (args) => {
       event_message: `posted query : ${query}`,
       event_details: {
         user_id,
-        place,
+        locationContext,
         coords: { lat: user_lat, long: user_long },
       },
     });
@@ -77,18 +92,70 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * 📦 temp route to the legacy webhook until MIT migrates.
      */
-    const useLegacy = USE_LEGACY || place === "mit" || place === "wonderway";
+    const useLegacy =
+      USE_LEGACY ||
+      locationContext.locationId === "mit" ||
+      locationContext.locationId === "wonderway";
     if (useLegacy) {
-      console.log("using legacy webhook for place:", place);
+      console.log(
+        "using legacy webhook for location:",
+        locationContext.locationId,
+      );
       return await handleLegacyWebhook({ ...args, request: clonedRequest });
     }
 
     /*
-     * ✏️ TODO fix mispronounciations
+     * ✏️ TODO fix mispronounciations at the exhibition and place level
      */
-    let corrected = await correctMispronunciations(place, query);
-    if (corrected) {
-      query = corrected;
+    let corrected;
+    if (locationContext?.exhibitionId) {
+      corrected = await correctMispronunciations(
+        locationContext.exhibitionId,
+        query,
+      );
+      if (corrected) {
+        query = corrected;
+      }
+    }
+    if (locationContext?.placeId) {
+      corrected = await correctMispronunciations(
+        locationContext.placeId,
+        query,
+      );
+      if (corrected) {
+        query = corrected;
+      }
+    }
+
+    /*
+     * ⚡ check semantic cache before doing expensive agent work
+     */
+    const cached = await searchCache(query, {
+      locationId: locationContext?.locationId,
+    });
+
+    if (cached) {
+      console.log(`[${requestId}] cache hit`, {
+        question: query,
+        cachedQuestion: cached.question,
+        similarity: cached.similarity,
+      });
+
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(cached.answer);
+            controller.close();
+          },
+        }),
+        {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+          },
+        },
+      );
     }
 
     /*
@@ -99,8 +166,14 @@ export const handleWebhook: ActionFunction = async (args) => {
     /*
      * ✏️ pull the prompt from redis or fallback
      */
-    const redisPrompt = await redis.get("prompt:" + place);
-    const prompt = redisPrompt || PROMPT;
+    const redisPrompt = await redis.get(
+      "prompt:" + locationContext?.locationId,
+    );
+
+    let prompt = PROMPT;
+    if (redisPrompt) {
+      prompt += "\n" + redisPrompt;
+    }
     messages.push({ role: "system", content: prompt });
     console.log("debug: prompt ", prompt);
 
@@ -119,6 +192,15 @@ export const handleWebhook: ActionFunction = async (args) => {
      */
     const queryClassification = await classifyQuery(query, trimmedHistory);
     const agentConfig = QUERY_TYPE_CONFIG[queryClassification.type];
+
+    // @TEMP
+    console.log(`[${requestId}] agent request started`, {
+      query: postedQuery,
+      user_id,
+      locationContext,
+      coords: { lat: user_lat, long: user_long },
+      classification: queryClassification.type,
+    });
 
     /*
      * 💬 get the conversation summary
@@ -143,13 +225,19 @@ export const handleWebhook: ActionFunction = async (args) => {
     const queryEmbedding = await getQueryEmbedding(query);
     const useContextual = agentConfig.tools.includes("pinecone_contextual");
     const useGlobal = agentConfig.tools.includes("pinecone_global");
+    const filter = await buildContextualPineconeFilter(
+      agentConfig,
+      locationContext,
+      user_lat,
+      user_long,
+    );
     const [contextualResults, globalResults] = await Promise.all([
       useContextual
         ? index.namespace("contextual").query({
             vector: queryEmbedding,
             topK: agentConfig.contextualTopK,
             includeMetadata: true,
-            filter: buildContextualPineconeFilter(agentConfig, place),
+            ...(filter && { filter }),
           })
         : Promise.resolve({ matches: [] }),
       useGlobal
@@ -160,8 +248,20 @@ export const handleWebhook: ActionFunction = async (args) => {
           })
         : Promise.resolve({ matches: [] }),
     ]);
-    console.log("debug: pinecone contextualResults ", contextualResults);
-    console.log("debug: pinecone globalResults ", globalResults);
+
+    console.log(
+      `[${requestId}] Pinecone contextual results`,
+      contextualResults.matches.map((m, index) => ({
+        rank: index + 1,
+        score: m.score,
+        id: m.id,
+        object_id: m.metadata?.object_id,
+        exhibition_id: m.metadata?.exhibition_id,
+        place_id: m.metadata?.place_id,
+        chunk_type: m.metadata?.chunk_type,
+        source_name: m.metadata?.source_name,
+      })),
+    );
 
     /*
      * 🌲 pinecone part two: filter results
@@ -184,17 +284,36 @@ export const handleWebhook: ActionFunction = async (args) => {
       agentConfig.globalScoreThreshold,
     );
 
+    const RAG_METADATA_KEYS_TO_EXCLUDE = [
+      "dropbox_file_id",
+      "dropbox_path",
+      "chunk_index",
+      "chunk_count",
+      "namespace",
+      "ingest_instructions",
+    ];
+
     const allMatches = [...contextualMatches, ...globalMatches];
     if (allMatches.length === 0) {
       messages.push({
         role: "system",
-        content: `No specific RAG context was found for this query. Answer generally if you can, or let the user know you don't have specific information.`,
+        content: noRagFallbackMessage,
       });
     } else {
       messages.push({
         role: "system",
         content: `RAG CONTEXT:\n${allMatches
-          .map((m) => m.metadata?.text)
+          .map((m) => {
+            if (!m.metadata) return null;
+
+            const metadata = Object.fromEntries(
+              Object.entries(m.metadata).filter(
+                ([key]) => !RAG_METADATA_KEYS_TO_EXCLUDE.includes(key),
+              ),
+            );
+
+            return JSON.stringify(metadata);
+          })
           .filter(Boolean)
           .join("\n\n")}`,
       });
@@ -268,6 +387,11 @@ export const handleWebhook: ActionFunction = async (args) => {
     messages.push({ role: "user", content: query });
     console.log("debug: user query ", query);
 
+    console.log(
+      "DEBUG: FINAL CONTEXT SENT TO AGENT",
+      JSON.stringify(messages, null, 2),
+    );
+
     /*
      * 🤖 stream the LLM response
      */
@@ -305,11 +429,106 @@ export const handleWebhook: ActionFunction = async (args) => {
             response_time: Date.now() - timerStart,
             tools,
             details: {
-              place,
+              requestId,
+              locationContext,
               prompt_source: redisPrompt ? "cms" : "default",
             },
           };
           await logAgentHistory(history_object);
+          logAppEvent({
+            event_type: "agent_webhook",
+            event_message: "agent request completed",
+            event_details: {
+              request_id: requestId,
+              user_id,
+
+              query: {
+                original: postedQuery,
+                final: query,
+                corrected: postedQuery !== query,
+              },
+
+              location: locationContext,
+
+              classification: {
+                type: queryClassification.type,
+              },
+
+              conversation: {
+                history_count: trimmedHistory.length,
+                summary_used: Boolean(conversationSummary),
+              },
+
+              retrieval: {
+                contextual_requested: useContextual,
+                global_requested: useGlobal,
+
+                filter: filter ?? null,
+
+                contextual_raw: contextualResults.matches.length,
+                global_raw: globalResults.matches.length,
+
+                contextual_after_threshold: contextualMatches.length,
+                global_after_threshold: globalMatches.length,
+
+                final_matches: allMatches.length,
+                highest_score:
+                  allMatches.length > 0
+                    ? Math.max(...allMatches.map((m) => m.score ?? 0))
+                    : null,
+              },
+
+              wikipedia: {
+                enabled: agentConfig.tools.includes("wiki_fallback"),
+                fallback_triggered: shouldFallbackToWiki,
+                found: Boolean(wikiSummary),
+              },
+
+              response: {
+                source:
+                  allMatches.length > 0
+                    ? "rag"
+                    : wikiSummary
+                      ? "wikipedia"
+                      : "none",
+                length: replyText.length,
+                response_time_ms: Date.now() - timerStart,
+              },
+
+              prompt_source: redisPrompt ? "cms" : "default",
+            },
+          });
+          logAppEvent({
+            event_type: "agent_webhook_rag",
+            event_message: `RAG results for: ${query}`,
+            event_details: {
+              request_id: requestId,
+              query,
+              classification: queryClassification.type,
+
+              contextual: contextualResults.matches.map((m) => ({
+                score: m.score,
+                id: m.id,
+                object_id: m.metadata?.object_id,
+                exhibition_id: m.metadata?.exhibition_id,
+                place_id: m.metadata?.place_id,
+                chunk_type: m.metadata?.chunk_type,
+                source_name: m.metadata?.source_name,
+                text: m.metadata?.text,
+              })),
+
+              global: globalResults.matches.map((m) => ({
+                score: m.score,
+                id: m.id,
+                object_id: m.metadata?.object_id,
+                exhibition_id: m.metadata?.exhibition_id,
+                place_id: m.metadata?.place_id,
+                chunk_type: m.metadata?.chunk_type,
+                source_name: m.metadata?.source_name,
+                text: m.metadata?.text,
+              })),
+            },
+          });
 
           /*
            * 🧾 wrap up: update the chat history in redis
@@ -327,6 +546,11 @@ export const handleWebhook: ActionFunction = async (args) => {
           );
 
           controller.close();
+          void cacheResponse({
+            question: query,
+            answer: replyText,
+            locationId: locationContext?.locationId,
+          });
         } catch (err) {
           console.error("Stream error:", err);
           controller.error(err);
@@ -379,8 +603,37 @@ async function getConversationSummary(
         .join("\n");
 
       const prompt = existingSummary
-        ? `Previous conversation summary: ${existingSummary}\n\nRecent messages:\n${recentMessages}\n\nUpdate the summary to include new topics while keeping previous context. Keep it concise (2-3 sentences).`
-        : `Summarize the main topics discussed in this conversation in 2-3 sentences:\n\n${recentMessages}`;
+        ? `Previous conversation summary:
+${existingSummary}
+
+Recent messages:
+${recentMessages}
+
+Update the conversation summary for future turns.
+
+Preserve important subjects from the previous summary and incorporate new information from the recent messages.
+
+Focus on:
+- artworks, objects, people, artists, exhibitions, places, and subjects being discussed
+- important facts established during the conversation
+- relationships between subjects that may matter for follow-up questions
+- unresolved questions or topics the visitor is still discussing
+
+Do not summarize every message or describe the conversation generally. Capture the context needed to understand future follow-up questions such as "why?", "what about him?", "was that intentional?", or "what else is in it?"
+
+Keep the summary concise, 2-3 sentences.`
+        : `Summarize this conversation for future follow-up questions.
+
+Identify the important artworks, objects, people, artists, exhibitions, places, and subjects being discussed.
+
+Include important context or relationships established in the conversation and any unresolved questions the visitor is pursuing.
+
+Do not summarize every message. Capture only the context needed to understand future follow-up questions.
+
+Keep the summary concise, 2-3 sentences.
+
+Conversation:
+${recentMessages}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -443,24 +696,133 @@ async function getConversationSummary(
  *    something this function can express — that logic stays one level up,
  *    in the pipeline, as a second call to this function / a second query.
  */
-function buildContextualPineconeFilter(
+async function buildContextualPineconeFilter(
   agentConfig: AgentConfig,
-  place: string,
-): Record<string, any> {
+  locationContext: LocationContext,
+  userLat?: number,
+  userLong?: number,
+): Promise<Record<string, any> | undefined> {
   const clauses: Record<string, any>[] = [];
 
+  const placeId = locationContext?.placeId;
+  const exhibitionId = locationContext?.exhibitionId;
+
+  // Build the place/exhibition scope clause without fabricating ids —
+  // only include a sub-clause for the ones we actually have.
+  const scopeClause = [
+    exhibitionId ? { exhibition_id: { $eq: exhibitionId } } : null,
+    placeId ? { place_id: { $eq: placeId } } : null,
+  ].filter(Boolean) as Record<string, any>[];
+
+  const scope = scopeClause.length > 1 ? { $or: scopeClause } : scopeClause[0];
+
   if (agentConfig.geoFiltered) {
-    // TODO: replace with nearbyPlaceIds/$in once lat/lng lands — see note 1 above
-    clauses.push({
-      $or: [{ exhibition_id: { $eq: place } }, { place_id: { $eq: place } }],
-    });
+    const wantsProximity = agentConfig.nearbyRadiusMeters != null;
+    const hasCoords = userLat != null && userLong != null;
+    let nearbyIds: string[] = [];
+
+    if (wantsProximity && hasCoords) {
+      const resolved = await resolveNearbyItems(
+        locationContext?.locationId,
+        userLat,
+        userLong,
+        agentConfig.nearbyRadiusMeters!,
+      );
+      nearbyIds = agentConfig.nearbyLimit
+        ? resolved.slice(0, agentConfig.nearbyLimit)
+        : resolved;
+    }
+
+    if (nearbyIds.length > 0 && scope) {
+      clauses.push({
+        $and: [{ object_id: { $in: nearbyIds } }, scope],
+      });
+    } else if (nearbyIds.length > 0) {
+      // Have nearby ids but no place/exhibition scope at all — filter on
+      // proximity alone rather than silently dropping the geo filter.
+      clauses.push({ object_id: { $in: nearbyIds } });
+    } else if (scope) {
+      clauses.push(scope);
+    }
   }
 
-  if (agentConfig.highlightFiltered) {
-    clauses.push({ is_highlight: { $eq: true } });
+  if (clauses.length === 0) return undefined;
+  if (clauses.length === 1) return clauses[0];
+  return { $and: clauses };
+}
+
+async function cacheResponse({
+  question,
+  answer,
+  locationId,
+}: {
+  question: string;
+  answer: string;
+  locationId: string;
+}) {
+  try {
+    const decision = await determineCacheDecision(question, answer);
+
+    console.log(
+      "cacheResponse: decision",
+      decision,
+      "question:",
+      question,
+      "answer:",
+      answer,
+    );
+
+    if (!decision.cacheable) {
+      return;
+    }
+
+    await storeCache(
+      question,
+      answer,
+      {
+        locationId,
+      },
+      decision,
+    );
+  } catch (error) {
+    console.error("Failed to cache response:", error);
+  }
+}
+
+// This function takes the single location id
+// and resolves it to a place id and exhibition id if applicable.
+type LocationContext = {
+  locationId: string;
+  placeId: string;
+  exhibitionId?: string;
+};
+async function resolveLocationId(
+  locationId: string,
+  supabase: SupabaseClient,
+): Promise<LocationContext> {
+  // Look for locationId as a child
+  const { data, error } = await supabase
+    .from("location_relationships")
+    .select("child_id, parent_id, child_type, parent_type")
+    .eq("child_id", locationId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
   }
 
-  if (clauses.length === 0) return {}; // neither flag set — unfiltered search
-  if (clauses.length === 1) return clauses[0]; // no need for $and wrapper with just one clause
-  return { $and: clauses }; // both flags set — combine with $and
+  if (data) {
+    return {
+      locationId,
+      placeId: data.parent_id,
+      exhibitionId:
+        data.child_type === "exhibition" ? data.child_id : undefined,
+    };
+  }
+
+  // No parent means this is already the parent/place
+  return {
+    locationId,
+    placeId: locationId,
+  };
 }
