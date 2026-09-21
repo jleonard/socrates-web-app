@@ -8,7 +8,6 @@ import type { ActionFunctionArgs } from "react-router";
 import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
-n;
 
 // ─── clients ────────────────────────────────────────────────────────────────
 
