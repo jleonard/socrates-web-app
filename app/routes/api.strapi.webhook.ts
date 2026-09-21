@@ -89,6 +89,11 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 
   // TODO error handling please
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
+  console.log(`[debug] fullEntry.place:`, JSON.stringify(fullEntry.place));
+  console.log(
+    `[debug] fullEntry.artworks:`,
+    JSON.stringify(fullEntry.artworks),
+  );
 
   await storePromptInRedis(model, fullEntry);
 
