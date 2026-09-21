@@ -677,17 +677,23 @@ async function buildLocationRelationship(entry: Record<string, any>) {
     const childType = "exhibition";
     const parentType = "place";
 
-    const { error } = await supabaseAdmin.from("location_relationships").upsert(
-      {
-        child_id: childId,
-        parent_id: parentId,
-        child_type: childType,
-        parent_type: parentType,
-      },
-      {
+    let payload = {
+      child_id: childId,
+      parent_id: parentId,
+      child_type: childType,
+      parent_type: parentType,
+    };
+
+    if (entry?.card?.large_image) {
+      console.log("large image!");
+      console.log(entry.card.large_image);
+    }
+
+    const { error } = await supabaseAdmin
+      .from("location_relationships")
+      .upsert(payload, {
         onConflict: "child_id,parent_id",
-      },
-    );
+      });
 
     if (error) {
       console.error("Failed to upsert content relationship:", error);
