@@ -2,12 +2,13 @@
  * Parse strapi body into the RAG
  */
 import { Pinecone } from "@pinecone-database/pinecone";
-import { l } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import OpenAI from "openai";
+import qs from "qs";
 import type { ActionFunctionArgs } from "react-router";
 import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
+n;
 
 // ─── clients ────────────────────────────────────────────────────────────────
 
@@ -615,8 +616,23 @@ const PLURAL: Record<string, string> = {
 };
 async function fetchStrapiEntry(model: string, documentId: string) {
   const plural = PLURAL[model] ?? `${model}s`;
+
+  const query = qs.stringify(
+    {
+      populate: {
+        card: { populate: "*" }, // populates blurb, large_image, thumbnail
+        place: { populate: "*" },
+        artworks: { populate: { artwork: { populate: "*" } } },
+        admin_zone: true,
+        location: true,
+        // add any other top-level relations/components you rely on
+      },
+    },
+    { encodeValuesOnly: true },
+  );
+  // was ${process.env.STRAPI_URL}/api/${plural}/${documentId}?populate=*`
   const res = await fetch(
-    `${process.env.STRAPI_URL}/api/${plural}/${documentId}?populate=*`,
+    `${process.env.STRAPI_URL}/api/${plural}/${documentId}?${query}`,
     { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } },
   );
   const { data } = await res.json();
