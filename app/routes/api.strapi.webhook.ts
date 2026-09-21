@@ -639,8 +639,19 @@ async function fetchStrapiEntry(model: string, documentId: string) {
     `${process.env.STRAPI_URL}/api/${plural}/${documentId}?${query}`,
     { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } },
   );
-  const { data } = await res.json();
-  return data;
+  const json = await res.json();
+
+  if (!res.ok || !json?.data) {
+    console.error(
+      `[fetchStrapiEntry] failed for ${model}/${documentId}: status=${res.status}`,
+      JSON.stringify(json),
+    );
+    throw new Error(
+      `Strapi fetch failed for ${model}/${documentId}: ${json?.error?.message ?? res.statusText}`,
+    );
+  }
+
+  return json.data;
 }
 
 /**
