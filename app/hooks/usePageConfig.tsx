@@ -14,7 +14,7 @@ const pageOverrides: Record<string, PageConfig> = {
     hiddenNav: true,
     hiddenLogo: true,
     hiddenControlBar: true,
-    theme: "pink",
+    theme: "default",
   }, // pink wins over dark, decide explicitly here
   "/welcome": { hiddenNav: true, hiddenControlBar: true, hiddenLogo: true },
   "/purchase": { hiddenNav: true, hiddenControlBar: true, theme: "dark" },
@@ -38,7 +38,7 @@ const pageOverrides: Record<string, PageConfig> = {
 };
 
 const themeClasses: Record<PageTheme, string> = {
-  default: "bg-paper-background",
+  default: "bg-neutral-50" /* bg-paper-background */,
   dark: "bg-ayapi-grey text-white",
   pink: "bg-ayapi-pink text-white",
 };

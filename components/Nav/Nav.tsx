@@ -35,7 +35,7 @@ export const Nav = () => {
       {isOpen && (
         <button
           type="button"
-          className="hidden fixed inset-0 bg-paper-background z-10"
+          className="hidden fixed inset-0 bg-neutral-50 z-10"
           aria-label="Close navigation menu"
           tabIndex={0}
           onClick={() => setIsOpen(false)}
@@ -65,7 +65,7 @@ export const Nav = () => {
         className={clsx(
           "flex flex-col w-full pt-10 pb-4",
           isOpen ? "z-10" : "z-10",
-          isTinted ? "bg-transparent" : "bg-paper-background",
+          isTinted ? "bg-transparent" : "bg-neutral-50",
         )}
       >
         <Container className="w-full grid grid-cols-3 items-center">

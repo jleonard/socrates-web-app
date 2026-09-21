@@ -128,7 +128,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // if you haven't onboarded, go do it
-  if (!profile.has_onboarded) {
+  if (!profile || !profile.has_onboarded) {
     throw redirect("/welcome", {
       headers: await buildHeaders(),
       //headers: { "Set-Cookie": await sessionStorage.commitSession(session) },

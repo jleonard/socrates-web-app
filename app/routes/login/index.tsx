@@ -1,11 +1,8 @@
-import { type LoaderFunctionArgs } from "react-router";
-import { Link } from "react-router";
-import { getSupabaseBrowserClient } from "~/utils/supabase.client";
-import { useLoaderData } from "react-router";
-import { CircleImage } from "components/CircleImage/CircleImage";
-import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
 import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";
+import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
+import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
+import { getSupabaseBrowserClient } from "~/utils/supabase.client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const env = {
@@ -65,19 +62,22 @@ export default function Login() {
   return (
     <>
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-96 items-center">
+        <div className="mb-[70px] gap-2 flex flex-col items-center">
+          <img
+            className="w-[196px]"
+            src="/logos/WonderWay.svg"
+            alt="Wonder Way"
+          />
+          <p>Museums. Landmarks. Culture.</p>
+        </div>
         <img
-          className="w-[263px]"
-          src="/logos/WonderWay-white.svg"
+          className="mb-[70px] w-[160px]"
+          src="/logos/icon-sm.svg"
           alt="Wonder Way"
         />
         {/* text container */}
-        <div className="flex flex-col gap-10 mb-28 text-center text-2xl font-regular items-center">
-          <h2>
-            is your museum <br />
-            companion
-          </h2>
-          <h2>Ask anything about the exhibition</h2>
-          <h2>Follow your curiosity</h2>
+        <div className="flex flex-col gap-2 mb-[70px] text-center font-regular items-center">
+          <h2 className="text-2xl">Log in</h2>
         </div>
         <GoogleAuthButton
           className="w-full"

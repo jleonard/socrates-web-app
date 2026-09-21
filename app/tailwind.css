@@ -37,18 +37,8 @@ body {
   justify-content: center;
 
   padding: 12px 15px;
-}
 
-.social-button--facebook {
-  background-color: #1877f2;
-  color: white;
-  font-weight: bold;
-}
-
-.social-button--google {
+  /* color */
   background-color: white;
   color: rgba(0, 0, 0, 0.54);
-  box-shadow:
-    0 0 3px 0 rgba(0, 0, 0, 0.084),
-    0 2px 3px 0 rgba(0, 0, 0, 0.168);
 }

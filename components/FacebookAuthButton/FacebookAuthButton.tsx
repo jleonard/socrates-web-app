@@ -1,5 +1,5 @@
-import { FaFacebookF } from "react-icons/fa"; // Facebook icon
 import React from "react";
+import { siFacebook } from "simple-icons";
 
 import { FacebookAuthButtonProps } from "./FacebookAuthButton.types";
 
@@ -13,10 +13,17 @@ export const FacebookAuthButton = React.forwardRef<
     <>
       <button
         style={{ width: "364px" }}
-        className="social-button social-button--facebook"
+        className="social-button border border-[#E6EAED]"
         {...rest}
       >
-        <img src="/icons/Facebook.svg" className="size-[23px]" alt="Facebook" />
+        <svg
+          className="size-[23px] text-[#1877f2]"
+          role="img"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d={siFacebook.path} />
+        </svg>
         <span>{label}</span>
       </button>
     </>

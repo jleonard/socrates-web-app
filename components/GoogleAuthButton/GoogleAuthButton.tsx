@@ -15,7 +15,7 @@ export const GoogleAuthButton = React.forwardRef<
     <>
       <button
         style={{ width: "364px" }}
-        className="social-button social-button--google"
+        className="social-button border border-[#E6EAED]"
         {...rest}
       >
         <img src="/icons/Google.svg" className="size-[23px]" alt="Google" />

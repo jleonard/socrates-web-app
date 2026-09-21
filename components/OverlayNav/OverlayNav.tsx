@@ -24,6 +24,11 @@ export function OverlayNav() {
       aria-modal="true"
     >
       <Container>
+        <img
+          className="w-[128px] mt-[22px]"
+          src="/logos/WonderWay.svg"
+          alt="Wonder Way"
+        />
         <ul className="space-y-2 w-full pt-10">
           <li className="py-3 border-b-[#FAF7F2] border-b">
             <Link
