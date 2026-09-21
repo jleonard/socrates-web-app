@@ -310,24 +310,30 @@ export type Database = {
           child_type: string | null
           created_at: string
           id: number
+          large_image: string | null
           parent_id: string | null
           parent_type: string | null
+          thumbnail: string | null
         }
         Insert: {
           child_id?: string | null
           child_type?: string | null
           created_at?: string
           id?: number
+          large_image?: string | null
           parent_id?: string | null
           parent_type?: string | null
+          thumbnail?: string | null
         }
         Update: {
           child_id?: string | null
           child_type?: string | null
           created_at?: string
           id?: number
+          large_image?: string | null
           parent_id?: string | null
           parent_type?: string | null
+          thumbnail?: string | null
         }
         Relationships: []
       }

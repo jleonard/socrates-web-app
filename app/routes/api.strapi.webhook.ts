@@ -697,7 +697,7 @@ async function buildLocationRelationship(entry: Record<string, any>) {
     const childType = "exhibition";
     const parentType = "place";
 
-    let payload = {
+    let payload: any = {
       child_id: childId,
       parent_id: parentId,
       child_type: childType,
@@ -705,8 +705,10 @@ async function buildLocationRelationship(entry: Record<string, any>) {
     };
 
     if (entry?.card?.large_image) {
-      console.log("large image!");
-      console.log(entry.card.large_image);
+      payload.large_image = entry.card.large_image?.url;
+    }
+    if (entry?.card?.thumbnail) {
+      payload.thumbnail = entry.card.thumbnail.url;
     }
 
     const { error } = await supabaseAdmin
