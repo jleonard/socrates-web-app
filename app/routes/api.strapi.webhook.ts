@@ -732,6 +732,9 @@ async function buildLocationRelationship(entry: Record<string, any>) {
     if (entry?.card?.blurb) {
       payload.description = entry.card.blurb;
     }
+    if (entry?.name) {
+      payload.name = entry.name;
+    }
 
     const { error } = await supabaseAdmin
       .from("location_relationships")
