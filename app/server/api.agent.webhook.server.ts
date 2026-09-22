@@ -105,7 +105,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     }
 
     /*
-     * ✏️ TODO fix mispronounciations at the exhibition and place level
+     * ✏️ TODO fix correctMispronunciations at the exhibition and place level
      */
     let corrected;
     if (locationContext?.exhibitionId) {

@@ -57,12 +57,12 @@ export const handleLegacyWebhook: ActionFunction = async ({ request }) => {
       correctTranscription(postedQuery);
 
     /*
-     * log mispronounciations
+     * log mispronunciations
      */
     if (correctedQuery !== rawQuery) {
       logAppEvent({
         event_type: "agent_log",
-        event_message: `mispronounciations fixed : ${correctedQuery}`,
+        event_message: `mispronunciations fixed : ${correctedQuery}`,
         event_details: {
           user_id,
           place,

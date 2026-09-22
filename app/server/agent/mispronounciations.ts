@@ -5,8 +5,8 @@ export async function correctMispronunciations(
   query: string,
 ): Promise<string | null> {
   const redis = await getRedis();
-  const mispronounciations = await redis.get(`mispronounciations:${id}`);
-  const dictionary = mispronounciations ? JSON.parse(mispronounciations) : null;
+  const mispronunciations = await redis.get(`mispronunciations:${id}`);
+  const dictionary = mispronunciations ? JSON.parse(mispronunciations) : null;
 
   if (!dictionary?.mispronunciations?.length) {
     return null;
@@ -36,7 +36,7 @@ export async function correctMispronunciations(
     corrected = corrected.replace(pattern, entry);
   }
 
-  console.log("correctMispronunciations", { id, query, corrected });
+  console.log("correctmMispronunciations", { id, query, corrected });
 
   return corrected === query ? null : corrected;
 }

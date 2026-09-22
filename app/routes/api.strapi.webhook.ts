@@ -37,7 +37,7 @@ type Chunk = {
 };
 
 // ─── route action ────────────────────────────────────────────────────────────
-// checked
+
 export async function action({ request }: ActionFunctionArgs) {
   // verify webhook secret
   const secret = request.headers.get("x-webhook-secret");
@@ -78,7 +78,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 // ─── publish handler ─────────────────────────────────────────────────────────
-// checked
+
 async function handlePublish(model: string, entry: Record<string, any>) {
   if (!entry.publishedAt) {
     console.log(
@@ -87,13 +87,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     return;
   }
 
-  // TODO error handling please
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
-  console.log(`[debug] fullEntry.place:`, JSON.stringify(fullEntry.place));
-  console.log(
-    `[debug] fullEntry.artworks:`,
-    JSON.stringify(fullEntry.artworks),
-  );
 
   await storePromptInRedis(model, fullEntry);
 
@@ -128,14 +122,14 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       return;
   }
 
-  // save mispronounciations to redis for agent context
-  if (entry?.mispronounciations) {
+  // save mispronunciations to redis for agent context
+  if (entry?.mispronunciations) {
     const groupId = buildGroupId(model, entry);
-    console.log("mispronounciations", entry.mispronounciations, groupId);
+    console.log("mispronunciations", entry.mispronunciations, groupId);
     const redis = await getRedis();
     await redis.set(
-      `mispronounciations:${entry[`${model}_id`]}`,
-      JSON.stringify(entry.mispronounciations),
+      `mispronunciations:${entry[`${model}_id`]}`,
+      JSON.stringify(entry.mispronunciations),
     );
   }
 
@@ -161,7 +155,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 }
 
 // ─── delete handler ───────────────────────────────────────────────────────────
-// checked
+
 async function handleDelete(model: string, entry: Record<string, any>) {
   const groupId = buildGroupId(model, entry);
   await deleteByGroupId(groupId);
@@ -218,7 +212,7 @@ async function deleteAndReEmbed(chunks: Chunk[]) {
 }
 
 // ─── embed ────────────────────────────────────────────────────────────────────
-// checked
+
 async function embedChunks(chunks: Chunk[]) {
   // batch embed for efficiency
   const response = await openai.embeddings.create({
@@ -237,7 +231,7 @@ async function embedChunks(chunks: Chunk[]) {
 }
 
 // ─── group id ─────────────────────────────────────────────────────────────────
-// checked
+
 function buildGroupId(model: string, entry: Record<string, any>): string {
   const id = entry[`${model}_id`] ?? entry.documentId;
   return `${model}:${id}`;
@@ -265,7 +259,20 @@ function buildBaseMeta(
   };
 }
 
+// ─── aliases helper ────────────────────────────────────────────────────────────
+// `aliases` is stored as a comma-separated string in Strapi (artwork, person),
+// not an array — split before joining anywhere it's used for display.
+
+function splitAliases(aliases: string | null | undefined): string[] {
+  if (!aliases?.trim()) return [];
+  return aliases
+    .split(",")
+    .map((a) => a.trim())
+    .filter(Boolean);
+}
+
 // ─── parsers ──────────────────────────────────────────────────────────────────
+
 function parseTextBlock(
   textBlock: string | null,
   chunkType: string,
@@ -355,14 +362,19 @@ function parseBody(
 }
 
 // ─── place chunks ─────────────────────────────────────────────────────────────
+// place schema: place_id, name, alternate_name, prompt, body, knowledge,
+// location (component: blocks.location), child_place, parent_place,
+// operational_info, mispronunciations, greeting
 
 function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("place", entry);
   const meta = buildBaseMeta("place", entry, {
-    city_id: entry.admin_zone?.zone_id ?? null,
+    // admin_zone lives inside the `location` component, not top-level
+    city_id: entry.location?.admin_zone?.zone_id ?? null,
     floor_number: entry.location?.floor_number ?? null,
-    centroid_lat: entry.location?.centroid_lat ?? null,
-    centroid_lng: entry.location?.centroid_lng ?? null,
+    // blocks.location's fields are `latitude`/`longitude`, not `centroid_lat/lng`
+    centroid_lat: entry.location?.latitude ?? null,
+    centroid_lng: entry.location?.longitude ?? null,
   });
 
   const chunks: Chunk[] = [];
@@ -373,8 +385,7 @@ function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
     namespace: "contextual",
     content: [
       entry.name,
-      entry.short_name ? `Also known as: ${entry.short_name}` : null,
-      entry.aliases?.length ? `Aliases: ${entry.aliases.join(", ")}` : null,
+      entry.alternate_name ? `Also known as: ${entry.alternate_name}` : null,
     ]
       .filter(Boolean)
       .join("\n"),
@@ -404,6 +415,8 @@ function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── artwork chunks ───────────────────────────────────────────────────────────
+// artwork schema: artwork_id, name, aliases, date, medium, artwork_type,
+// body, knowledge, attribution
 
 function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("artwork", entry);
@@ -413,6 +426,7 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
   });
 
   const chunks: Chunk[] = [];
+  const aliasList = splitAliases(entry.aliases);
 
   // identity chunk
   chunks.push({
@@ -420,9 +434,7 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
     namespace: "global",
     content: [
       entry.name,
-      entry.aliases?.length
-        ? `Also known as: ${entry.aliases.join(", ")}`
-        : null,
+      aliasList.length ? `Also known as: ${aliasList.join(", ")}` : null,
       entry.attribution,
       entry.date,
       entry.medium,
@@ -432,19 +444,6 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
       .join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
-
-  // text blocks with --- separators
-  if (entry.visual_description) {
-    chunks.push(
-      ...parseTextBlock(
-        entry.visual_description,
-        "visual",
-        groupId,
-        "global",
-        meta,
-      ),
-    );
-  }
 
   // body sections
   chunks.push(...parseBody(entry.body, groupId, "global", meta));
@@ -456,6 +455,9 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── exhibition chunks ────────────────────────────────────────────────────────
+// exhibition schema: exhibition_id, name, place, greeting, prompt, body,
+// knowledge, artworks (component: blocks.exhibition-item, repeatable),
+// mispronunciations, card (component: blocks.detail-card)
 
 async function buildExhibitionChunks(
   entry: Record<string, any>,
@@ -466,7 +468,6 @@ async function buildExhibitionChunks(
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
-    is_current: entry.is_current ?? true,
     floor_number: entry.place?.location?.floor_number ?? null,
   });
 
@@ -476,20 +477,13 @@ async function buildExhibitionChunks(
   chunks.push({
     chunk_id: `${groupId}:identity`,
     namespace: "contextual",
-    content: [
-      entry.name,
-      entry.exhibition_type,
-      entry.description,
-      entry.starts_at ? `Opens: ${entry.starts_at}` : null,
-      entry.ends_at ? `Closes: ${entry.ends_at}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    content: [entry.name].filter(Boolean).join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
 
   // artwork placement chunks
   for (const item of entry.artworks ?? []) {
+    if (!item) continue;
     const artwork = item.artwork;
     if (!artwork) continue;
 
@@ -516,6 +510,7 @@ async function buildExhibitionChunks(
 }
 
 // ─── person chunks ────────────────────────────────────────────────────────────
+// person schema: person_id, name, aliases, birth_year, death_year, body, knowledge
 
 function buildPersonChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("person", entry);
@@ -524,20 +519,18 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
   });
 
   const chunks: Chunk[] = [];
+  const aliasList = splitAliases(entry.aliases);
 
+  // identity chunk
   chunks.push({
     chunk_id: `${groupId}:identity`,
     namespace: "global",
     content: [
       entry.name,
-      entry.aliases?.length
-        ? `Also known as: ${entry.aliases.join(", ")}`
-        : null,
-      entry.nationality,
+      aliasList.length ? `Also known as: ${aliasList.join(", ")}` : null,
       entry.birth_year && entry.death_year
         ? `${entry.birth_year}-${entry.death_year}`
         : (entry.birth_year ?? null),
-      entry.bio,
     ]
       .filter(Boolean)
       .join("\n"),
@@ -551,32 +544,27 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── topic chunks ─────────────────────────────────────────────────────────────
+// topic schema: topic_id, name, body, knowledge
 
 function buildTopicChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("topic", entry);
   const meta = buildBaseMeta("topic", entry, {
     topic_id: entry.topic_id,
-    topic_type: entry.topic_type,
   });
 
   const chunks: Chunk[] = [];
 
+  // identity chunk
   chunks.push({
     chunk_id: `${groupId}:identity`,
     namespace: "global",
-    content: [
-      entry.name,
-      entry.aliases?.length
-        ? `Also known as: ${entry.aliases.join(", ")}`
-        : null,
-      entry.summary,
-      entry.keywords?.length ? `Keywords: ${entry.keywords.join(", ")}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    content: [entry.name].filter(Boolean).join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
 
+  // NOTE: `body` on the topic content type must be a "richtext" field
+  // (markdown string) for parseBody to work — change it from "blocks"
+  // in Strapi and re-save existing entries before relying on this.
   chunks.push(...parseBody(entry.body, groupId, "global", meta));
   chunks.push(...parseKnowledge(entry.knowledge, groupId, "global", meta));
 
@@ -584,7 +572,9 @@ function buildTopicChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── artifact chunks ──────────────────────────────────────────────────────────
-// TODO: implement when Artifact collection is defined
+// artifact schema confirmed: artifact_id, name, body, knowledge
+// TODO: implement when ready — left as a stub for now
+
 function buildArtifactChunks(entry: Record<string, any>): Chunk[] {
   console.log(`[webhook] artifact chunking not yet implemented id=${entry.id}`);
   return [];
@@ -614,36 +604,54 @@ async function storePromptInRedis(model: string, entry: Record<string, any>) {
 
 /**
  * Get the full strapi entry with all relations populated.
+ *
+ * Populate is defined per-model because each content type only declares
+ * the fields/relations it actually has — Strapi returns a 400
+ * ("Invalid key ...") if you ask it to populate a field that doesn't
+ * exist on that model. Do not merge these into one shared object.
  */
 const PLURAL: Record<string, string> = {
   person: "people",
 };
+
+const POPULATE_BY_MODEL: Record<string, Record<string, any>> = {
+  place: {
+    // admin_zone is nested inside the location component, kept shallow
+    // to avoid cascading into admin-zone's self-referencing parent/child relations
+    location: { populate: { admin_zone: true } },
+  },
+  exhibition: {
+    card: { populate: "*" },
+    place: {
+      populate: { location: { populate: { admin_zone: true } } },
+    },
+    artworks: { populate: { artwork: { populate: "*" } } },
+  },
+  artwork: {},
+  person: {},
+  topic: {},
+  artifact: {},
+};
+
 async function fetchStrapiEntry(model: string, documentId: string) {
   const plural = PLURAL[model] ?? `${model}s`;
+  const populate = POPULATE_BY_MODEL[model] ?? {};
+  const hasPopulate = Object.keys(populate).length > 0;
 
-  const query = qs.stringify(
-    {
-      populate: {
-        card: { populate: "*" }, // populates blurb, large_image, thumbnail
-        place: { populate: "*" },
-        artworks: { populate: { artwork: { populate: "*" } } },
-        admin_zone: true,
-        location: true,
-        // add any other top-level relations/components you rely on
-      },
-    },
-    { encodeValuesOnly: true },
-  );
-  // was ${process.env.STRAPI_URL}/api/${plural}/${documentId}?populate=*`
+  const query = hasPopulate
+    ? `?${qs.stringify({ populate }, { encodeValuesOnly: true })}`
+    : "";
+
   const res = await fetch(
-    `${process.env.STRAPI_URL}/api/${plural}/${documentId}?${query}`,
+    `${process.env.STRAPI_URL}/api/${plural}/${documentId}${query}`,
     { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } },
   );
+
   const json = await res.json();
 
   if (!res.ok || !json?.data) {
     console.error(
-      `[fetchStrapiEntry] failed for ${model}/${documentId}: status=${res.status}`,
+      `[fetchStrapiEntry] failed for ${model}/${documentId} status=${res.status}:`,
       JSON.stringify(json),
     );
     throw new Error(
@@ -720,6 +728,9 @@ async function buildLocationRelationship(entry: Record<string, any>) {
     }
     if (entry?.card?.thumbnail) {
       payload.thumbnail = entry.card.thumbnail.url;
+    }
+    if (entry?.card?.blurb) {
+      payload.description = entry.card.blurb;
     }
 
     const { error } = await supabaseAdmin
