@@ -62,7 +62,7 @@ export default function Login() {
   return (
     <>
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 w-full max-w-96 items-center">
-        <div className="mb-[70px] gap-2 flex flex-col items-center">
+        <div className="mb-[60px] gap-2 flex flex-col items-center">
           <img
             className="w-[196px]"
             src="/logos/WonderWay.svg"
