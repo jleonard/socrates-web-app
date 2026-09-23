@@ -309,8 +309,10 @@ export type Database = {
           child_id: string | null
           child_type: string | null
           created_at: string
+          description: string | null
           id: number
           large_image: string | null
+          name: string | null
           parent_id: string | null
           parent_type: string | null
           thumbnail: string | null
@@ -319,8 +321,10 @@ export type Database = {
           child_id?: string | null
           child_type?: string | null
           created_at?: string
+          description?: string | null
           id?: number
           large_image?: string | null
+          name?: string | null
           parent_id?: string | null
           parent_type?: string | null
           thumbnail?: string | null
@@ -329,8 +333,10 @@ export type Database = {
           child_id?: string | null
           child_type?: string | null
           created_at?: string
+          description?: string | null
           id?: number
           large_image?: string | null
+          name?: string | null
           parent_id?: string | null
           parent_type?: string | null
           thumbnail?: string | null

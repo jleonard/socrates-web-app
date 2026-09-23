@@ -1,3 +1,4 @@
+import { ReactElement } from "react";
 import { ButtonProps as ReactAriaButtonProps } from "react-aria-components";
 
 export type ButtonBaseProps = {
@@ -15,6 +16,8 @@ export type ButtonBaseProps = {
 
   /** Drops all css except for className and the focus-ring styles */
   unstyled?: boolean;
+
+  trailingContent?: React.ReactNode;
 };
 
 export type ButtonProps = ReactAriaButtonProps & ButtonBaseProps;

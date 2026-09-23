@@ -1,7 +1,7 @@
 import { tv } from "../../app/utils/tv";
 
 export const ButtonStyles = tv({
-  base: "flex items-center rounded-sm",
+  base: "flex items-center justify-center rounded-full",
   variants: {
     size: {
       default: "gap-4 px-6 py-5",
@@ -13,7 +13,7 @@ export const ButtonStyles = tv({
     },
     level: {
       primary:
-        "bg-action-primary text-inverse hover:bg-action-primary-hover focus:bg-action-primary-focus",
+        "bg-action-primary text-inverse hover:bg-action-primary-hover focus:bg-action-primary-focus uppercase",
       secondary: [
         "border border-action-secondary bg-action-secondary text-primary",
         "hover:border-action-secondary-hover hover:bg-action-secondary-hover",
