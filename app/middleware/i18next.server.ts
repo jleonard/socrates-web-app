@@ -3,8 +3,7 @@ import {
   DEFAULT_NS,
   SUPPORTED_LOCALES,
 } from "app/utils/i18n/config";
-import Backend from "i18next-fs-backend";
-import { resolve } from "node:path";
+import resources from "app/utils/i18n/resources";
 import { initReactI18next } from "react-i18next";
 import { createCookie } from "react-router";
 import { createI18nextMiddleware } from "remix-i18next/middleware";
@@ -27,9 +26,7 @@ export const [i18nextMiddleware, getLocale, getInstance] =
       fallbackLng: DEFAULT_LOCALE,
       supportedLngs: [...SUPPORTED_LOCALES],
       defaultNS: DEFAULT_NS,
-      backend: {
-        loadPath: resolve("./public/locales/{{lng}}/{{ns}}.json"),
-      },
+      resources,
     },
-    plugins: [initReactI18next, Backend],
+    plugins: [initReactI18next],
   });

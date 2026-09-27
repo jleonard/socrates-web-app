@@ -4,6 +4,7 @@
  * For more information, see https://remix.run/file-conventions/entry.client
  */
 import * as Sentry from "@sentry/react-router";
+import resources from "app/locales";
 import {
   DEFAULT_LOCALE,
   DEFAULT_NS,
@@ -11,7 +12,6 @@ import {
 } from "app/utils/i18n/config";
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import HttpBackend from "i18next-http-backend";
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
@@ -27,14 +27,13 @@ Sentry.init({
 async function main() {
   await i18next
     .use(initReactI18next)
-    .use(HttpBackend)
     .use(LanguageDetector)
     .init({
+      resources,
       fallbackLng: DEFAULT_LOCALE,
       supportedLngs: [...SUPPORTED_LOCALES],
       defaultNS: DEFAULT_NS,
       detection: { order: ["htmlTag"], caches: [] },
-      backend: { loadPath: "/locales/{{lng}}/{{ns}}.json" },
       react: { useSuspense: false },
     });
 
