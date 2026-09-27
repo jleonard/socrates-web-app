@@ -4,12 +4,12 @@
  * For more information, see https://remix.run/file-conventions/entry.client
  */
 import * as Sentry from "@sentry/react-router";
-import resources from "app/locales";
 import {
   DEFAULT_LOCALE,
   DEFAULT_NS,
   SUPPORTED_LOCALES,
 } from "app/utils/i18n/config";
+import resources from "app/utils/i18n/resources";
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { startTransition, StrictMode } from "react";
