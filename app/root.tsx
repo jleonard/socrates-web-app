@@ -3,7 +3,8 @@ import { ErrorBoundary as RootErrorBoundary } from "components/ErrorBoundary/Err
 import { Nav } from "components/Nav/Nav";
 import { OverlayNav } from "components/OverlayNav/OverlayNav";
 import { useEffect } from "react";
-import type { LinksFunction, LoaderFunction } from "react-router";
+import { useTranslation } from "react-i18next";
+import type { LinksFunction } from "react-router";
 import {
   data,
   Links,
@@ -12,16 +13,20 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
-  useLocation,
   useMatches,
 } from "react-router";
 import { NavOverlayProvider } from "./context/nav-overlay";
 import { usePageConfig } from "./hooks/usePageConfig";
 import { usePageViews } from "./hooks/usePageViews";
-import { sessionStorage } from "./sessions.server";
-import { usePlaceStore } from "./stores/placeStore";
+import {
+  getLocale,
+  i18nextMiddleware,
+  localeCookie,
+} from "./middleware/i18next.server";
 
 import "./tailwind.css";
+
+export const middleware = [i18nextMiddleware];
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -36,20 +41,33 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export const loader = async ({ request }: { request: Request }) => {
-  return data({
-    GA_TRACKING_ID: process.env.GA_TRACKING_ID,
-  });
+export const loader = async ({
+  request,
+  context,
+}: {
+  request: Request;
+  context: any;
+}) => {
+  const locale = getLocale(context);
+
+  return data(
+    {
+      GA_TRACKING_ID: process.env.GA_TRACKING_ID,
+      locale,
+    },
+    { headers: { "Set-Cookie": await localeCookie.serialize(locale) } },
+  );
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { backgroundClass } = usePageConfig();
+  const { i18n } = useTranslation();
 
   // Handle the case where useLoaderData might fail in error boundaries
   let GA_TRACKING_ID: string | undefined;
   try {
-    const data = useLoaderData<typeof loader>();
-    GA_TRACKING_ID = data?.GA_TRACKING_ID;
+    const loaderData = useLoaderData<typeof loader>();
+    GA_TRACKING_ID = loaderData?.GA_TRACKING_ID;
   } catch (error) {
     // If useLoaderData fails (e.g., in error boundary), use undefined
     GA_TRACKING_ID = undefined;
@@ -67,7 +85,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <html lang="en">
+    <html lang={i18n.language} dir={i18n.dir(i18n.language)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -122,6 +140,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { locale } = useLoaderData<typeof loader>();
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    if (i18n.language !== locale) i18n.changeLanguage(locale);
+  }, [locale, i18n]);
+
   /*
    * process query string vars here
    *

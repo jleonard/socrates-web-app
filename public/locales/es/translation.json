@@ -1,0 +1,24 @@
+{
+  "global": {
+    "talk_btn": "Hablar",
+    "start_btn": "Iniciar",
+    "sign_out": "Cerrar Sesión",
+    "sign_in": "Iniciar Sesión",
+    "history": "Historial",
+    "menu": "Menú",
+    "close": "Cerrar",
+    "continue_with": "Continuar con {{provider}}",
+    "auth_tagline": "Museos. Monumentos. Cultura."
+  },
+  "nav": {
+    "privacy": "Política de Privacidad",
+    "terms": "Términos y Condiciones"
+  },
+  "location_permissions": {
+    "title": "Habilitar Acceso a la Ubicación",
+    "message": "Comparte tu ubicación para que podamos guiarte por museos, galerías y sitios culturales cercanos mientras exploras.",
+    "allow": "Permitir Acceso a la Ubicación",
+    "deny": "Continuar Sin Ubicación",
+    "disclaimer": "Puedes cambiar esta configuración en cualquier momento desde las preferencias de tu navegador."
+  }
+}

@@ -1,13 +1,19 @@
 import React from "react";
 import { siFacebook } from "simple-icons";
 
+import { useTranslation } from "react-i18next";
 import { FacebookAuthButtonProps } from "./FacebookAuthButton.types";
 
 export const FacebookAuthButton = React.forwardRef<
   HTMLButtonElement,
   FacebookAuthButtonProps
 >((props, ref) => {
-  const { className, label = "Continue with Facebook", ...rest } = props;
+  const { t } = useTranslation();
+  const {
+    className,
+    label = `${t("global.continue_with", { provider: "Facebook" })}`,
+    ...rest
+  } = props;
 
   return (
     <>

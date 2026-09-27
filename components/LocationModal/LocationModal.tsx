@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface LocationModalProps {
   onAllow: () => void;
@@ -6,6 +7,7 @@ interface LocationModalProps {
 }
 
 const LocationModal: React.FC<LocationModalProps> = ({ onAllow, onClose }) => {
+  const { t } = useTranslation();
   const allowButtonRef = useRef<HTMLButtonElement>(null);
 
   // Move focus into the modal on open, and close on Escape
@@ -60,11 +62,10 @@ const LocationModal: React.FC<LocationModalProps> = ({ onAllow, onClose }) => {
             id="location-modal-title"
             className="text-lg font-semibold text-gray-900 mb-2"
           >
-            Enable Location Access
+            {t("location_permissions.title")}
           </h3>
           <p id="location-modal-description" className="text-gray-600 mb-6">
-            Share your location so we can guide you through nearby museums,
-            galleries, and cultural sites as you explore.
+            {t("location_permissions.message")}
           </p>
           <div className="flex flex-col space-y-3">
             <button
@@ -72,17 +73,17 @@ const LocationModal: React.FC<LocationModalProps> = ({ onAllow, onClose }) => {
               onClick={onAllow}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
-              Allow Location Access
+              {t("location_permissions.allow")}
             </button>
             <button
               onClick={onClose}
               className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
-              Continue Without Location
+              {t("location_permissions.deny")}
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-4">
-            You can change this setting anytime in your browser preferences.
+            {t("location_permissions.disclaimer")}
           </p>
         </div>
       </div>

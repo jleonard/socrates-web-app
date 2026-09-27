@@ -1,0 +1,24 @@
+{
+  "global": {
+    "talk_btn": "Talk",
+    "start_btn": "Start",
+    "sign_out": "Sign Out",
+    "sign_in": "Sign In",
+    "history": "History",
+    "menu": "Menu",
+    "close": "Close",
+    "continue_with": "Continue with {{provider}}",
+    "auth_tagline": "Museums. Landmarks. Culture."
+  },
+  "nav": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms &amp; Conditions"
+  },
+  "location_permissions": {
+    "title": "Enable Location Access",
+    "message": "Share your location so we can guide you through nearby museums, galleries, and cultural sites as you explore.",
+    "allow": "Allow Location Access",
+    "deny": "Continue Without Location",
+    "disclaimer": "You can change this setting anytime in your browser preferences."
+  }
+}

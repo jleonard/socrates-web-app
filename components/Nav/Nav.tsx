@@ -6,11 +6,13 @@ import { Link, useLocation, useMatches } from "react-router";
 import { usePageConfig } from "app/hooks/usePageConfig";
 import { BackButton } from "components/BackButton/BackButton";
 import { Container } from "components/Container/Container";
+import { useTranslation } from "react-i18next";
 
 export const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const matches = useMatches();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const { hiddenLogo, hiddenNav, backgroundClass: theme } = usePageConfig();
   const showBackButton = location.pathname === "/history";

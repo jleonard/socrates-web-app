@@ -1,9 +1,16 @@
 import { Container } from "components/Container/Container";
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import { useLoaderData } from "react-router";
+import type { loader } from "./loader";
 
 const Privacy: React.FC = () => {
+  const { content } = useLoaderData<typeof loader>();
   return (
     <Container>
+      <div className="border border-red-800">
+        <ReactMarkdown>{content}</ReactMarkdown>
+      </div>
       <h1 className="text-4xl mt-8">Terms of Service</h1>
       <br />
       <p className="font-bold">Effective Date: 06/01/2025</p>

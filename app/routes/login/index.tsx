@@ -1,5 +1,6 @@
 import { FacebookAuthButton } from "components/FacebookAuthButton/FacebookAuthButton";
 import { GoogleAuthButton } from "components/GoogleAuthButton/GoogleAuthButton";
+import { useTranslation } from "react-i18next";
 import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 import { getSupabaseBrowserClient } from "~/utils/supabase.client";
@@ -13,6 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Login() {
+  const { t } = useTranslation();
   const { env } = useLoaderData<{
     env: { SUPABASE_URL: string; SUPABASE_KEY: string };
   }>();
@@ -68,7 +70,7 @@ export default function Login() {
             src="/logos/WonderWay.svg"
             alt="Wonder Way"
           />
-          <p>Museums. Landmarks. Culture.</p>
+          <p>{t("global.auth_tagline")}</p>
         </div>
         <img
           className="mb-[70px] w-[160px]"
@@ -77,25 +79,18 @@ export default function Login() {
         />
         {/* text container */}
         <div className="flex flex-col gap-2 mb-[70px] text-center font-regular items-center">
-          <h2 className="text-2xl">Log in</h2>
+          <h2 className="text-2xl">{t("global.sign_in")}</h2>
         </div>
-        <GoogleAuthButton
-          className="w-full"
-          label="Continue with Google"
-          onClick={handleGoogleLogin}
-        />
-        <FacebookAuthButton
-          onClick={handleFacebookLogin}
-          label="Continue with Facebook"
-        ></FacebookAuthButton>
+        <GoogleAuthButton className="w-full" onClick={handleGoogleLogin} />
+        <FacebookAuthButton onClick={handleFacebookLogin}></FacebookAuthButton>
         <p className="mt-3 text-xs text-center ">
           By signing up with Google or Facebook you agree to our <br />
           <Link className="underline" to="/terms">
-            Terms &amp; Conditions
+            {t("nav.terms")}
           </Link>{" "}
           and{" "}
           <Link className="underline" to="/privacy">
-            Privacy Statement
+            {t("nav.privacy")}
           </Link>
         </p>
       </div>

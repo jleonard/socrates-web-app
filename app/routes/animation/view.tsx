@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 
 import { Circles } from "components/Circles/Circles";
+import { useTranslation } from "react-i18next";
 
 const Animation: React.FC = () => {
   const [mode, setMode] = useState<
     "processing" | "idle" | "connected" | "error" | "speaking" | "preconnect"
   >("idle");
+  const { t } = useTranslation();
 
   return (
     <>
+      <h1>{t("global.sign_in")}</h1>
       <div className="fixed w-dvw h-dvh top-0 left-0">
         <Circles mode={mode}></Circles>
       </div>

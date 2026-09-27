@@ -4,6 +4,7 @@ import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Link,
   useLoaderData,
@@ -41,6 +42,7 @@ import {
 } from "~/utils/location.client";
 
 const ParentComponent: React.FC = () => {
+  const { t } = useTranslation();
   const { access, elevenLabsId, sessionId, user, user_profile, place } =
     useLoaderData<typeof loader>();
 
@@ -410,7 +412,9 @@ const ParentComponent: React.FC = () => {
             mode={buttonMode}
             userAccess={access?.category ?? "none"}
             expiration={access?.expiration ?? new Date().toISOString()}
-            label={shouldPlayGreeting ? "Start" : "Talk"}
+            label={
+              shouldPlayGreeting ? t("global.start_btn") : t("global.talk_btn")
+            }
           ></MainButton>
         </>
       ) : (

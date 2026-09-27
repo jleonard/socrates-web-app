@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useTranslation } from "react-i18next";
 import { GoogleAuthButtonProps } from "./GoogleAuthButton.types";
 
 // Got the code for the button here
@@ -9,7 +10,12 @@ export const GoogleAuthButton = React.forwardRef<
   HTMLButtonElement,
   GoogleAuthButtonProps
 >((props, ref) => {
-  const { className, label = "Continue with Google", ...rest } = props;
+  const { t } = useTranslation();
+  const {
+    className,
+    label = `${t("global.continue_with", { provider: "Google" })}`,
+    ...rest
+  } = props;
 
   return (
     <>
