@@ -1,4 +1,5 @@
 import { data, redirect, type LoaderFunctionArgs } from "react-router";
+import { getLocale } from "~/middleware/i18next.server";
 import { userHasAccess } from "~/server/access.manager.server";
 import { signInGuest, signOutGuest } from "~/server/guest.manager.server";
 import { getPromo, setUserPromo } from "~/server/promo.manager.server";
@@ -7,7 +8,7 @@ import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase, headers: supabaseHeaders } =
     getSupabaseServerClient(request);
   const { session, sessionId } = await getSessionId(request);
@@ -17,6 +18,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     headers.append("Set-Cookie", await sessionStorage.commitSession(session));
     return headers;
   };
+
+  const locale = getLocale(context);
 
   const url = new URL(request.url);
   const place = url.searchParams.get("place");
@@ -151,6 +154,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: agentId,
       place: session.get("place"),
+      locale,
     },
     {
       headers: await buildHeaders(),
