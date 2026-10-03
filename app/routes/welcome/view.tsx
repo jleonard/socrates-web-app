@@ -1,44 +1,38 @@
-import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router";
 import { Carousel } from "components/Carousel/Carousel";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
+
+type OnboardingStep = { title: string; text: string };
 
 const Welcome: React.FC = () => {
+  const { t, i18n } = useTranslation("onboarding");
+
   const [goForward, setGoForward] = useState(0);
   const [goBack, setGoBack] = useState(0);
   const [currentContent, setCurrentContent] = useState(0);
 
   const nextSlide = () => setGoForward(Date.now());
   const prevSlide = () => setGoBack(Date.now());
+  const slideChange = (index: number) => setCurrentContent(index);
 
-  function slideChange(index: number) {
-    setCurrentContent(index);
-  }
+  const raw = t("welcome", { returnObjects: true });
+  const content: OnboardingStep[] = Array.isArray(raw) ? raw : [];
 
-  const content = [
-    {
-      title: "Hi! I'm Wonder",
-      text: "I'm here to help you discover stories about art, science, and culture through conversation.",
-    },
-    {
-      title: "Connect to the public WiFi",
-      text: "Internet connectivity is essential to maintain an uninterrupted conversation.",
-    },
-    {
-      title: "Slip on your headphones",
-      text: "We don't want to make it noisy for others.",
-    },
-    {
-      title: "Press and talk",
-      text: "Press the button to talk and ask questions about where you are and what you are curious about.",
-    },
-    {
-      title: "Start by asking",
-      text: "Where you are. The name of the art piece. Anything you want to know about it. Switch language on the go.",
-    },
-  ];
+  const current = content[currentContent];
+  console.log(
+    "welcome raw:",
+    raw,
+    "| lang:",
+    i18n.language,
+    "| loaded:",
+    i18n.hasLoadedNamespace("onboarding"),
+  );
+  if (!current) return null;
 
   const lightText = currentContent !== 0 && currentContent !== 3;
+  const isLast = currentContent === content.length - 1;
 
   return (
     <>
@@ -53,12 +47,12 @@ const Welcome: React.FC = () => {
         <h2
           className={`text-[32px] leading-10 font-semibold ${lightText ? "text-white" : "text-black"} text-center mb-5 w-3/4 mx-auto`}
         >
-          {content[currentContent].title}
+          {current.title}
         </h2>
         <p
           className={`${lightText ? "text-white" : "text-black"} text-center mb-8 text-balance`}
         >
-          {content[currentContent].text}
+          {current.text}
         </p>
 
         <div className="flex gap-2 justify-center mb-3">
@@ -74,9 +68,8 @@ const Welcome: React.FC = () => {
           ))}
         </div>
 
-        {/* button container */}
         <div className="mt-4 w-full flex">
-          {currentContent < content.length - 1 && (
+          {!isLast ? (
             <div className="w-full flex flex-row gap-3">
               <button
                 onClick={prevSlide}
@@ -89,18 +82,16 @@ const Welcome: React.FC = () => {
                 onClick={nextSlide}
                 className="flex gap-2 w-full px-6 py-3 bg-black text-white rounded-full text-center pointer-events-auto items-center justify-center"
               >
-                <span className="uppercase text-sm">Next</span>
+                <span className="uppercase text-sm">{t("next")}</span>
                 <ChevronRight size={20} strokeWidth={1.5} />
               </button>
             </div>
-          )}
-
-          {currentContent === content.length - 1 && (
+          ) : (
             <Link
               to="/app"
               className="flex w-full px-6 py-3 bg-black text-white rounded-full text-center pointer-events-auto items-center justify-center"
             >
-              <span className="uppercase text-sm">Get Started</span>
+              <span className="uppercase text-sm">{t("getStarted")}</span>
             </Link>
           )}
         </div>
