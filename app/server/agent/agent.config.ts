@@ -32,14 +32,24 @@ export const QUERY_TYPE_CONFIG: Record<AgentQueryType, AgentConfig> = {
     tools: ["pinecone_contextual"],
     contextualTopK: 8,
     globalTopK: 0,
-    contextualScoreThreshold: 0.5, // higher bar — a confident wrong ID is worse than a wrong fact
+    contextualScoreThreshold: 0.5,
     globalScoreThreshold: null,
     geoFiltered: true,
     nearbyRadiusMeters: 15,
     nearbyLimit: 3,
     promptAddition:
-      "The visitor is looking at something specific right now. Identify it clearly and confidently " +
-      "if the retrieved context supports it. If no strong match exists, say so plainly rather than guessing.",
+      "The visitor is looking at something specific right now. Use the retrieved nearby items to identify it.\n" +
+      "Decide using these rules:\n" +
+      "1. ONE clear match: if exactly one retrieved item fits the visitor's description, identify it " +
+      "confidently in 1-2 sentences.\n" +
+      "2. MULTIPLE plausible matches: if two or more retrieved items fit the description equally well " +
+      "(e.g. the visitor names an artist and several works by that artist are nearby), do NOT pick one. " +
+      "List each candidate by title with one short distinguishing detail (medium, color, size, or position), " +
+      "then ask which one they mean.\n" +
+      "3. NO strong match: say so plainly rather than guessing.\n" +
+      "Only list items that appear in the retrieved context. Never invent candidates or details. " +
+      "If the visitor's wording contains a distinguishing detail (a color, subject, or medium), " +
+      "use it to narrow the candidates before deciding between rule 1 and rule 2.",
     maxResponseTokens: 250,
   },
 
