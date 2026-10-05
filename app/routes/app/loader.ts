@@ -24,17 +24,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const place = url.searchParams.get("place");
   const promo = url.searchParams.get("promo");
-  const agentCode = url.searchParams.get("aid");
-  let agentId;
 
-  if (agentCode == "bee") {
-    agentId = "agent_7401m2tn9ewrfm5rrz73js20ecqw";
-    console.log("bee! SET");
-  }
-
-  if (!agentId) {
-    agentId = process.env.ELEVENLABS_AGENT!;
-  }
+  const agentId = process.env.ELEVENLABS_AGENT!;
 
   // save place before any redirects
   if (place) {
