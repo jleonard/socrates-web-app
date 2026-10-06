@@ -382,6 +382,16 @@ export const handleWebhook: ActionFunction = async (args) => {
     }
 
     /*
+     * ✏️ per-query-type instructions
+     */
+    if (agentConfig.promptAddition) {
+      messages.push({
+        role: "system",
+        content: `INSTRUCTIONS FOR THIS QUESTION (type: ${queryClassification.type}):\n${agentConfig.promptAddition}`,
+      });
+    }
+
+    /*
      * ✏️ add the user query at the end of the messages
      */
     messages.push({ role: "user", content: query });
