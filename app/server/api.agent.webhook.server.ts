@@ -1,25 +1,15 @@
-import {
-  Pinecone,
-  type RecordMetadata,
-  type ScoredPineconeRecord,
-} from "@pinecone-database/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 import * as Sentry from "@sentry/react-router";
 import { SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import type { ActionFunction } from "react-router";
 import { QUERY_TYPE_CONFIG } from "~/server/agent/agent.config";
-import { classifyQuery } from "~/server/agent/query.classifier.server";
 import { AgentConfig, HistoryLog, ToolLog } from "~/types";
 import { determineCacheDecision } from "~/utils/cache/cache-decision";
 import { searchCache, storeCache } from "~/utils/cache/cache.server";
 import { logAppEvent } from "~/utils/events/appEvents.server";
 import { logAgentHistory } from "~/utils/history.server";
-import {
-  getQueryEmbedding,
-  PINECONE_SCORE,
-  queryPinecone,
-} from "~/utils/pinecone";
-import { correctTranscription } from "~/utils/query-correction.server";
+import { getQueryEmbedding } from "~/utils/pinecone";
 import { getRedis } from "~/utils/redis.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import {
@@ -30,9 +20,10 @@ import {
   noRagFallbackMessage,
   role,
 } from "~/utils/system.prompt";
-import { fetchWikipedia } from "~/utils/wikipedia.tool";
 import { resolveNearbyItems } from "./agent/geo.search";
 import { correctMispronunciations } from "./agent/mispronounciations";
+import { rewriteQuery } from "./agent/query.rewrite.server";
+import { DENSE_FLOOR, RERANK_MIN, retrieve } from "./agent/rag.retrieve"; // recall -> rerank -> gate
 import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 
 let USE_LEGACY = false;
@@ -44,6 +35,16 @@ let PROMPT = `${role}\n\n${context}\n\n${goals}\n\n${accuracy}\n\n${guardrails}`
 const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY!,
 });
+
+/** Metadata keys that are useful for logging/ingest but just noise for the model. */
+const RAG_METADATA_KEYS_TO_EXCLUDE = [
+  "dropbox_file_id",
+  "dropbox_path",
+  "chunk_index",
+  "chunk_count",
+  "namespace",
+  "ingest_instructions",
+];
 
 export const handleWebhook: ActionFunction = async (args) => {
   const { request } = args;
@@ -70,7 +71,7 @@ export const handleWebhook: ActionFunction = async (args) => {
     } = body;
 
     const locationContext = await resolveLocationId(locationId, supabase);
-
+    const originalQuery = postedQuery;
     let query = postedQuery;
 
     /* 🔷 logging: prep the history log */
@@ -188,28 +189,43 @@ export const handleWebhook: ActionFunction = async (args) => {
     console.log("debug: trimmedHistory ", trimmedHistory);
 
     /*
-     * ✏️ classify the query
+     * ✏️ rewrite + classify the query in one call.
+     * `query` stays the visitor's words (used for the model, history, cache);
+     * `searchQuery` is the clean English rewrite used ONLY for retrieval.
      */
-    const queryClassification = await classifyQuery(query, trimmedHistory);
-    const agentConfig = QUERY_TYPE_CONFIG[queryClassification.type];
+    const {
+      searchQuery,
+      type: queryClassification,
+      confidence: classificationConfidence,
+      fallback: classificationFallback,
+    } = await rewriteQuery(query, trimmedHistory);
+
+    const agentConfig = QUERY_TYPE_CONFIG[queryClassification];
 
     // @TEMP
     console.log(`[${requestId}] agent request started`, {
       query: postedQuery,
+      searchQuery,
       user_id,
       locationContext,
       coords: { lat: user_lat, long: user_long },
-      classification: queryClassification.type,
+      classification: queryClassification,
     });
 
     /*
-     * 💬 get the conversation summary
+     * 🌲 retrieval prep: summary, embedding and filter are independent,
+     * so run them in parallel.
      */
-    const conversationSummary = await getConversationSummary(
-      redis,
-      user_id,
-      chatHistory,
-    );
+    const [conversationSummary, queryEmbedding, filter] = await Promise.all([
+      getConversationSummary(redis, user_id, chatHistory),
+      getQueryEmbedding(searchQuery), // rewritten query, not the raw one
+      buildContextualPineconeFilter(
+        agentConfig,
+        locationContext,
+        user_lat,
+        user_long,
+      ),
+    ]);
     if (conversationSummary) {
       messages.push({
         role: "system",
@@ -219,81 +235,40 @@ export const handleWebhook: ActionFunction = async (args) => {
     console.log("debug: conversationSummary ", conversationSummary);
 
     /*
-     * 🌲 pinecone part one: get contextual and global results
+     * 🌲 retrieval: recall -> rerank -> gate (see rag.retrieve.ts).
+     * A topK of 0 disables a namespace for this query type.
      */
-    const index = pc.index("wonderway");
-    const queryEmbedding = await getQueryEmbedding(query);
     const useContextual = agentConfig.tools.includes("pinecone_contextual");
     const useGlobal = agentConfig.tools.includes("pinecone_global");
-    const filter = await buildContextualPineconeFilter(
-      agentConfig,
-      locationContext,
-      user_lat,
-      user_long,
-    );
-    const [contextualResults, globalResults] = await Promise.all([
-      useContextual
-        ? index.namespace("contextual").query({
-            vector: queryEmbedding,
-            topK: agentConfig.contextualTopK,
-            includeMetadata: true,
-            ...(filter && { filter }),
-          })
-        : Promise.resolve({ matches: [] }),
-      useGlobal
-        ? index.namespace("global").query({
-            vector: queryEmbedding,
-            topK: agentConfig.globalTopK,
-            includeMetadata: true,
-          })
-        : Promise.resolve({ matches: [] }),
-    ]);
+    const retrievalStart = Date.now();
+    const {
+      matches: allMatches,
+      candidates,
+      rerank,
+      raw,
+      rerankFailed,
+    } = await retrieve({
+      pc,
+      embedding: queryEmbedding,
+      searchQuery,
+      filter,
+      ctxTopK: useContextual ? agentConfig.contextualTopK : 0,
+      globalTopK: useGlobal ? agentConfig.globalTopK : 0,
+    });
+    const retrievalMs = Date.now() - retrievalStart;
 
-    console.log(
-      `[${requestId}] Pinecone contextual results`,
-      contextualResults.matches.map((m, index) => ({
-        rank: index + 1,
-        score: m.score,
-        id: m.id,
-        object_id: m.metadata?.object_id,
-        exhibition_id: m.metadata?.exhibition_id,
-        place_id: m.metadata?.place_id,
-        chunk_type: m.metadata?.chunk_type,
-        source_name: m.metadata?.source_name,
-      })),
-    );
+    console.log(`[${requestId}] retrieval`, {
+      contextual_raw: raw.contextual.length,
+      global_raw: raw.global.length,
+      candidates,
+      final: allMatches.length,
+      rerankFailed,
+      reranked: rerank,
+    });
 
     /*
-     * 🌲 pinecone part two: filter results
+     * 🌲 inject retrieved context, or the no-context instruction
      */
-    function filterByScore(
-      matches: ScoredPineconeRecord<RecordMetadata>[],
-      threshold: number | null,
-    ) {
-      if (threshold === null) return matches; // no score gate — e.g. discovery
-      return matches.filter((match) => (match.score ?? 0) >= threshold);
-    }
-
-    const contextualMatches = filterByScore(
-      contextualResults.matches,
-      agentConfig.contextualScoreThreshold,
-    );
-
-    const globalMatches = filterByScore(
-      globalResults.matches,
-      agentConfig.globalScoreThreshold,
-    );
-
-    const RAG_METADATA_KEYS_TO_EXCLUDE = [
-      "dropbox_file_id",
-      "dropbox_path",
-      "chunk_index",
-      "chunk_count",
-      "namespace",
-      "ingest_instructions",
-    ];
-
-    const allMatches = [...contextualMatches, ...globalMatches];
     if (allMatches.length === 0) {
       messages.push({
         role: "system",
@@ -321,13 +296,15 @@ export const handleWebhook: ActionFunction = async (args) => {
     console.log("debug: allMatches filtered ", allMatches);
 
     if (allMatches.length > 0) {
-      /* 🔷 logging: log the rag tool usage */
+      /* 🔷 logging: log the rag tool usage (dense + rerank score per match) */
+      const rerankById = new Map(rerank.map((r) => [r.id, r.rerank]));
       tools.push({
         tool: "rag",
         details: {
           match_count: allMatches.length,
           matches: allMatches.map((m) => ({
             score: m.score,
+            rerank_score: rerankById.get(m.id) ?? null,
             metadata: (() => {
               const { text, ...rest } = m.metadata ?? {};
               return rest;
@@ -339,55 +316,12 @@ export const handleWebhook: ActionFunction = async (args) => {
     }
 
     /*
-     * 🌍 wikipedia fallback
-     */
-    let wikiSummary: string | null = null;
-    const wikiPromise = agentConfig.tools.includes("wiki_fallback")
-      ? fetchWikipedia(query)
-      : Promise.resolve(null);
-
-    const WIKI_SCORE_THRESHOLD = 0.65;
-    const WIKI_MIN_MATCHES = 2;
-
-    const strongMatches = allMatches.filter(
-      (m) => (m.score ?? 0) >= WIKI_SCORE_THRESHOLD,
-    );
-
-    const shouldFallbackToWiki =
-      strongMatches.length < WIKI_MIN_MATCHES &&
-      agentConfig.tools.includes("wiki_fallback");
-    if (shouldFallbackToWiki) {
-      wikiSummary = await wikiPromise;
-
-      if (wikiSummary) {
-        messages.push({
-          role: "system",
-          content: `WIKIPEDIA CONTEXT:\n${wikiSummary}`,
-        });
-        console.log("debug: wikipedia summary ", wikiSummary);
-      } else {
-        messages.push({
-          role: "system",
-          content: `No relevant information found on Wikipedia.`,
-        });
-      }
-
-      if (wikiSummary) {
-        /* 🔷 logging: log the wikipedia tool usage */
-        tools.push({
-          tool: "wikipedia",
-          details: { summary: wikiSummary },
-        });
-      }
-    }
-
-    /*
      * ✏️ per-query-type instructions
      */
     if (agentConfig.promptAddition) {
       messages.push({
         role: "system",
-        content: `INSTRUCTIONS FOR THIS QUESTION (type: ${queryClassification.type}):\n${agentConfig.promptAddition}`,
+        content: `INSTRUCTIONS FOR THIS QUESTION (type: ${queryClassification}):\n${agentConfig.promptAddition}`,
       });
     }
 
@@ -434,14 +368,23 @@ export const handleWebhook: ActionFunction = async (args) => {
           const history_object: HistoryLog = {
             user_id,
             query,
-            query_classification: queryClassification.type,
+            query_classification: queryClassification,
             response: replyText,
             response_time: Date.now() - timerStart,
             tools,
             details: {
               requestId,
+              query: {
+                original: originalQuery,
+                rewritten: searchQuery,
+              },
               locationContext,
               prompt_source: redisPrompt ? "cms" : "default",
+              classification: {
+                type: queryClassification,
+                confidence: classificationConfidence,
+                fallback: classificationFallback,
+              },
             },
           };
           await logAgentHistory(history_object);
@@ -461,7 +404,9 @@ export const handleWebhook: ActionFunction = async (args) => {
               location: locationContext,
 
               classification: {
-                type: queryClassification.type,
+                type: queryClassification,
+                confidence: classificationConfidence,
+                fallback: classificationFallback,
               },
 
               conversation: {
@@ -470,37 +415,24 @@ export const handleWebhook: ActionFunction = async (args) => {
               },
 
               retrieval: {
+                search_query: searchQuery,
                 contextual_requested: useContextual,
                 global_requested: useGlobal,
-
                 filter: filter ?? null,
-
-                contextual_raw: contextualResults.matches.length,
-                global_raw: globalResults.matches.length,
-
-                contextual_after_threshold: contextualMatches.length,
-                global_after_threshold: globalMatches.length,
-
+                dense_floor: DENSE_FLOOR,
+                rerank_min: RERANK_MIN,
+                contextual_raw: raw.contextual.length,
+                global_raw: raw.global.length,
+                dense_candidates: candidates,
                 final_matches: allMatches.length,
-                highest_score:
-                  allMatches.length > 0
-                    ? Math.max(...allMatches.map((m) => m.score ?? 0))
-                    : null,
-              },
-
-              wikipedia: {
-                enabled: agentConfig.tools.includes("wiki_fallback"),
-                fallback_triggered: shouldFallbackToWiki,
-                found: Boolean(wikiSummary),
+                rerank_failed: rerankFailed,
+                retrieval_ms: retrievalMs,
+                // [{id, object_id, dense, rerank}] — the threshold calibration data
+                reranked: rerank,
               },
 
               response: {
-                source:
-                  allMatches.length > 0
-                    ? "rag"
-                    : wikiSummary
-                      ? "wikipedia"
-                      : "none",
+                source: allMatches.length > 0 ? "rag" : "none",
                 length: replyText.length,
                 response_time_ms: Date.now() - timerStart,
               },
@@ -514,29 +446,11 @@ export const handleWebhook: ActionFunction = async (args) => {
             event_details: {
               request_id: requestId,
               query,
-              classification: queryClassification.type,
-
-              contextual: contextualResults.matches.map((m) => ({
-                score: m.score,
-                id: m.id,
-                object_id: m.metadata?.object_id,
-                exhibition_id: m.metadata?.exhibition_id,
-                place_id: m.metadata?.place_id,
-                chunk_type: m.metadata?.chunk_type,
-                source_name: m.metadata?.source_name,
-                text: m.metadata?.text,
-              })),
-
-              global: globalResults.matches.map((m) => ({
-                score: m.score,
-                id: m.id,
-                object_id: m.metadata?.object_id,
-                exhibition_id: m.metadata?.exhibition_id,
-                place_id: m.metadata?.place_id,
-                chunk_type: m.metadata?.chunk_type,
-                source_name: m.metadata?.source_name,
-                text: m.metadata?.text,
-              })),
+              search_query: searchQuery,
+              classification: queryClassification,
+              // every chunk Pinecone returned, before floor/rerank
+              contextual: raw.contextual,
+              global: raw.global,
             },
           });
 
@@ -684,9 +598,8 @@ ${recentMessages}`;
  *    regress for institutions that haven't rolled geo out.
  *
  * 2. NOT every type's "nearby" logic should live here:
- *    - navigational_locate has geoFiltered: false ON PURPOSE — it's an
- *      institution-wide name lookup, the visitor is asking specifically
- *      because the thing ISN'T nearby. Don't accidentally geo-scope it.
+ *    - a future "where is X?" type should NOT be geo-scoped — the visitor is
+ *      asking specifically because the thing ISN'T nearby.
  *    - visual_id doesn't use this function's geo clause at all. Its geo
  *      scoping happens via a separate hop: resolveNearbyArtworks() from
  *      Redis -> artwork_id: { $in: [...] } filter against the GLOBAL

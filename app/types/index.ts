@@ -22,22 +22,31 @@ export type AgentToolName =
 
 export interface AgentConfig {
   /** Tools invoked for this query type, in the order they should run.
-   *  Pipeline treats this as authoritative — no separate if/else branching on type. */
+   *  Pipeline treats this as authoritative — no separate if/else branching on type.
+   *  Note: "wiki_fallback" is no longer handled by the webhook, so no config
+   *  sets it. Keep it in AgentToolName only if other code still references it. */
   tools: AgentToolName[];
 
-  /** Pinecone contextual namespace top-K. 0 = skip. */
+  /** Pinecone contextual namespace top-K. 0 = skip. This sets how many
+   *  candidates the reranker sees, not how many reach the model. */
   contextualTopK: number;
 
-  /** Pinecone global namespace top-K. 0 = skip. */
+  /** Pinecone global namespace top-K. 0 = skip. Same meaning as above. */
   globalTopK: number;
 
-  /** Minimum score to keep a contextual match. null = no score gate (filter-driven instead, e.g. discovery). */
-  contextualScoreThreshold: number | null;
+  /**
+   * @deprecated Relevance is now decided by the reranker (RERANK_MIN in
+   * rag.retrieve.ts). No longer read by the webhook. Kept optional so old
+   * configs still compile; delete once nothing references it.
+   */
+  contextualScoreThreshold?: number | null;
 
-  /** Minimum score to keep a global match. null = no score gate. */
-  globalScoreThreshold: number | null;
+  /**
+   * @deprecated See contextualScoreThreshold.
+   */
+  globalScoreThreshold?: number | null;
 
-  /** Apply { place_id: { $in: nearbyPlaceIds } } filter on the contextual query. */
+  /** Apply the place/exhibition scope filter on the contextual query. */
   geoFiltered: boolean;
 
   /** When set, narrows geoFiltered types to real lat/lng proximity via
@@ -45,15 +54,18 @@ export interface AgentConfig {
    *  Omit to keep geoFiltered institution-scoping without proximity narrowing. */
   nearbyRadiusMeters?: number;
 
-  /* used for geoFilter to limit how many responses to consider. filter out noise */
+  /** Used with nearbyRadiusMeters to limit how many nearby items to consider
+   *  (filters out noise). */
   nearbyLimit?: number;
 
-  /** Text appended to the system prompt for this query type — controls response shape/tone.
-   *  Empty string = use the base system prompt with no addition. */
+  /** Text added as a system message for this query type, just before the
+   *  visitor's question — controls response shape/tone and grounding rules.
+   *  Empty string = no addition. */
   promptAddition: string;
 
-  /** Max tokens to allow in the generated response. Keeps factual/navigational answers short,
-   *  gives interpretive/discovery room to synthesize or list. */
+  /** Max tokens to allow in the generated response. Acts as a ceiling, not a
+   *  target: hitting it cuts the reply mid-sentence, so keep it above the
+   *  length the promptAddition asks for. */
   maxResponseTokens: number;
 }
 
@@ -63,9 +75,7 @@ export type AgentQueryType =
   | "comparative" //— relate/contrast two or more things
   | "contextual" //— narrative background on one thing
   | "interpretive" //— meaning, significance, or story of one thing
-  | "discovery" //— recommend/rank across many things
-  | "navigational_locate" //— find a specific named thing
-  | "operational"; //— hours, tickets, accessibility, pure metadata (new)
+  | "discovery"; //— recommend/rank across many things
 
 export type AgentResponse =
   Database["public"]["Tables"]["agent_history"]["Row"];
