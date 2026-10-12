@@ -134,11 +134,13 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   }
 
   if (!chunks.length) {
+    // Still clear out anything previously ingested for this entry.
+    await deleteEntryVectors(model, fullEntry);
     console.log(`[webhook] no chunks produced for ${model} id=${entry.id}`);
     return;
   }
 
-  await deleteAndReEmbed(chunks);
+  await deleteAndReEmbed(model, fullEntry, chunks);
 
   if (fullEntry?.greeting) {
     console.log("has greeting");
@@ -157,31 +159,87 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 // ─── delete handler ───────────────────────────────────────────────────────────
 
 async function handleDelete(model: string, entry: Record<string, any>) {
-  const groupId = buildGroupId(model, entry);
-  await deleteByGroupId(groupId);
-  console.log(`[webhook] deleted vectors for group_id=${groupId}`);
+  await deleteEntryVectors(model, entry);
 }
 
-async function deleteByGroupId(groupId: string) {
-  for (const nsName of ["contextual", "global"] as const) {
-    const ns = index.namespace(nsName);
-    let paginationToken: string | undefined;
+const NAMESPACES = ["contextual", "global"] as const;
 
+/** text-embedding-3-large. Only used to build the lookup vector below. */
+const EMBEDDING_DIMENSION = 3072;
+
+/**
+ * Arbitrary non-zero vector for metadata-only lookups. Pinecone queries
+ * need a vector; the filter decides what matches, not similarity.
+ */
+const LOOKUP_VECTOR = new Array(EMBEDDING_DIMENSION).fill(0.001);
+
+/** Pinecone's max ids per deleteMany call. */
+const DELETE_BATCH = 1000;
+
+/**
+ * Deletes every vector previously ingested for a Strapi entry, in both
+ * namespaces. Matches on two keys so nothing is left behind:
+ *
+ * 1. id prefix `${model}:${slug}:` (buildGroupId). Covers chunks written
+ *    before `strapi_id` was stored in metadata.
+ * 2. `strapi_id` = entry.documentId. Strapi's documentId never changes, so
+ *    this catches chunks written under an OLD slug, which the prefix misses
+ *    (e.g. place:mit-musuem:* after the slug was fixed to mit-museum).
+ */
+async function deleteEntryVectors(model: string, entry: Record<string, any>) {
+  const groupId = buildGroupId(model, entry);
+  const documentId: string | undefined = entry.documentId;
+
+  for (const nsName of NAMESPACES) {
+    const ns = index.namespace(nsName);
+    const ids = new Set<string>();
+
+    // 1. by id prefix
+    let paginationToken: string | undefined;
     do {
       const res = await ns.listPaginated({
         prefix: `${groupId}:`,
         paginationToken,
       });
-      const ids = res.vectors?.map((v) => v.id) ?? [];
-      if (ids.length) await ns.deleteMany(ids);
+      for (const v of res.vectors ?? []) if (v.id) ids.add(v.id);
       paginationToken = res.pagination?.next;
     } while (paginationToken);
+
+    // 2. by stable Strapi id (scoped to this model, in case ids ever collide)
+    if (documentId) {
+      const res = await ns.query({
+        vector: LOOKUP_VECTOR,
+        topK: 10000,
+        includeMetadata: false,
+        includeValues: false,
+        filter: {
+          strapi_id: { $eq: documentId },
+          parent_type: { $eq: model },
+        },
+      });
+      for (const m of res.matches) ids.add(m.id);
+    }
+
+    const all = [...ids];
+    for (let i = 0; i < all.length; i += DELETE_BATCH) {
+      await ns.deleteMany(all.slice(i, i + DELETE_BATCH));
+    }
+
+    if (all.length) {
+      console.log(
+        `[webhook] deleted ${all.length} vectors from namespace=${nsName} for group_id=${groupId} strapi_id=${documentId}`,
+      );
+    }
   }
 }
 
 // ─── delete + re-embed ────────────────────────────────────────────────────────
 
-async function deleteAndReEmbed(chunks: Chunk[]) {
+async function deleteAndReEmbed(
+  model: string,
+  entry: Record<string, any>,
+  chunks: Chunk[],
+) {
   if (!chunks.length) return;
 
   // group chunks by namespace
@@ -193,20 +251,23 @@ async function deleteAndReEmbed(chunks: Chunk[]) {
     {} as Record<string, Chunk[]>,
   );
 
-  for (const [ns, nsChunks] of Object.entries(byNamespace)) {
-    const groupId = nsChunks[0].metadata.group_id;
+  // 1. embed everything first, so an OpenAI failure leaves the existing
+  //    vectors in place instead of deleting them with nothing to replace them
+  const embedded = await Promise.all(
+    Object.entries(byNamespace).map(
+      async ([ns, nsChunks]) => [ns, await embedChunks(nsChunks)] as const,
+    ),
+  );
 
-    // 1. delete prior vectors for this group in this namespace
-    await deleteByGroupId(groupId);
+  // 2. delete prior vectors ONCE, across both namespaces. Deleting inside
+  //    the per-namespace loop would wipe vectors upserted on an earlier pass.
+  await deleteEntryVectors(model, entry);
 
-    // 2. embed all chunks
-    const vectors = await embedChunks(nsChunks);
-
-    // 3. upsert to Pinecone
+  // 3. upsert
+  for (const [ns, vectors] of embedded) {
     await index.namespace(ns).upsert(vectors);
-
     console.log(
-      `[webhook] upserted ${vectors.length} vectors to namespace=${ns} group_id=${groupId}`,
+      `[webhook] upserted ${vectors.length} vectors to namespace=${ns} group_id=${buildGroupId(model, entry)}`,
     );
   }
 }
