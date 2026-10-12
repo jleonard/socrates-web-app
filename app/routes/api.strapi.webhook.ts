@@ -252,7 +252,11 @@ function buildBaseMeta(
     name: entry.name ?? null,
     parent_type: model,
     parent_id: entry[`${model}_id`] ?? entry.documentId ?? String(entry.id),
-    place_id: entry.place?.place_id ?? null,
+    // A place record has no `place` relation to itself, so use its own id.
+    place_id:
+      model === "place"
+        ? (entry.place_id ?? null)
+        : (entry.place?.place_id ?? null),
     // @TODO institution_id: entry.institution_id ?? null,
     language: entry.language ?? "en",
     ...extras,
