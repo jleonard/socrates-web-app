@@ -252,7 +252,11 @@ async function processImageOcr(file: any, supabase: SupabaseClient) {
     const text = await ocrImage(file.download_link);
     console.log("OCR : ", text);
     if (text === "NO_TEXT_FOUND") {
-      return true; // nothing to index, but not a failure — don't retry forever
+      // Nothing to index, but not a failure — don't retry forever. Clear
+      // any chunks from an earlier run that did find text, so they don't
+      // linger with stale metadata.
+      await clearFileVectors(file, supabase);
+      return true;
     }
     file.metadata.chunk_type = "ocr";
     return await pushTextToPinecone(file, text, supabase);
@@ -345,6 +349,29 @@ async function getEmbeddings(chunks: string[]): Promise<number[][]> {
 }
 
 /*
+ * Removes every vector previously written for this file and clears its
+ * stored pinecone_ids. Used when a re-run produces nothing to index.
+ */
+async function clearFileVectors(file: any, supabase: SupabaseClient) {
+  if (!file.pinecone_ids || file.pinecone_ids.length === 0) return;
+
+  await deleteByIds("wonderway", file.pinecone_ids);
+
+  const { error } = await supabase
+    .from("dropbox_assets")
+    .upsert(
+      { dropbox_file_id: file.dropbox_file_id, pinecone_ids: [] },
+      { onConflict: "dropbox_file_id" },
+    );
+
+  if (error) {
+    throw new Error(
+      `Failed to clear pinecone_ids for ${file.dropbox_file_id}: ${error.message}`,
+    );
+  }
+}
+
+/*
  * shared by image visual description processing and generic text file splitting
  */
 async function pushTextToPinecone(
@@ -358,7 +385,11 @@ async function pushTextToPinecone(
     .filter(Boolean)
     .flatMap(splitOversized);
   if (chunks.length === 0) {
-    return false;
+    // Empty file: nothing to index, but not a failure. Returning false here
+    // left the file in "process" (retried every run) with its old vectors
+    // still live, so clear them and mark it done.
+    await clearFileVectors(file, supabase);
+    return true;
   }
   // if this file's already been processed before, clean up its old
   // vectors first so a shrinking/changed chunk count doesn't leave
