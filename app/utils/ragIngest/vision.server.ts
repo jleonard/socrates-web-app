@@ -1,5 +1,16 @@
 import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+
+/**
+ * Vision/OCR run inside a 60s Vercel function (api.dropbox.push-changes).
+ * A call that outlives the function gets killed with no status recorded,
+ * so fail it here instead: one attempt, 25s max. push-changes budgets
+ * 30s per heavy file (HEAVY_WORST_MS) based on this.
+ */
+const openai = new OpenAI({
+  apiKey: process.env.OPEN_AI_KEY,
+  timeout: 25_000,
+  maxRetries: 0,
+});
 
 const prompts = {
   artwork: `You are creating a visual description of an artwork for a museum guide.
@@ -181,7 +192,8 @@ export async function describeImage(
   type: keyof typeof prompts = "artifact",
   metadata: Record<string, unknown> = {},
 ): Promise<string> {
-  const prompt = (prompts[type] ?? prompts.artifact) + VISITOR_WORDS_INSTRUCTION;
+  const prompt =
+    (prompts[type] ?? prompts.artifact) + VISITOR_WORDS_INSTRUCTION;
 
   // Previously only a "Special instructions" header was appended (with
   // literal "/n"), never the instructions themselves. Context and

@@ -13,6 +13,7 @@ import exifr from "exifr";
 import mammoth from "mammoth";
 import OpenAI from "openai";
 import { ActionFunctionArgs } from "react-router";
+import type { Database } from "~/types/supabase";
 import { deleteByIds } from "~/utils/pinecone";
 import { describeImage, ocrImage } from "~/utils/ragIngest/vision.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
@@ -35,9 +36,11 @@ export async function action({ request }: ActionFunctionArgs) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const runStart = Date.now();
+
   try {
     const { supabase } = getSupabaseServiceRoleClient();
-    const { data: filesToProcess, error: fetchError } = await supabase
+    const { data: queued, error: fetchError } = await supabase
       .from("dropbox_assets")
       .select("*")
       .eq("status", "process")
@@ -45,130 +48,227 @@ export async function action({ request }: ActionFunctionArgs) {
       .not("dropbox_file_id", "is", null)
       .not("name", "is", null)
       .order("id", { ascending: true })
-      .limit(1);
-
-    console.log("RAG Ingest : ", filesToProcess);
+      .limit(FETCH_LIMIT);
 
     if (fetchError) {
       throw fetchError;
     }
 
-    if (!filesToProcess || filesToProcess.length === 0) {
+    if (!queued || queued.length === 0) {
       return new Response("No files to process", { status: 200 });
     }
 
-    let metadataCache = new Map<string, any>();
+    /*
+     * Heavy files (vision/OCR) first so every run makes progress on images,
+     * then light files (text, location) to use the rest of the time.
+     * Each group stays in queue (id) order.
+     */
+    const heavy = queued
+      .filter((r) => fileCost(r) === "heavy")
+      .slice(0, MAX_HEAVY);
+    const light = queued
+      .filter((r) => fileCost(r) === "light")
+      .slice(0, MAX_LIGHT);
 
-    type ProcessingFile = (typeof filesToProcess)[number] & {
-      metadata?: any;
-      extension?: string;
-      doc_source?: string;
-      binary?: Buffer;
-      download_link?: string;
+    const ctx: ProcessingContext = {
+      supabase,
+      dbx: new Dropbox({
+        clientId: process.env.DROPBOX_APP_KEY,
+        clientSecret: process.env.DROPBOX_APP_SECRET,
+        refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
+      }),
+      metadataCache: new Map<string, any>(),
     };
 
-    const dbx = new Dropbox({
-      clientId: process.env.DROPBOX_APP_KEY,
-      clientSecret: process.env.DROPBOX_APP_SECRET,
-      refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
-    });
+    const results: { name: string; status: string; ms: number }[] = [];
+    let deferred = 0;
 
-    // Process each file
-    for (const row of filesToProcess) {
-      const file: ProcessingFile = { ...row };
-      let status = file.status;
-
-      if (!file.dropbox_folder) {
-        await updateProcessingStatus("skipped", file.dropbox_file_id, supabase);
-        continue;
-      }
-
-      // Get the metadata for this file
-      let metadata = metadataCache.get(file.dropbox_folder);
-
-      if (metadata === undefined) {
-        metadata = await getMetadataForFolder(file.dropbox_folder, supabase);
-
-        if (metadata === null) {
-          await updateProcessingStatus(
-            "skipped",
-            file.dropbox_file_id,
-            supabase,
-          );
+    for (const [rows, worstMs] of [
+      [heavy, HEAVY_WORST_MS],
+      [light, LIGHT_WORST_MS],
+    ] as const) {
+      for (const row of rows) {
+        // Only start a file if its worst case still fits under the limit.
+        // Vercel kills the function at its max duration, and a killed run
+        // can't record a status, so the file would block the queue.
+        if (Date.now() - runStart + worstMs > SAFE_LIMIT_MS) {
+          deferred++;
           continue;
         }
 
-        metadataCache.set(file.dropbox_folder, metadata);
-      }
+        const fileStart = Date.now();
+        let status: string;
 
-      file.metadata = metadata;
-      file.extension = file.name.split(".").pop()?.toLowerCase();
-      file.doc_source = "dropbox";
-
-      if (TEXT_EXTENSIONS.has(file.extension ?? "")) {
-        // Text files need the binary
-        const response = await dbx.filesDownload({
-          path: file.dropbox_path!,
-        });
-
-        file.binary = (
-          response.result as unknown as { fileBinary: Buffer }
-        ).fileBinary;
-
-        const processed = await processTextFile(file, supabase);
-        status = processed ? "success" : "process";
-      } else if (IMAGE_EXTENSIONS.has(file.extension ?? "")) {
-        if (file.dropbox_folder.includes("location")) {
-          // Location images need the binary for EXIF/GPS
-          const response = await dbx.filesDownload({
-            path: file.dropbox_path!,
-          });
-
-          file.binary = (
-            response.result as unknown as { fileBinary: Buffer }
-          ).fileBinary;
-
-          const processed = await processLocationImage(file, supabase);
-          status = processed ? "success" : "process";
-        } else if (
-          file.dropbox_folder.includes("vision") ||
-          file.dropbox_folder.includes("ocr")
-        ) {
-          // Vision/OCR only need a URL.
-          // Don't download the image into the Vercel function.
-          const downloadLink = await dbx.filesGetTemporaryLink({
-            path: file.dropbox_path!,
-          });
-
-          file.download_link = downloadLink.result.link;
-
-          let processed: boolean;
-
-          if (file.dropbox_folder.includes("vision")) {
-            processed = await processImageDescription(file, supabase);
-          } else {
-            processed = await processImageOcr(file, supabase);
-          }
-
-          status = processed ? "success" : "process";
-        } else {
-          status = "skipped";
+        // One file's failure must not stop the run or stay at the head of
+        // the queue: mark it "error" and move on. It is re-queued when the
+        // file changes in Dropbox, or by resetting its status.
+        try {
+          status = await processFile(row, ctx);
+        } catch (error) {
+          console.error(
+            `[push-changes] failed ${row.dropbox_path}:`,
+            error instanceof Error ? error.message : error,
+          );
+          status = "error";
         }
-      } else {
-        status = "skipped";
-      }
 
-      // Set the status for the file
-      await updateProcessingStatus(status, file.dropbox_file_id, supabase);
+        try {
+          await updateProcessingStatus(status, row.dropbox_file_id, supabase);
+        } catch (error) {
+          console.error(`[push-changes] status update failed:`, error);
+        }
+
+        results.push({
+          name: row.name,
+          status,
+          ms: Date.now() - fileStart,
+        });
+      }
     }
-    return new Response(JSON.stringify({ processed: filesToProcess.length }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+
+    console.log("[push-changes] run", {
+      ms: Date.now() - runStart,
+      queued: queued.length,
+      deferred,
+      results,
     });
+
+    return new Response(
+      JSON.stringify({ processed: results.length, deferred, results }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (error) {
     console.error("Error pushing changes to RAG:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
+}
+
+// ─── batching ────────────────────────────────────────────────────────────────
+
+/** How many queued files to look at per run. */
+const FETCH_LIMIT = 25;
+
+/** Max vision/OCR files per run. */
+const MAX_HEAVY = 2;
+
+/** Max text/location files per run. */
+const MAX_LIGHT = 10;
+
+/**
+ * Stop starting new files once elapsed + a file's worst case would pass this.
+ * Keep it ~10s under the Vercel function max duration (currently 60s).
+ */
+const SAFE_LIMIT_MS = Number(process.env.PUSH_CHANGES_SAFE_LIMIT_MS ?? 50_000);
+
+/** Vision/OCR worst case: the OpenAI call timeout (vision.server.ts) + embed + writes. */
+const HEAVY_WORST_MS = 30_000;
+
+/** Text/location worst case: download + embed + writes. */
+const LIGHT_WORST_MS = 5_000;
+
+function fileExtension(name: string | null) {
+  return name?.split(".").pop()?.toLowerCase() ?? "";
+}
+
+/** Heavy = an OpenAI vision call (vision/OCR folders). Everything else is light. */
+function fileCost(row: { name: string | null; dropbox_folder: string | null }) {
+  const folder = row.dropbox_folder ?? "";
+  const isImage = IMAGE_EXTENSIONS.has(fileExtension(row.name));
+  return isImage && (folder.includes("vision") || folder.includes("ocr"))
+    ? "heavy"
+    : "light";
+}
+
+type DropboxAssetRow = Database["public"]["Tables"]["dropbox_assets"]["Row"];
+
+/** Merged folder metadata; null when the folder has no metadata.json. */
+type FolderMetadata = Record<string, unknown> | null;
+
+type ProcessingFile = Omit<DropboxAssetRow, "metadata"> & {
+  metadata: Record<string, unknown>;
+  extension: string;
+  doc_source: string;
+  binary?: Buffer;
+  download_link?: string;
+};
+
+type ProcessingContext = {
+  supabase: SupabaseClient;
+  dbx: Dropbox;
+  metadataCache: Map<string, FolderMetadata>;
+};
+
+/**
+ * Processes one queued file and returns its new status. Throws on failure;
+ * the caller records "error".
+ */
+async function processFile(
+  row: DropboxAssetRow,
+  ctx: ProcessingContext,
+): Promise<string> {
+  const { supabase, dbx, metadataCache } = ctx;
+
+  const folder = row.dropbox_folder;
+  if (!folder) return "skipped";
+
+  // Get the metadata for this file's folder
+  let metadata = metadataCache.get(folder);
+  if (metadata === undefined) {
+    metadata = await getMetadataForFolder(folder, supabase);
+    metadataCache.set(folder, metadata);
+  }
+  if (metadata === null) return "skipped";
+
+  const file: ProcessingFile = {
+    ...row,
+    // Copy: processing sets per-file fields (e.g. chunk_type) on metadata,
+    // and the cached object is shared by every file in the folder this run.
+    metadata: { ...metadata },
+    extension: fileExtension(row.name),
+    doc_source: "dropbox",
+  };
+
+  if (TEXT_EXTENSIONS.has(file.extension)) {
+    // Text files need the binary
+    const response = await dbx.filesDownload({ path: file.dropbox_path! });
+    file.binary = (
+      response.result as unknown as { fileBinary: Buffer }
+    ).fileBinary;
+
+    return (await processTextFile(file, supabase)) ? "success" : "process";
+  }
+
+  if (!IMAGE_EXTENSIONS.has(file.extension)) return "skipped";
+
+  if (folder.includes("location")) {
+    // Location images need the binary for EXIF/GPS
+    const response = await dbx.filesDownload({ path: file.dropbox_path! });
+    file.binary = (
+      response.result as unknown as { fileBinary: Buffer }
+    ).fileBinary;
+
+    return await processLocationImage(file, supabase);
+  }
+
+  if (folder.includes("vision") || folder.includes("ocr")) {
+    // Vision/OCR only need a URL.
+    // Don't download the image into the Vercel function.
+    const downloadLink = await dbx.filesGetTemporaryLink({
+      path: file.dropbox_path!,
+    });
+    file.download_link = downloadLink.result.link;
+
+    const processed = folder.includes("vision")
+      ? await processImageDescription(file, supabase)
+      : await processImageOcr(file, supabase);
+
+    return processed ? "success" : "process";
+  }
+
+  return "skipped";
 }
 
 async function updateProcessingStatus(
@@ -194,11 +294,16 @@ async function processTextFile(file: any, supabase: SupabaseClient) {
   return await pushTextToPinecone(file, text, supabase);
 }
 
-async function processLocationImage(file: any, supabase: SupabaseClient) {
+async function processLocationImage(
+  file: any,
+  supabase: SupabaseClient,
+): Promise<"success" | "skipped"> {
   const gps = await exifr.gps(file.binary);
 
+  // No GPS won't fix itself on retry; "process" would block the queue.
   if (gps?.latitude == null || gps?.longitude == null) {
-    return false;
+    console.warn(`[push-changes] no GPS in ${file.dropbox_path}, skipping`);
+    return "skipped";
   }
 
   const object_id = file.metadata["object_id"] ?? file.dropbox_file_id;
@@ -231,7 +336,7 @@ async function processLocationImage(file: any, supabase: SupabaseClient) {
       );
     }
   }
-  return true;
+  return "success";
 }
 
 async function processImageDescription(file: any, supabase: SupabaseClient) {

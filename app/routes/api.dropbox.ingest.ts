@@ -198,7 +198,8 @@ export async function action({ request }: ActionFunctionArgs) {
           dropbox_folder: file.dropbox_folder,
           metadata: metadataJson,
           dropbox_file_id: file.id,
-          status: "process",
+          // metadata.json is config, not content: never queued for push-changes
+          status: "ignore",
         });
       } catch (error) {
         processingErrors.push(
@@ -525,7 +526,9 @@ async function markFoldersForReprocessing(
   const { error } = await supabaseServiceRole
     .from("dropbox_assets")
     .update({ status: "process" })
-    .or(filters.join(","));
+    .or(filters.join(","))
+    // the metadata.json files themselves stay "ignore"
+    .neq("name", "metadata.json");
 
   if (error) {
     throw new Error(
