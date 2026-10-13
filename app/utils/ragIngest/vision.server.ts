@@ -101,6 +101,59 @@ semantic search and matching against a visitor's natural-language
 description.`,
 };
 
+/**
+ * Appended to every description prompt. Rerankers match words fairly
+ * literally: a description that says "globe" scored 0.04 for "the large
+ * sphere at the entrance". A closing sentence in a visitor's own words
+ * ("Visitors might call this a globe, a large sphere, or a big ball…")
+ * lifted that to 0.9+ without raising unrelated questions. A keyword list
+ * did NOT work and even lowered the exact-word match, so keep it a sentence.
+ */
+const VISITOR_WORDS_INSTRUCTION = `
+
+Finish with one or two plain sentences beginning "Visitors might call this…"
+that name the object the way a visitor would in everyday speech, including
+common alternative words (for example, a globe might be called a sphere or a
+big ball; a skeleton might be called the big bones). If the context below says
+where the object is displayed, mention that too (for example, "near the
+entrance"). Use everyday words here, not titles, artist names, or catalog
+names.`;
+
+/**
+ * Builds the text sent alongside the image from the file's folder metadata.
+ * The context is for naming the object in everyday words and saying where it
+ * is displayed; the description itself must still be based on what is
+ * visible.
+ */
+function buildContext(metadata: Record<string, unknown>): string {
+  const field = (key: string) => {
+    const value = metadata?.[key];
+    return typeof value === "string" && value.trim() ? value.trim() : null;
+  };
+
+  const lines = [
+    ["Name", field("name") ?? field("title") ?? field("object_name")],
+    ["Type", field("object_subtype") ?? field("object_type")],
+    ["Context", field("description")],
+    ["Exhibition", field("exhibition_name")],
+    ["Venue", field("place_name")],
+  ]
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}: ${value}`);
+
+  const instructions = field("ingest_instructions");
+
+  let context = lines.length
+    ? `Context for this image (use it only to name the object in everyday words and to say where it is displayed; describe only what is visible):\n${lines.join("\n")}`
+    : "";
+
+  if (instructions) {
+    context += `${context ? "\n\n" : ""}Special instructions for this item:\n${instructions}`;
+  }
+
+  return context;
+}
+
 const OCR_PROMPT = `You are transcribing visible text from an image for a museum guide's search index.
 
 Transcribe all text that is visibly legible in the image, exactly as it
@@ -126,12 +179,15 @@ Return only the transcribed text (or NO_TEXT_FOUND), nothing else.`;
 export async function describeImage(
   url: string,
   type: keyof typeof prompts = "artifact",
-  metadata: Record<string, string> = {},
+  metadata: Record<string, unknown> = {},
 ): Promise<string> {
-  let prompt = prompts[type];
-  if (metadata?.ingest_instructions) {
-    prompt += "/n /N Special instructions for this item: /n";
-  }
+  const prompt = (prompts[type] ?? prompts.artifact) + VISITOR_WORDS_INSTRUCTION;
+
+  // Previously only a "Special instructions" header was appended (with
+  // literal "/n"), never the instructions themselves. Context and
+  // instructions now go in the user message alongside the image.
+  const context = buildContext(metadata);
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -142,6 +198,7 @@ export async function describeImage(
       {
         role: "user",
         content: [
+          ...(context ? [{ type: "text" as const, text: context }] : []),
           {
             type: "image_url",
             image_url: { url },

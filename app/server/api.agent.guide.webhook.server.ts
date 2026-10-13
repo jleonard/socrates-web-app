@@ -4,6 +4,7 @@ import { handleLegacyWebhook } from "./api.agent.webhook.legacy.server";
 import { getChatHistory } from "./guide/chat.history.server";
 import { resolveLocation } from "./guide/location.server";
 import { correctPronunciations } from "./guide/pronunciation.server";
+import { retrieveChunks } from "./guide/retrieval.server";
 import { buildSearchQuery } from "./guide/search.query.server";
 
 /** Places still served by the legacy webhook until they migrate. */
@@ -117,6 +118,46 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       visitor: visitorQuery,
       search: searchQuery,
       fallback: searchQueryFallback,
+    });
+
+    /*
+     * 🌲 retrieval: "here" scope (this exhibition + place-level content),
+     * general + visual-description searches, reranked together.
+     */
+    const retrieval = await retrieveChunks({
+      searchQuery,
+      location: locationContext,
+    });
+    loggingDetails.retrieval = {
+      filter: retrieval.filter,
+      counts: retrieval.counts,
+      rerank_failed: retrieval.rerankFailed,
+      rerank_error: retrieval.rerankError,
+      // every candidate's scores, for RERANK_MIN calibration (text omitted)
+      candidates: retrieval.candidates.map((c) => ({
+        id: c.id,
+        object_id: c.metadata.object_id ?? null,
+        chunk_type: c.metadata.chunk_type ?? null,
+        searches: c.searches,
+        dense: c.dense,
+        rerank: c.rerank,
+        selected: retrieval.chunks.includes(c),
+        pass: c.pass,
+      })),
+    };
+    Object.assign(loggingDetails.timing, retrieval.timings);
+
+    console.log("[guide] retrieval", {
+      conversation_id,
+      counts: retrieval.counts,
+      rerank_failed: retrieval.rerankFailed,
+      selected: retrieval.chunks.map((c) => ({
+        id: c.id,
+        object_id: c.metadata.object_id,
+        searches: c.searches,
+        rerank: c.rerank,
+        pass: c.pass,
+      })),
     });
   } catch (err) {
     console.error("agent webhook error:", err);
