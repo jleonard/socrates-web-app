@@ -30,7 +30,9 @@ export async function resolveLocation(
     .maybeSingle();
 
   if (error) {
-    throw new Error(`resolveLocation failed for ${locationId}: ${error.message}`);
+    throw new Error(
+      `resolveLocation failed for ${locationId}: ${error.message}`,
+    );
   }
 
   // A child row means locationId sits under a parent place.
@@ -38,8 +40,7 @@ export async function resolveLocation(
     return {
       locationId,
       placeId: data.parent_id,
-      exhibitionId:
-        data.child_type === "exhibition" ? locationId : undefined,
+      exhibitionId: data.child_type === "exhibition" ? locationId : undefined,
     };
   }
 

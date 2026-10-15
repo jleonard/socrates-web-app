@@ -5,6 +5,7 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
 import qs from "qs";
 import type { ActionFunctionArgs } from "react-router";
+import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
@@ -136,11 +137,16 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   if (!chunks.length) {
     // Still clear out anything previously ingested for this entry.
     await deleteEntryVectors(model, fullEntry);
+    await bumpContentVersions(locationIdsFor(model, fullEntry, chunks));
     console.log(`[webhook] no chunks produced for ${model} id=${entry.id}`);
     return;
   }
 
   await deleteAndReEmbed(model, fullEntry, chunks);
+
+  // Content (and possibly the CMS prompt or mispronunciations) changed for
+  // these locations: retire their cached guide answers.
+  await bumpContentVersions(locationIdsFor(model, fullEntry, chunks));
 
   if (fullEntry?.greeting) {
     console.log("has greeting");
@@ -160,6 +166,25 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 
 async function handleDelete(model: string, entry: Record<string, any>) {
   await deleteEntryVectors(model, entry);
+  await bumpContentVersions(locationIdsFor(model, entry, []));
+}
+
+/**
+ * Location ids whose cached guide answers this entry can affect: the entry
+ * itself if it is a place or exhibition, its place, and every place and
+ * exhibition its chunks are tagged with.
+ */
+function locationIdsFor(
+  model: string,
+  entry: Record<string, any>,
+  chunks: Chunk[],
+): (string | null | undefined)[] {
+  return [
+    model === "place" ? entry.place_id : null,
+    model === "exhibition" ? entry.exhibition_id : null,
+    entry.place?.place_id,
+    ...chunks.flatMap((c) => [c.metadata.place_id, c.metadata.exhibition_id]),
+  ];
 }
 
 const NAMESPACES = ["contextual", "global"] as const;

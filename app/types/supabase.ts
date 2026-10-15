@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
@@ -60,6 +60,8 @@ export type Database = {
       }
       agent_history: {
         Row: {
+          app_version: string | null
+          conversation_id: string | null
           created_at: string
           details: Json | null
           id: number
@@ -82,6 +84,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          app_version?: string | null
+          conversation_id?: string | null
           created_at?: string
           details?: Json | null
           id?: number
@@ -104,6 +108,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          app_version?: string | null
+          conversation_id?: string | null
           created_at?: string
           details?: Json | null
           id?: number
@@ -279,28 +285,40 @@ export type Database = {
       }
       event_log: {
         Row: {
+          app_version: string | null
+          conversation_id: string | null
           created_at: string
           event_details: Json | null
           event_message: string | null
           event_type: string | null
           id: number
           qa: string | null
+          source: string | null
+          user_id: string | null
         }
         Insert: {
+          app_version?: string | null
+          conversation_id?: string | null
           created_at?: string
           event_details?: Json | null
           event_message?: string | null
           event_type?: string | null
           id?: number
           qa?: string | null
+          source?: string | null
+          user_id?: string | null
         }
         Update: {
+          app_version?: string | null
+          conversation_id?: string | null
           created_at?: string
           event_details?: Json | null
           event_message?: string | null
           event_type?: string | null
           id?: number
           qa?: string | null
+          source?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

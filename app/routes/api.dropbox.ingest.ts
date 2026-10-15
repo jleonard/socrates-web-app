@@ -4,6 +4,7 @@ import { Dropbox } from "dropbox";
 import { ActionFunctionArgs, data } from "react-router";
 import type { DropboxAssetRow } from "~/types";
 import type { Json } from "~/types/supabase";
+import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { deleteByIds } from "~/utils/pinecone";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
@@ -301,7 +302,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const { data: deletedAssets, error: recordError } =
         await supabaseServiceRole
           .from("dropbox_assets")
-          .select("dropbox_path, pinecone_ids")
+          .select("dropbox_path, dropbox_folder, pinecone_ids")
           .in("dropbox_path", deletedPaths);
 
       if (recordError) {
@@ -319,6 +320,17 @@ export async function action({ request }: ActionFunctionArgs) {
             deletedAssets.flatMap((asset) => asset.pinecone_ids ?? []),
           ),
         ];
+
+        /*
+         * Deleted content changes what the guide can answer at its
+         * locations, so retire their cached answers.
+         */
+        await bumpContentVersions(
+          await locationIdsForFolders(
+            deletedAssets.map((asset) => asset.dropbox_folder),
+            supabaseServiceRole,
+          ),
+        );
 
         /*
          * deleteByIds() handles the configured Pinecone namespaces and
@@ -535,4 +547,44 @@ async function markFoldersForReprocessing(
       `Failed to mark folders for reprocessing: ${error.message}`,
     );
   }
+}
+
+/**
+ * Place and exhibition ids that apply to the given folders, read from the
+ * metadata.json files in each folder and its ancestors. Never throws: a
+ * failed lookup only means cached guide answers aren't retired.
+ */
+async function locationIdsForFolders(
+  folders: (string | null)[],
+  supabaseServiceRole: SupabaseClient,
+): Promise<string[]> {
+  const ancestors = new Set<string>();
+  for (const folder of folders) {
+    const parts = (folder ?? "").split("/").filter(Boolean);
+    parts.forEach((_, i) =>
+      ancestors.add("/" + parts.slice(0, i + 1).join("/")),
+    );
+  }
+  if (ancestors.size === 0) return [];
+
+  const { data, error } = await supabaseServiceRole
+    .from("dropbox_assets")
+    .select("metadata")
+    .eq("name", "metadata.json")
+    .in("dropbox_folder", [...ancestors]);
+
+  if (error) {
+    console.error("[ingest] location lookup for deleted files failed", error);
+    return [];
+  }
+
+  const ids = new Set<string>();
+  for (const row of data ?? []) {
+    const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+    for (const key of ["place_id", "exhibition_id"]) {
+      const id = metadata[key];
+      if (typeof id === "string" && id) ids.add(id);
+    }
+  }
+  return [...ids];
 }

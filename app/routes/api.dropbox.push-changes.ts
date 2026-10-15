@@ -14,6 +14,7 @@ import mammoth from "mammoth";
 import OpenAI from "openai";
 import { ActionFunctionArgs } from "react-router";
 import type { Database } from "~/types/supabase";
+import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { deleteByIds } from "~/utils/pinecone";
 import { describeImage, ocrImage } from "~/utils/ragIngest/vision.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
@@ -78,6 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
         refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
       }),
       metadataCache: new Map<string, any>(),
+      touchedLocations: new Set<string>(),
     };
 
     const results: { name: string; status: string; ms: number }[] = [];
@@ -125,6 +127,9 @@ export async function action({ request }: ActionFunctionArgs) {
         });
       }
     }
+
+    // Content changed for these locations: retire their cached guide answers.
+    await bumpContentVersions([...ctx.touchedLocations]);
 
     console.log("[push-changes] run", {
       ms: Date.now() - runStart,
@@ -199,6 +204,8 @@ type ProcessingContext = {
   supabase: SupabaseClient;
   dbx: Dropbox;
   metadataCache: Map<string, FolderMetadata>;
+  /** Place/exhibition ids whose content this run changed. */
+  touchedLocations: Set<string>;
 };
 
 /**
@@ -221,6 +228,11 @@ async function processFile(
     metadataCache.set(folder, metadata);
   }
   if (metadata === null) return "skipped";
+
+  for (const key of ["place_id", "exhibition_id"]) {
+    const id = metadata[key];
+    if (typeof id === "string" && id) ctx.touchedLocations.add(id);
+  }
 
   const file: ProcessingFile = {
     ...row,

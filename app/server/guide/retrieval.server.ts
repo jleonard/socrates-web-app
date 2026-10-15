@@ -108,7 +108,9 @@ const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
  * "Here" scope: this exhibition, or place-level content with no exhibition.
  * Without an exhibition (visitor is at the place level), the whole place.
  */
-export function buildHereFilter(location: LocationContext): Record<string, any> {
+export function buildHereFilter(
+  location: LocationContext,
+): Record<string, any> {
   if (location.exhibitionId) {
     return {
       $or: [
