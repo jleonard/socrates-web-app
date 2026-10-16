@@ -166,6 +166,13 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 
 async function handleDelete(model: string, entry: Record<string, any>) {
   await deleteEntryVectors(model, entry);
+
+  // Its content is gone, so drop it from its place too; publishing again
+  // recreates the row.
+  if (model === "exhibition" && entry.exhibition_id) {
+    await deleteExhibitionRelationships(entry.exhibition_id);
+  }
+
   await bumpContentVersions(locationIdsFor(model, entry, []));
 }
 
@@ -836,5 +843,43 @@ async function buildLocationRelationship(entry: Record<string, any>) {
       console.error("Failed to upsert content relationship:", error);
       throw error;
     }
+
+    // An exhibition re-pointed to another place in Strapi would otherwise
+    // keep its old row too, and readers expect one parent per child
+    // (resolveLocation uses maybeSingle and fails on two). Done after the
+    // upsert so a failed write never leaves the exhibition with no row.
+    await deleteExhibitionRelationships(childId, parentId);
+  }
+}
+
+/**
+ * Deletes the exhibition's location_relationships rows, except the one
+ * under keepParentId when given.
+ */
+async function deleteExhibitionRelationships(
+  exhibitionId: string,
+  keepParentId?: string,
+) {
+  const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient();
+
+  let query = supabaseAdmin
+    .from("location_relationships")
+    .delete()
+    .eq("child_id", exhibitionId)
+    .eq("child_type", "exhibition");
+
+  if (keepParentId) {
+    // neq alone would skip rows with a null parent_id
+    query = query.or(`parent_id.neq."${keepParentId}",parent_id.is.null`);
+  }
+
+  const { error } = await query;
+
+  if (error) {
+    console.error(
+      `Failed to delete location relationships for ${exhibitionId}:`,
+      error,
+    );
+    throw error;
   }
 }
