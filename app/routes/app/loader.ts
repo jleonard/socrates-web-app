@@ -6,6 +6,7 @@ import { getPromo, setUserPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
+import { resolveAgentId } from "~/utils/elevenlabs/agents.server";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -25,7 +26,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const place = url.searchParams.get("place");
   const promo = url.searchParams.get("promo");
 
-  const agentId = process.env.ELEVENLABS_AGENT!;
+  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save place before any redirects
   if (place) {
