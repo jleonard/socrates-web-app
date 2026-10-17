@@ -42,7 +42,7 @@ export const ControlBar = ({ className }: { className?: string }) => {
 
         {/* center */}
         <div className="pointer-events-auto absolute inset-x-0 flex justify-center">
-          <Agent />
+          {/* <Agent /> */}
         </div>
 
         {/* right side */}

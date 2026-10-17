@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const viewState = { longitude: -73.935242, latitude: 40.73061, zoom: 11 };
 
   const { data: locations, error } = await supabase
-    .from("locations")
+    .from("map_locations")
     .select()
     .limit(200)
     .returns<LocationRow[]>();

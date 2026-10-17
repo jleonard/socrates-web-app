@@ -54,7 +54,7 @@ const MapView: React.FC = () => {
                         marginBottom: 4,
                         whiteSpace: "nowrap",
                         background: "#ffffff",
-                        padding: "2px",
+                        padding: "6px 12px",
                       }}
                     >
                       {loc.name}
