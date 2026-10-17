@@ -10,6 +10,7 @@
     "dev": "NODE_OPTIONS='--import ./instrument.server.mjs' react-router dev",
     "start": "NODE_OPTIONS='--import ./instrument.server.mjs' react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
+    "map:region": "tsx app/scripts/build-map-region.ts",
     "gen:types": "npx supabase gen types typescript --project-id qzehvyxtbkhmguvyzhcd --schema public > ./app/types/supabase.ts"
   },
   "dependencies": {
