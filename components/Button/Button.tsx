@@ -1,9 +1,9 @@
-import React, { ReactElement } from "react";
+import React from "react";
 
 import { Button as ReactAriaButton } from "react-aria-components";
 
-import { ButtonProps } from "./Button.types";
 import { ButtonStyles } from "./Button.styles";
+import { ButtonProps } from "./Button.types";
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (props, ref) => {
@@ -14,6 +14,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       children,
       unstyled = false,
+      trailingContent,
       ...rest
     } = props;
 
@@ -28,8 +29,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         isDisabled={disabled}
         {...rest}
       >
-        {children}
+        {(renderProps) => (
+          <span className="inline-flex items-center gap-2">
+            {typeof children === "function" ? children(renderProps) : children}
+            {trailingContent}
+          </span>
+        )}
       </ReactAriaButton>
     );
-  }
+  },
 );

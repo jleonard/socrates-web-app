@@ -1,7 +1,5 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
-  return {
-    pageTitle: "WonderWay | Privacy Policy",
-  };
+  return redirect("/legal/privacy");
 }

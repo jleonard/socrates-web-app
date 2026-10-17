@@ -23,8 +23,6 @@ const VALID_QUERY_TYPES: AgentQueryType[] = [
   "contextual",
   "interpretive",
   "discovery",
-  "navigational_locate",
-  "operational",
 ];
 
 const CLASSIFY_SYSTEM_PROMPT = `Classify the visitor's query into exactly one type:
@@ -36,15 +34,12 @@ contextual                  - narrative background on ONE specific place/artwork
 interpretive                - broad philosophical, cultural, historical, or theoretical questions
                              ("why does this movement matter", "what was the artist reacting against")
 discovery                    - recommend or rank across MANY things ("what should I see", "highlights")
-navigational_locate             - find the location of a specific named place/artwork/exhibition
-operational                        - hours, tickets, pricing, accessibility, policies
- 
+
 Distinguish interpretive from contextual: contextual asks "tell me about this place/thing,"
 interpretive asks "why does this matter" or "what does this mean" — it seeks meaning,
 influence, or significance rather than description.
  
-Use conversation history to disambiguate pronouns and follow-ups
-(e.g. "how do I get there?" after discussing a specific room = navigational_locate).
+Use conversation history to disambiguate pronouns and follow-ups.
  
 Respond with JSON only: {"type": "...", "confidence": 0.0-1.0}`;
 

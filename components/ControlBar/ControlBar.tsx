@@ -3,12 +3,14 @@ import clsx from "clsx";
 import { Agent } from "components/Agent/Agent";
 import { Container } from "components/Container/Container";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useNavOverlay } from "~/context/nav-overlay";
 
 export const ControlBar = ({ className }: { className?: string }) => {
   const { isOpen, toggle } = useNavOverlay();
   const { hiddenControlBar } = usePageConfig();
+  const { t } = useTranslation();
 
   if (hiddenControlBar) return null;
 
@@ -53,7 +55,7 @@ export const ControlBar = ({ className }: { className?: string }) => {
               {/* icon img */}
               <img src="/icons/History.svg" alt="History" />
             </div>
-            History
+            {t("global.history")}
           </Link>
           <button
             onClick={toggle}
@@ -67,7 +69,7 @@ export const ControlBar = ({ className }: { className?: string }) => {
                 <img src="/icons/Menu.svg" alt="Menu" />
               )}
             </div>
-            {isOpen ? "Close" : "Menu"}
+            {isOpen ? t("global.close") : t("global.menu")}
           </button>
         </div>
       </Container>

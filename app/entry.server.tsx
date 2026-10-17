@@ -1,10 +1,12 @@
-import { PassThrough } from "node:stream";
-import type { AppLoadContext, EntryContext } from "react-router";
 import { createReadableStreamFromReadable } from "@react-router/node";
-import { ServerRouter } from "react-router";
-import { isbot } from "isbot";
-import { renderToPipeableStream } from "react-dom/server";
 import * as Sentry from "@sentry/react-router";
+import { isbot } from "isbot";
+import { PassThrough } from "node:stream";
+import { renderToPipeableStream } from "react-dom/server";
+import { I18nextProvider } from "react-i18next";
+import type { EntryContext, RouterContextProvider } from "react-router";
+import { ServerRouter } from "react-router";
+import { getInstance } from "./middleware/i18next.server";
 
 export const streamTimeout = 5000;
 
@@ -18,20 +20,24 @@ export default function handleRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   reactRouterContext: EntryContext,
-  _loadContext: AppLoadContext
+  routerContext: RouterContextProvider,
 ) {
+  const i18nInstance = getInstance(routerContext);
+
   return isbot(request.headers.get("user-agent") || "")
     ? handleBotRequest(
         request,
         responseStatusCode,
         responseHeaders,
-        reactRouterContext
+        reactRouterContext,
+        i18nInstance,
       )
     : handleBrowserRequest(
         request,
         responseStatusCode,
         responseHeaders,
-        reactRouterContext
+        reactRouterContext,
+        i18nInstance,
       );
 }
 
@@ -39,13 +45,16 @@ function handleBotRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  reactRouterContext: EntryContext
+  reactRouterContext: EntryContext,
+  i18nInstance: ReturnType<typeof getInstance>,
 ) {
   return new Promise((resolve, reject) => {
     let shellRendered = false;
 
     const { pipe, abort } = renderToPipeableStream(
-      <ServerRouter context={reactRouterContext} url={request.url} />,
+      <I18nextProvider i18n={i18nInstance}>
+        <ServerRouter context={reactRouterContext} url={request.url} />
+      </I18nextProvider>,
       {
         onAllReady() {
           shellRendered = true;
@@ -59,7 +68,7 @@ function handleBotRequest(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
+            }),
           );
 
           pipe(body);
@@ -78,7 +87,7 @@ function handleBotRequest(
             console.error(error);
           }
         },
-      }
+      },
     );
 
     setTimeout(abort, streamTimeout + 1000);
@@ -89,13 +98,16 @@ function handleBrowserRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  reactRouterContext: EntryContext
+  reactRouterContext: EntryContext,
+  i18nInstance: ReturnType<typeof getInstance>,
 ) {
   return new Promise((resolve, reject) => {
     let shellRendered = false;
 
     const { pipe, abort } = renderToPipeableStream(
-      <ServerRouter context={reactRouterContext} url={request.url} />,
+      <I18nextProvider i18n={i18nInstance}>
+        <ServerRouter context={reactRouterContext} url={request.url} />
+      </I18nextProvider>,
       {
         onShellReady() {
           shellRendered = true;
@@ -109,7 +121,7 @@ function handleBrowserRequest(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
+            }),
           );
 
           pipe(body);
@@ -128,7 +140,7 @@ function handleBrowserRequest(
             console.error(error);
           }
         },
-      }
+      },
     );
 
     setTimeout(abort, streamTimeout + 1000);

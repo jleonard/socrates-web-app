@@ -1,5 +1,8 @@
 const coreColors = {
   white: "#FFFFFF",
+  neutral: {
+    "50": "#f2f7fa",
+  },
   blue: {
     "50": "#F9FBFE",
     "100": "#ECF2FE",

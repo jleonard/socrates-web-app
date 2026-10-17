@@ -4,6 +4,7 @@ import { Dropbox } from "dropbox";
 import { ActionFunctionArgs, data } from "react-router";
 import type { DropboxAssetRow } from "~/types";
 import type { Json } from "~/types/supabase";
+import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { deleteByIds } from "~/utils/pinecone";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
@@ -198,7 +199,8 @@ export async function action({ request }: ActionFunctionArgs) {
           dropbox_folder: file.dropbox_folder,
           metadata: metadataJson,
           dropbox_file_id: file.id,
-          status: "process",
+          // metadata.json is config, not content: never queued for push-changes
+          status: "ignore",
         });
       } catch (error) {
         processingErrors.push(
@@ -296,17 +298,31 @@ export async function action({ request }: ActionFunctionArgs) {
        * Fetch the Pinecone IDs before deleting the Supabase records.
        *
        * We only select the columns we actually need instead of SELECT *.
+       * Paths go in the URL, so they're looked up in batches.
        */
-      const { data: deletedAssets, error: recordError } =
-        await supabaseServiceRole
+      const pathBatches = batches(deletedPaths, PATH_BATCH);
+      const deletedAssets: {
+        dropbox_path: string | null;
+        dropbox_folder: string | null;
+        pinecone_ids: string[] | null;
+      }[] = [];
+      let recordError: string | null = null;
+
+      for (const batch of pathBatches) {
+        const { data, error } = await supabaseServiceRole
           .from("dropbox_assets")
-          .select("dropbox_path, pinecone_ids")
-          .in("dropbox_path", deletedPaths);
+          .select("dropbox_path, dropbox_folder, pinecone_ids")
+          .in("dropbox_path", batch);
+
+        if (error) {
+          recordError = describeError(error);
+          break;
+        }
+        deletedAssets.push(...(data ?? []));
+      }
 
       if (recordError) {
-        processingErrors.push(
-          `Failed to find deleted assets: ${recordError.message}`,
-        );
+        processingErrors.push(`Failed to find deleted assets: ${recordError}`);
       } else {
         /*
          * A file can potentially have multiple Pinecone vectors.
@@ -318,6 +334,17 @@ export async function action({ request }: ActionFunctionArgs) {
             deletedAssets.flatMap((asset) => asset.pinecone_ids ?? []),
           ),
         ];
+
+        /*
+         * Deleted content changes what the guide can answer at its
+         * locations, so retire their cached answers.
+         */
+        await bumpContentVersions(
+          await locationIdsForFolders(
+            deletedAssets.map((asset) => asset.dropbox_folder),
+            supabaseServiceRole,
+          ),
+        );
 
         /*
          * deleteByIds() handles the configured Pinecone namespaces and
@@ -339,31 +366,38 @@ export async function action({ request }: ActionFunctionArgs) {
         }
 
         /*
-         * Delete all associated content_locations in one Supabase request.
+         * Delete all associated content_locations, one request per batch
+         * of paths.
          */
-        const { error: locationError } = await supabaseServiceRole
-          .from("content_locations")
-          .delete()
-          .in("dropbox_path", deletedPaths);
+        for (const batch of pathBatches) {
+          const { error: locationError } = await supabaseServiceRole
+            .from("content_locations")
+            .delete()
+            .in("dropbox_path", batch);
 
-        if (locationError) {
-          processingErrors.push(
-            `Failed to delete content locations: ${locationError.message}`,
-          );
+          if (locationError) {
+            processingErrors.push(
+              `Failed to delete content locations: ${describeError(locationError)}`,
+            );
+            break;
+          }
         }
 
         /*
-         * Finally remove all deleted Dropbox assets in one request.
+         * Finally remove all deleted Dropbox assets, one request per batch.
          */
-        const { error: assetDeleteError } = await supabaseServiceRole
-          .from("dropbox_assets")
-          .delete()
-          .in("dropbox_path", deletedPaths);
+        for (const batch of pathBatches) {
+          const { error: assetDeleteError } = await supabaseServiceRole
+            .from("dropbox_assets")
+            .delete()
+            .in("dropbox_path", batch);
 
-        if (assetDeleteError) {
-          processingErrors.push(
-            `Failed to delete Dropbox assets: ${assetDeleteError.message}`,
-          );
+          if (assetDeleteError) {
+            processingErrors.push(
+              `Failed to delete Dropbox assets: ${describeError(assetDeleteError)}`,
+            );
+            break;
+          }
         }
       }
     }
@@ -492,14 +526,51 @@ async function gatherChanges(cursor: string | null, dbx: Dropbox) {
   };
 }
 
+/*
+ * PostgREST filters (.or(), .in()) travel in the request URL, and a long
+ * URL is rejected with an empty error message. A sync that adds a whole
+ * place can touch hundreds of folders/paths, so filters are sent in
+ * batches small enough to stay well under the limit (~6-8 KB each).
+ */
+const FOLDER_BATCH = 25;
+const PATH_BATCH = 50;
+
+function batches<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
+/**
+ * Drops folders that sit inside another folder in the list: the parent's
+ * "LIKE parent/*" already covers them. e.g. a new place uploaded with a
+ * metadata.json at its root collapses to that one folder.
+ */
+function outermostFolders(folders: string[]): string[] {
+  const kept: string[] = [];
+  for (const folder of [...folders].sort((a, b) => a.length - b.length)) {
+    if (!kept.some((parent) => folder.startsWith(parent + "/"))) {
+      kept.push(folder);
+    }
+  }
+  return kept;
+}
+
+/** Supabase errors from an over-long URL have an empty message. */
+function describeError(error: { message?: string; code?: string }) {
+  return error.message || error.code || "no message (request may be too long)";
+}
+
 /**
  * Mark all assets belonging to the supplied folders (and their descendants)
  * as needing processing.
  *
  * A metadata.json file can change inherited metadata for an entire subtree.
  *
- * This function intentionally accepts multiple folders so all affected
- * folders can be updated with a single Supabase request.
+ * Folders covered by a parent in the list are dropped, and the rest are
+ * updated in batches so the filter stays within the URL limit.
  */
 async function markFoldersForReprocessing(
   dropboxFolders: string[],
@@ -509,27 +580,78 @@ async function markFoldersForReprocessing(
     return;
   }
 
-  /*
-   * Build a PostgREST OR expression:
-   *
-   *   folder = /foo
-   *   OR folder LIKE /foo/*
-   *   OR folder = /bar
-   *   OR folder LIKE /bar/*
-   */
-  const filters = dropboxFolders.flatMap((folder) => [
-    `dropbox_folder.eq.${folder}`,
-    `dropbox_folder.like.${folder}/*`,
-  ]);
+  for (const batch of batches(outermostFolders(dropboxFolders), FOLDER_BATCH)) {
+    /*
+     * Build a PostgREST OR expression:
+     *
+     *   folder = /foo
+     *   OR folder LIKE /foo/*
+     *   OR folder = /bar
+     *   OR folder LIKE /bar/*
+     */
+    const filters = batch.flatMap((folder) => [
+      `dropbox_folder.eq.${folder}`,
+      `dropbox_folder.like.${folder}/*`,
+    ]);
 
-  const { error } = await supabaseServiceRole
-    .from("dropbox_assets")
-    .update({ status: "process" })
-    .or(filters.join(","));
+    const { error } = await supabaseServiceRole
+      .from("dropbox_assets")
+      .update({ status: "process" })
+      .or(filters.join(","))
+      // the metadata.json files themselves stay "ignore"
+      .neq("name", "metadata.json");
 
-  if (error) {
-    throw new Error(
-      `Failed to mark folders for reprocessing: ${error.message}`,
+    if (error) {
+      throw new Error(
+        `Failed to mark ${batch.length} folders for reprocessing: ${describeError(error)}`,
+      );
+    }
+  }
+}
+
+/**
+ * Place and exhibition ids that apply to the given folders, read from the
+ * metadata.json files in each folder and its ancestors. Never throws: a
+ * failed lookup only means cached guide answers aren't retired.
+ */
+async function locationIdsForFolders(
+  folders: (string | null)[],
+  supabaseServiceRole: SupabaseClient,
+): Promise<string[]> {
+  const ancestors = new Set<string>();
+  for (const folder of folders) {
+    const parts = (folder ?? "").split("/").filter(Boolean);
+    parts.forEach((_, i) =>
+      ancestors.add("/" + parts.slice(0, i + 1).join("/")),
     );
   }
+  if (ancestors.size === 0) return [];
+
+  const rows: { metadata: Json }[] = [];
+  for (const batch of batches([...ancestors], PATH_BATCH)) {
+    const { data, error } = await supabaseServiceRole
+      .from("dropbox_assets")
+      .select("metadata")
+      .eq("name", "metadata.json")
+      .in("dropbox_folder", batch);
+
+    if (error) {
+      console.error(
+        "[ingest] location lookup for deleted files failed",
+        describeError(error),
+      );
+      return [];
+    }
+    rows.push(...(data ?? []));
+  }
+
+  const ids = new Set<string>();
+  for (const row of rows) {
+    const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+    for (const key of ["place_id", "exhibition_id"]) {
+      const id = metadata[key];
+      if (typeof id === "string" && id) ids.add(id);
+    }
+  }
+  return [...ids];
 }

@@ -4,14 +4,15 @@ import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  Link,
   useLoaderData,
   useNavigate,
   useRevalidator,
   useSubmit,
 } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
+import { DEFAULT_LOCALE } from "~/utils/i18n/config";
 import type { loader } from "./loader";
 
 // stores
@@ -41,7 +42,8 @@ import {
 } from "~/utils/location.client";
 
 const ParentComponent: React.FC = () => {
-  const { access, elevenLabsId, sessionId, user, user_profile, place } =
+  const { t } = useTranslation();
+  const { access, elevenLabsId, sessionId, user, user_profile, place, locale } =
     useLoaderData<typeof loader>();
 
   // this is used to post to the action
@@ -361,8 +363,11 @@ const ParentComponent: React.FC = () => {
           <GreetingButton onPress={startGreeting}></GreetingButton>
           <AudioPlayer
             ref={audioRef}
-            src={`https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}.mp3`}
-            fallbackSrc="/audio/greetings/wonderway.mp3"
+            src={`https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${locale}.mp3`}
+            fallbackSrc={[
+              `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${DEFAULT_LOCALE}.mp3`,
+              "/audio/greetings/wonderway.mp3",
+            ]}
             onStart={() => setCircleMode("speaking")}
             onEnded={() => handleGreetingEnded()}
           />
@@ -410,7 +415,9 @@ const ParentComponent: React.FC = () => {
             mode={buttonMode}
             userAccess={access?.category ?? "none"}
             expiration={access?.expiration ?? new Date().toISOString()}
-            label={shouldPlayGreeting ? "Start" : "Talk"}
+            label={
+              shouldPlayGreeting ? t("global.start_btn") : t("global.talk_btn")
+            }
           ></MainButton>
         </>
       ) : (

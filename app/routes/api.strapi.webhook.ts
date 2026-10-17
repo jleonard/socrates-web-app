@@ -2,9 +2,10 @@
  * Parse strapi body into the RAG
  */
 import { Pinecone } from "@pinecone-database/pinecone";
-import { l } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import OpenAI from "openai";
+import qs from "qs";
 import type { ActionFunctionArgs } from "react-router";
+import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { processGreeting } from "~/utils/ragIngest/greeting.server";
 import { getRedis } from "~/utils/redis.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
@@ -37,7 +38,7 @@ type Chunk = {
 };
 
 // ─── route action ────────────────────────────────────────────────────────────
-// checked
+
 export async function action({ request }: ActionFunctionArgs) {
   // verify webhook secret
   const secret = request.headers.get("x-webhook-secret");
@@ -78,7 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 // ─── publish handler ─────────────────────────────────────────────────────────
-// checked
+
 async function handlePublish(model: string, entry: Record<string, any>) {
   if (!entry.publishedAt) {
     console.log(
@@ -87,7 +88,6 @@ async function handlePublish(model: string, entry: Record<string, any>) {
     return;
   }
 
-  // TODO error handling please
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
 
   await storePromptInRedis(model, fullEntry);
@@ -123,23 +123,30 @@ async function handlePublish(model: string, entry: Record<string, any>) {
       return;
   }
 
-  // save mispronounciations to redis for agent context
-  if (entry?.mispronounciations) {
+  // save mispronunciations to redis for agent context
+  if (entry?.mispronunciations) {
     const groupId = buildGroupId(model, entry);
-    console.log("mispronounciations", entry.mispronounciations, groupId);
+    console.log("mispronunciations", entry.mispronunciations, groupId);
     const redis = await getRedis();
     await redis.set(
-      `mispronounciations:${entry[`${model}_id`]}`,
-      JSON.stringify(entry.mispronounciations),
+      `mispronunciations:${entry[`${model}_id`]}`,
+      JSON.stringify(entry.mispronunciations),
     );
   }
 
   if (!chunks.length) {
+    // Still clear out anything previously ingested for this entry.
+    await deleteEntryVectors(model, fullEntry);
+    await bumpContentVersions(locationIdsFor(model, fullEntry, chunks));
     console.log(`[webhook] no chunks produced for ${model} id=${entry.id}`);
     return;
   }
 
-  await deleteAndReEmbed(chunks);
+  await deleteAndReEmbed(model, fullEntry, chunks);
+
+  // Content (and possibly the CMS prompt or mispronunciations) changed for
+  // these locations: retire their cached guide answers.
+  await bumpContentVersions(locationIdsFor(model, fullEntry, chunks));
 
   if (fullEntry?.greeting) {
     console.log("has greeting");
@@ -156,33 +163,115 @@ async function handlePublish(model: string, entry: Record<string, any>) {
 }
 
 // ─── delete handler ───────────────────────────────────────────────────────────
-// checked
+
 async function handleDelete(model: string, entry: Record<string, any>) {
-  const groupId = buildGroupId(model, entry);
-  await deleteByGroupId(groupId);
-  console.log(`[webhook] deleted vectors for group_id=${groupId}`);
+  await deleteEntryVectors(model, entry);
+
+  // Its content is gone, so drop it from its place too; publishing again
+  // recreates the row.
+  if (model === "exhibition" && entry.exhibition_id) {
+    await deleteExhibitionRelationships(entry.exhibition_id);
+  }
+
+  await bumpContentVersions(locationIdsFor(model, entry, []));
 }
 
-async function deleteByGroupId(groupId: string) {
-  for (const nsName of ["contextual", "global"] as const) {
-    const ns = index.namespace(nsName);
-    let paginationToken: string | undefined;
+/**
+ * Location ids whose cached guide answers this entry can affect: the entry
+ * itself if it is a place or exhibition, its place, and every place and
+ * exhibition its chunks are tagged with.
+ */
+function locationIdsFor(
+  model: string,
+  entry: Record<string, any>,
+  chunks: Chunk[],
+): (string | null | undefined)[] {
+  return [
+    model === "place" ? entry.place_id : null,
+    model === "exhibition" ? entry.exhibition_id : null,
+    entry.place?.place_id,
+    ...chunks.flatMap((c) => [c.metadata.place_id, c.metadata.exhibition_id]),
+  ];
+}
 
+const NAMESPACES = ["contextual", "global"] as const;
+
+/** text-embedding-3-large. Only used to build the lookup vector below. */
+const EMBEDDING_DIMENSION = 3072;
+
+/**
+ * Arbitrary non-zero vector for metadata-only lookups. Pinecone queries
+ * need a vector; the filter decides what matches, not similarity.
+ */
+const LOOKUP_VECTOR = new Array(EMBEDDING_DIMENSION).fill(0.001);
+
+/** Pinecone's max ids per deleteMany call. */
+const DELETE_BATCH = 1000;
+
+/**
+ * Deletes every vector previously ingested for a Strapi entry, in both
+ * namespaces. Matches on two keys so nothing is left behind:
+ *
+ * 1. id prefix `${model}:${slug}:` (buildGroupId). Covers chunks written
+ *    before `strapi_id` was stored in metadata.
+ * 2. `strapi_id` = entry.documentId. Strapi's documentId never changes, so
+ *    this catches chunks written under an OLD slug, which the prefix misses
+ *    (e.g. place:mit-musuem:* after the slug was fixed to mit-museum).
+ */
+async function deleteEntryVectors(model: string, entry: Record<string, any>) {
+  const groupId = buildGroupId(model, entry);
+  const documentId: string | undefined = entry.documentId;
+
+  for (const nsName of NAMESPACES) {
+    const ns = index.namespace(nsName);
+    const ids = new Set<string>();
+
+    // 1. by id prefix
+    let paginationToken: string | undefined;
     do {
       const res = await ns.listPaginated({
         prefix: `${groupId}:`,
         paginationToken,
       });
-      const ids = res.vectors?.map((v) => v.id) ?? [];
-      if (ids.length) await ns.deleteMany(ids);
+      for (const v of res.vectors ?? []) if (v.id) ids.add(v.id);
       paginationToken = res.pagination?.next;
     } while (paginationToken);
+
+    // 2. by stable Strapi id (scoped to this model, in case ids ever collide)
+    if (documentId) {
+      const res = await ns.query({
+        vector: LOOKUP_VECTOR,
+        topK: 10000,
+        includeMetadata: false,
+        includeValues: false,
+        filter: {
+          strapi_id: { $eq: documentId },
+          parent_type: { $eq: model },
+        },
+      });
+      for (const m of res.matches) ids.add(m.id);
+    }
+
+    const all = [...ids];
+    for (let i = 0; i < all.length; i += DELETE_BATCH) {
+      await ns.deleteMany(all.slice(i, i + DELETE_BATCH));
+    }
+
+    if (all.length) {
+      console.log(
+        `[webhook] deleted ${all.length} vectors from namespace=${nsName} for group_id=${groupId} strapi_id=${documentId}`,
+      );
+    }
   }
 }
 
 // ─── delete + re-embed ────────────────────────────────────────────────────────
 
-async function deleteAndReEmbed(chunks: Chunk[]) {
+async function deleteAndReEmbed(
+  model: string,
+  entry: Record<string, any>,
+  chunks: Chunk[],
+) {
   if (!chunks.length) return;
 
   // group chunks by namespace
@@ -194,26 +283,29 @@ async function deleteAndReEmbed(chunks: Chunk[]) {
     {} as Record<string, Chunk[]>,
   );
 
-  for (const [ns, nsChunks] of Object.entries(byNamespace)) {
-    const groupId = nsChunks[0].metadata.group_id;
+  // 1. embed everything first, so an OpenAI failure leaves the existing
+  //    vectors in place instead of deleting them with nothing to replace them
+  const embedded = await Promise.all(
+    Object.entries(byNamespace).map(
+      async ([ns, nsChunks]) => [ns, await embedChunks(nsChunks)] as const,
+    ),
+  );
 
-    // 1. delete prior vectors for this group in this namespace
-    await deleteByGroupId(groupId);
+  // 2. delete prior vectors ONCE, across both namespaces. Deleting inside
+  //    the per-namespace loop would wipe vectors upserted on an earlier pass.
+  await deleteEntryVectors(model, entry);
 
-    // 2. embed all chunks
-    const vectors = await embedChunks(nsChunks);
-
-    // 3. upsert to Pinecone
+  // 3. upsert
+  for (const [ns, vectors] of embedded) {
     await index.namespace(ns).upsert(vectors);
-
     console.log(
-      `[webhook] upserted ${vectors.length} vectors to namespace=${ns} group_id=${groupId}`,
+      `[webhook] upserted ${vectors.length} vectors to namespace=${ns} group_id=${buildGroupId(model, entry)}`,
     );
   }
 }
 
 // ─── embed ────────────────────────────────────────────────────────────────────
-// checked
+
 async function embedChunks(chunks: Chunk[]) {
   // batch embed for efficiency
   const response = await openai.embeddings.create({
@@ -232,7 +324,7 @@ async function embedChunks(chunks: Chunk[]) {
 }
 
 // ─── group id ─────────────────────────────────────────────────────────────────
-// checked
+
 function buildGroupId(model: string, entry: Record<string, any>): string {
   const id = entry[`${model}_id`] ?? entry.documentId;
   return `${model}:${id}`;
@@ -253,14 +345,31 @@ function buildBaseMeta(
     name: entry.name ?? null,
     parent_type: model,
     parent_id: entry[`${model}_id`] ?? entry.documentId ?? String(entry.id),
-    place_id: entry.place?.place_id ?? null,
+    // A place record has no `place` relation to itself, so use its own id.
+    place_id:
+      model === "place"
+        ? (entry.place_id ?? null)
+        : (entry.place?.place_id ?? null),
     // @TODO institution_id: entry.institution_id ?? null,
     language: entry.language ?? "en",
     ...extras,
   };
 }
 
+// ─── aliases helper ────────────────────────────────────────────────────────────
+// `aliases` is stored as a comma-separated string in Strapi (artwork, person),
+// not an array — split before joining anywhere it's used for display.
+
+function splitAliases(aliases: string | null | undefined): string[] {
+  if (!aliases?.trim()) return [];
+  return aliases
+    .split(",")
+    .map((a) => a.trim())
+    .filter(Boolean);
+}
+
 // ─── parsers ──────────────────────────────────────────────────────────────────
+
 function parseTextBlock(
   textBlock: string | null,
   chunkType: string,
@@ -350,14 +459,19 @@ function parseBody(
 }
 
 // ─── place chunks ─────────────────────────────────────────────────────────────
+// place schema: place_id, name, alternate_name, prompt, body, knowledge,
+// location (component: blocks.location), child_place, parent_place,
+// operational_info, mispronunciations, greeting
 
 function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("place", entry);
   const meta = buildBaseMeta("place", entry, {
-    city_id: entry.admin_zone?.zone_id ?? null,
+    // admin_zone lives inside the `location` component, not top-level
+    city_id: entry.location?.admin_zone?.zone_id ?? null,
     floor_number: entry.location?.floor_number ?? null,
-    centroid_lat: entry.location?.centroid_lat ?? null,
-    centroid_lng: entry.location?.centroid_lng ?? null,
+    // blocks.location's fields are `latitude`/`longitude`, not `centroid_lat/lng`
+    centroid_lat: entry.location?.latitude ?? null,
+    centroid_lng: entry.location?.longitude ?? null,
   });
 
   const chunks: Chunk[] = [];
@@ -368,8 +482,7 @@ function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
     namespace: "contextual",
     content: [
       entry.name,
-      entry.short_name ? `Also known as: ${entry.short_name}` : null,
-      entry.aliases?.length ? `Aliases: ${entry.aliases.join(", ")}` : null,
+      entry.alternate_name ? `Also known as: ${entry.alternate_name}` : null,
     ]
       .filter(Boolean)
       .join("\n"),
@@ -399,6 +512,8 @@ function buildPlaceChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── artwork chunks ───────────────────────────────────────────────────────────
+// artwork schema: artwork_id, name, aliases, date, medium, artwork_type,
+// body, knowledge, attribution
 
 function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("artwork", entry);
@@ -408,6 +523,7 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
   });
 
   const chunks: Chunk[] = [];
+  const aliasList = splitAliases(entry.aliases);
 
   // identity chunk
   chunks.push({
@@ -415,9 +531,7 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
     namespace: "global",
     content: [
       entry.name,
-      entry.aliases?.length
-        ? `Also known as: ${entry.aliases.join(", ")}`
-        : null,
+      aliasList.length ? `Also known as: ${aliasList.join(", ")}` : null,
       entry.attribution,
       entry.date,
       entry.medium,
@@ -427,19 +541,6 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
       .join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
-
-  // text blocks with --- separators
-  if (entry.visual_description) {
-    chunks.push(
-      ...parseTextBlock(
-        entry.visual_description,
-        "visual",
-        groupId,
-        "global",
-        meta,
-      ),
-    );
-  }
 
   // body sections
   chunks.push(...parseBody(entry.body, groupId, "global", meta));
@@ -451,6 +552,9 @@ function buildArtworkChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── exhibition chunks ────────────────────────────────────────────────────────
+// exhibition schema: exhibition_id, name, place, greeting, prompt, body,
+// knowledge, artworks (component: blocks.exhibition-item, repeatable),
+// mispronunciations, card (component: blocks.detail-card)
 
 async function buildExhibitionChunks(
   entry: Record<string, any>,
@@ -461,7 +565,6 @@ async function buildExhibitionChunks(
   const groupId = buildGroupId("exhibition", entry);
   const meta = buildBaseMeta("exhibition", entry, {
     exhibition_id: entry.exhibition_id,
-    is_current: entry.is_current ?? true,
     floor_number: entry.place?.location?.floor_number ?? null,
   });
 
@@ -471,20 +574,13 @@ async function buildExhibitionChunks(
   chunks.push({
     chunk_id: `${groupId}:identity`,
     namespace: "contextual",
-    content: [
-      entry.name,
-      entry.exhibition_type,
-      entry.description,
-      entry.starts_at ? `Opens: ${entry.starts_at}` : null,
-      entry.ends_at ? `Closes: ${entry.ends_at}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    content: [entry.name].filter(Boolean).join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
 
   // artwork placement chunks
   for (const item of entry.artworks ?? []) {
+    if (!item) continue;
     const artwork = item.artwork;
     if (!artwork) continue;
 
@@ -511,6 +607,7 @@ async function buildExhibitionChunks(
 }
 
 // ─── person chunks ────────────────────────────────────────────────────────────
+// person schema: person_id, name, aliases, birth_year, death_year, body, knowledge
 
 function buildPersonChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("person", entry);
@@ -519,20 +616,18 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
   });
 
   const chunks: Chunk[] = [];
+  const aliasList = splitAliases(entry.aliases);
 
+  // identity chunk
   chunks.push({
     chunk_id: `${groupId}:identity`,
     namespace: "global",
     content: [
       entry.name,
-      entry.aliases?.length
-        ? `Also known as: ${entry.aliases.join(", ")}`
-        : null,
-      entry.nationality,
+      aliasList.length ? `Also known as: ${aliasList.join(", ")}` : null,
       entry.birth_year && entry.death_year
         ? `${entry.birth_year}-${entry.death_year}`
         : (entry.birth_year ?? null),
-      entry.bio,
     ]
       .filter(Boolean)
       .join("\n"),
@@ -546,32 +641,27 @@ function buildPersonChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── topic chunks ─────────────────────────────────────────────────────────────
+// topic schema: topic_id, name, body, knowledge
 
 function buildTopicChunks(entry: Record<string, any>): Chunk[] {
   const groupId = buildGroupId("topic", entry);
   const meta = buildBaseMeta("topic", entry, {
     topic_id: entry.topic_id,
-    topic_type: entry.topic_type,
   });
 
   const chunks: Chunk[] = [];
 
+  // identity chunk
   chunks.push({
     chunk_id: `${groupId}:identity`,
     namespace: "global",
-    content: [
-      entry.name,
-      entry.aliases?.length
-        ? `Also known as: ${entry.aliases.join(", ")}`
-        : null,
-      entry.summary,
-      entry.keywords?.length ? `Keywords: ${entry.keywords.join(", ")}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    content: [entry.name].filter(Boolean).join("\n"),
     metadata: { ...meta, chunk_type: "identity" },
   });
 
+  // NOTE: `body` on the topic content type must be a "richtext" field
+  // (markdown string) for parseBody to work — change it from "blocks"
+  // in Strapi and re-save existing entries before relying on this.
   chunks.push(...parseBody(entry.body, groupId, "global", meta));
   chunks.push(...parseKnowledge(entry.knowledge, groupId, "global", meta));
 
@@ -579,7 +669,9 @@ function buildTopicChunks(entry: Record<string, any>): Chunk[] {
 }
 
 // ─── artifact chunks ──────────────────────────────────────────────────────────
-// TODO: implement when Artifact collection is defined
+// artifact schema confirmed: artifact_id, name, body, knowledge
+// TODO: implement when ready — left as a stub for now
+
 function buildArtifactChunks(entry: Record<string, any>): Chunk[] {
   console.log(`[webhook] artifact chunking not yet implemented id=${entry.id}`);
   return [];
@@ -609,18 +701,62 @@ async function storePromptInRedis(model: string, entry: Record<string, any>) {
 
 /**
  * Get the full strapi entry with all relations populated.
+ *
+ * Populate is defined per-model because each content type only declares
+ * the fields/relations it actually has — Strapi returns a 400
+ * ("Invalid key ...") if you ask it to populate a field that doesn't
+ * exist on that model. Do not merge these into one shared object.
  */
 const PLURAL: Record<string, string> = {
   person: "people",
 };
+
+const POPULATE_BY_MODEL: Record<string, Record<string, any>> = {
+  place: {
+    // admin_zone is nested inside the location component, kept shallow
+    // to avoid cascading into admin-zone's self-referencing parent/child relations
+    location: { populate: { admin_zone: true } },
+  },
+  exhibition: {
+    card: { populate: "*" },
+    place: {
+      populate: { location: { populate: { admin_zone: true } } },
+    },
+    artworks: { populate: { artwork: { populate: "*" } } },
+  },
+  artwork: {},
+  person: {},
+  topic: {},
+  artifact: {},
+};
+
 async function fetchStrapiEntry(model: string, documentId: string) {
   const plural = PLURAL[model] ?? `${model}s`;
+  const populate = POPULATE_BY_MODEL[model] ?? {};
+  const hasPopulate = Object.keys(populate).length > 0;
+
+  const query = hasPopulate
+    ? `?${qs.stringify({ populate }, { encodeValuesOnly: true })}`
+    : "";
+
   const res = await fetch(
-    `${process.env.STRAPI_URL}/api/${plural}/${documentId}?populate=*`,
+    `${process.env.STRAPI_URL}/api/${plural}/${documentId}${query}`,
     { headers: { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` } },
   );
-  const { data } = await res.json();
-  return data;
+
+  const json = await res.json();
+
+  if (!res.ok || !json?.data) {
+    console.error(
+      `[fetchStrapiEntry] failed for ${model}/${documentId} status=${res.status}:`,
+      JSON.stringify(json),
+    );
+    throw new Error(
+      `Strapi fetch failed for ${model}/${documentId}: ${json?.error?.message ?? res.statusText}`,
+    );
+  }
+
+  return json.data;
 }
 
 /**
@@ -677,21 +813,73 @@ async function buildLocationRelationship(entry: Record<string, any>) {
     const childType = "exhibition";
     const parentType = "place";
 
-    const { error } = await supabaseAdmin.from("location_relationships").upsert(
-      {
-        child_id: childId,
-        parent_id: parentId,
-        child_type: childType,
-        parent_type: parentType,
-      },
-      {
+    let payload: any = {
+      child_id: childId,
+      parent_id: parentId,
+      child_type: childType,
+      parent_type: parentType,
+    };
+
+    if (entry?.card?.large_image) {
+      payload.large_image = entry.card.large_image?.url;
+    }
+    if (entry?.card?.thumbnail) {
+      payload.thumbnail = entry.card.thumbnail.url;
+    }
+    if (entry?.card?.blurb) {
+      payload.description = entry.card.blurb;
+    }
+    if (entry?.name) {
+      payload.name = entry.name;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("location_relationships")
+      .upsert(payload, {
         onConflict: "child_id,parent_id",
-      },
-    );
+      });
 
     if (error) {
       console.error("Failed to upsert content relationship:", error);
       throw error;
     }
+
+    // An exhibition re-pointed to another place in Strapi would otherwise
+    // keep its old row too, and readers expect one parent per child
+    // (resolveLocation uses maybeSingle and fails on two). Done after the
+    // upsert so a failed write never leaves the exhibition with no row.
+    await deleteExhibitionRelationships(childId, parentId);
+  }
+}
+
+/**
+ * Deletes the exhibition's location_relationships rows, except the one
+ * under keepParentId when given.
+ */
+async function deleteExhibitionRelationships(
+  exhibitionId: string,
+  keepParentId?: string,
+) {
+  const { supabase: supabaseAdmin } = getSupabaseServiceRoleClient();
+
+  let query = supabaseAdmin
+    .from("location_relationships")
+    .delete()
+    .eq("child_id", exhibitionId)
+    .eq("child_type", "exhibition");
+
+  if (keepParentId) {
+    // neq alone would skip rows with a null parent_id
+    query = query.or(`parent_id.neq."${keepParentId}",parent_id.is.null`);
+  }
+
+  const { error } = await query;
+
+  if (error) {
+    console.error(
+      `Failed to delete location relationships for ${exhibitionId}:`,
+      error,
+    );
+    throw error;
   }
 }

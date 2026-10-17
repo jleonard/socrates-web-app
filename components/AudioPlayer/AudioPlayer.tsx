@@ -1,10 +1,10 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
 const DELAY = 1000; // ms
 
 type AudioPlayerProps = {
   src: string;
-  fallbackSrc?: string;
+  fallbackSrc?: string[];
   onStart: () => void;
   onEnded: () => void;
 };
@@ -15,7 +15,7 @@ export type AudioPlayerHandle = {
 };
 
 export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
-  ({ src, fallbackSrc, onStart, onEnded }, ref) => {
+  ({ src, fallbackSrc = [], onStart, onEnded }, ref) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const onStartRef = useRef(onStart);
@@ -30,15 +30,25 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
       const audio = new Audio(src);
       audioRef.current = audio;
 
+      // -1 means "currently playing `src`, haven't touched fallbacks yet".
+      // 0..n-1 indexes into fallbackSrc as each one is tried in turn.
+      let fallbackIndex = -1;
+
       const handlePlay = () => onStartRef.current();
       const handleEnded = () => onEndedRef.current();
       const handleError = () => {
         console.log("[AudioPlayer] failed to load:", audio.src);
-        if (fallbackSrc && audio.src !== fallbackSrc) {
-          console.log("[AudioPlayer] trying fallback:", fallbackSrc);
-          audio.src = fallbackSrc;
+
+        fallbackIndex += 1;
+        const nextSrc = fallbackSrc[fallbackIndex];
+
+        if (nextSrc) {
+          console.log("[AudioPlayer] trying fallback:", nextSrc);
+          audio.src = nextSrc;
           audio.load();
           audio.play();
+        } else {
+          console.log("[AudioPlayer] no more fallbacks, giving up");
         }
       };
 
@@ -59,7 +69,6 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
       };
     }, [src, fallbackSrc]);
 
-    // expose stop/play methods to parent via ref
     useImperativeHandle(ref, () => ({
       stop: () => {
         if (audioRef.current) {

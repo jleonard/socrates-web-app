@@ -1,0 +1,26 @@
+{
+  "welcome": [
+    {
+      "title": "Hi! I'm Wonder",
+      "text": "I'm here to help you discover stories about art, science, and culture through conversation."
+    },
+    {
+      "title": "Connect to the public WiFi",
+      "text": "Internet connectivity is essential to maintain an uninterrupted conversation."
+    },
+    {
+      "title": "Slip on your headphones",
+      "text": "We don't want to make it noisy for others."
+    },
+    {
+      "title": "Press and talk",
+      "text": "Press the button to talk and ask questions about where you are and what you are curious about."
+    },
+    {
+      "title": "Start by asking",
+      "text": "Where you are. The name of the art piece. Anything you want to know about it. Switch language on the go."
+    }
+  ],
+  "next": "Next",
+  "getStarted": "Get Started"
+}

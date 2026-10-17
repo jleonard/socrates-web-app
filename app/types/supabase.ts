@@ -1,0 +1,808 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3"
+  }
+  public: {
+    Tables: {
+      access: {
+        Row: {
+          access_id: string
+          created_at: string
+          expiration: string | null
+          "expiration-deprecated": string | null
+          hours: number
+          id: number
+          product_code: string | null
+          promo_code: string | null
+          user_id: string
+        }
+        Insert: {
+          access_id?: string
+          created_at?: string
+          expiration?: string | null
+          "expiration-deprecated"?: string | null
+          hours?: number
+          id?: number
+          product_code?: string | null
+          promo_code?: string | null
+          user_id?: string
+        }
+        Update: {
+          access_id?: string
+          created_at?: string
+          expiration?: string | null
+          "expiration-deprecated"?: string | null
+          hours?: number
+          id?: number
+          product_code?: string | null
+          promo_code?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      agent_history: {
+        Row: {
+          app_version: string | null
+          conversation_id: string | null
+          created_at: string
+          details: Json | null
+          id: number
+          qa: string | null
+          query: string | null
+          query_classification: string | null
+          "query-before-fixing": string | null
+          rag_index: string | null
+          rag_score: number | null
+          response: string | null
+          response_time: number | null
+          text_rag: string | null
+          text_wikipedia: string | null
+          tool_cache: boolean | null
+          "tool_fix-speech": boolean | null
+          tool_followup: boolean | null
+          tool_rag: boolean | null
+          tool_wikipedia: boolean | null
+          tools: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: number
+          qa?: string | null
+          query?: string | null
+          query_classification?: string | null
+          "query-before-fixing"?: string | null
+          rag_index?: string | null
+          rag_score?: number | null
+          response?: string | null
+          response_time?: number | null
+          text_rag?: string | null
+          text_wikipedia?: string | null
+          tool_cache?: boolean | null
+          "tool_fix-speech"?: boolean | null
+          tool_followup?: boolean | null
+          tool_rag?: boolean | null
+          tool_wikipedia?: boolean | null
+          tools?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: number
+          qa?: string | null
+          query?: string | null
+          query_classification?: string | null
+          "query-before-fixing"?: string | null
+          rag_index?: string | null
+          rag_score?: number | null
+          response?: string | null
+          response_time?: number | null
+          text_rag?: string | null
+          text_wikipedia?: string | null
+          tool_cache?: boolean | null
+          "tool_fix-speech"?: boolean | null
+          tool_followup?: boolean | null
+          tool_rag?: boolean | null
+          tool_wikipedia?: boolean | null
+          tools?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      content_locations: {
+        Row: {
+          created_at: string
+          dropbox_file_id: string | null
+          dropbox_path: string | null
+          geom: unknown
+          group_id: string | null
+          id: number
+          latitude: number | null
+          longitude: number | null
+          modified_at: string | null
+          object_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          dropbox_path?: string | null
+          geom?: unknown
+          group_id?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          modified_at?: string | null
+          object_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          dropbox_path?: string | null
+          geom?: unknown
+          group_id?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          modified_at?: string | null
+          object_id?: string | null
+        }
+        Relationships: []
+      }
+      dropbox_assets: {
+        Row: {
+          created_at: string
+          dropbox_file_id: string | null
+          dropbox_folder: string | null
+          dropbox_path: string | null
+          id: number
+          latitude: number | null
+          longitude: number | null
+          metadata: Json | null
+          mime_type: string | null
+          modified_time: string | null
+          name: string | null
+          pinecone_ids: string[] | null
+          processed_at: string | null
+          status: string | null
+          strapi_documentId: string | null
+        }
+        Insert: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          dropbox_folder?: string | null
+          dropbox_path?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          mime_type?: string | null
+          modified_time?: string | null
+          name?: string | null
+          pinecone_ids?: string[] | null
+          processed_at?: string | null
+          status?: string | null
+          strapi_documentId?: string | null
+        }
+        Update: {
+          created_at?: string
+          dropbox_file_id?: string | null
+          dropbox_folder?: string | null
+          dropbox_path?: string | null
+          id?: number
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          mime_type?: string | null
+          modified_time?: string | null
+          name?: string | null
+          pinecone_ids?: string[] | null
+          processed_at?: string | null
+          status?: string | null
+          strapi_documentId?: string | null
+        }
+        Relationships: []
+      }
+      dropbox_sync_cursor: {
+        Row: {
+          created_at: string
+          cursor: string | null
+          id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          cursor?: string | null
+          id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          cursor?: string | null
+          id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      elevenlabs_history: {
+        Row: {
+          created_at: string
+          duration: number | null
+          dynamic_variables: Json | null
+          elevenlabs_tokens: number | null
+          id: number
+          qa: string | null
+          summary: string | null
+          transcript: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration?: number | null
+          dynamic_variables?: Json | null
+          elevenlabs_tokens?: number | null
+          id?: number
+          qa?: string | null
+          summary?: string | null
+          transcript?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration?: number | null
+          dynamic_variables?: Json | null
+          elevenlabs_tokens?: number | null
+          id?: number
+          qa?: string | null
+          summary?: string | null
+          transcript?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      event_log: {
+        Row: {
+          app_version: string | null
+          conversation_id: string | null
+          created_at: string
+          event_details: Json | null
+          event_message: string | null
+          event_type: string | null
+          id: number
+          qa: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          event_details?: Json | null
+          event_message?: string | null
+          event_type?: string | null
+          id?: number
+          qa?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          event_details?: Json | null
+          event_message?: string | null
+          event_type?: string | null
+          id?: number
+          qa?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      location_relationships: {
+        Row: {
+          child_id: string | null
+          child_type: string | null
+          created_at: string
+          description: string | null
+          id: number
+          large_image: string | null
+          name: string | null
+          parent_id: string | null
+          parent_type: string | null
+          thumbnail: string | null
+        }
+        Insert: {
+          child_id?: string | null
+          child_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          large_image?: string | null
+          name?: string | null
+          parent_id?: string | null
+          parent_type?: string | null
+          thumbnail?: string | null
+        }
+        Update: {
+          child_id?: string | null
+          child_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          large_image?: string | null
+          name?: string | null
+          parent_id?: string | null
+          parent_type?: string | null
+          thumbnail?: string | null
+        }
+        Relationships: []
+      }
+      locations: {
+        Row: {
+          category: string
+          city: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          geom: unknown
+          id: number
+          image_url: string | null
+          lat: number
+          lng: number
+          name: string
+          source: string
+          updated_at: string
+          wikidata_qid: string
+          wikipedia_url: string | null
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          geom: unknown
+          id?: number
+          image_url?: string | null
+          lat: number
+          lng: number
+          name: string
+          source?: string
+          updated_at?: string
+          wikidata_qid: string
+          wikipedia_url?: string | null
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          geom?: unknown
+          id?: number
+          image_url?: string | null
+          lat?: number
+          lng?: number
+          name?: string
+          source?: string
+          updated_at?: string
+          wikidata_qid?: string
+          wikipedia_url?: string | null
+        }
+        Relationships: []
+      }
+      logs_elevenlabs: {
+        Row: {
+          call_duration_seconds: number | null
+          conversation_id: string
+          cost: number | null
+          created_at: string
+          id: number
+          payload: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          call_duration_seconds?: number | null
+          conversation_id: string
+          cost?: number | null
+          created_at?: string
+          id?: number
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          call_duration_seconds?: number | null
+          conversation_id?: string
+          cost?: number | null
+          created_at?: string
+          id?: number
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      n8n_cached_responses: {
+        Row: {
+          cache_key: string
+          created_at: string
+          hits: number
+          id: number
+          last_accessed: string
+          last_updated: string | null
+          response: string | null
+          ttl: number | null
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          hits?: number
+          id?: number
+          last_accessed?: string
+          last_updated?: string | null
+          response?: string | null
+          ttl?: number | null
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          hits?: number
+          id?: number
+          last_accessed?: string
+          last_updated?: string | null
+          response?: string | null
+          ttl?: number | null
+        }
+        Relationships: []
+      }
+      n8n_chat_histories: {
+        Row: {
+          created: string | null
+          id: number
+          message: Json
+          place: string | null
+          session_id: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created?: string | null
+          id?: number
+          message: Json
+          place?: string | null
+          session_id: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created?: string | null
+          id?: number
+          message?: Json
+          place?: string | null
+          session_id?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      n8n_chat_memory: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          has_onboarded: boolean | null
+          id: number
+          last_greeted: string | null
+          last_seen: string | null
+          promo_code: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          has_onboarded?: boolean | null
+          id?: number
+          last_greeted?: string | null
+          last_seen?: string | null
+          promo_code?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          has_onboarded?: boolean | null
+          id?: number
+          last_greeted?: string | null
+          last_seen?: string | null
+          promo_code?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      promos: {
+        Row: {
+          allow_guest: boolean | null
+          code: string
+          created_at: string
+          description: string | null
+          expiration: string | null
+          hours: number | null
+          id: number
+          quantity: number | null
+        }
+        Insert: {
+          allow_guest?: boolean | null
+          code: string
+          created_at?: string
+          description?: string | null
+          expiration?: string | null
+          hours?: number | null
+          id?: number
+          quantity?: number | null
+        }
+        Update: {
+          allow_guest?: boolean | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          expiration?: string | null
+          hours?: number | null
+          id?: number
+          quantity?: number | null
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          access_id: string | null
+          created_at: string
+          id: number
+          product_hours: number
+          stripe_amount_total: number
+          stripe_currency: string
+          stripe_payment_intent: string
+          stripe_payment_status: string
+          stripe_product_code: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Insert: {
+          access_id?: string | null
+          created_at?: string
+          id?: number
+          product_hours: number
+          stripe_amount_total: number
+          stripe_currency: string
+          stripe_payment_intent: string
+          stripe_payment_status: string
+          stripe_product_code: string
+          stripe_session_id: string
+          user_id?: string
+        }
+        Update: {
+          access_id?: string | null
+          created_at?: string
+          id?: number
+          product_hours?: number
+          stripe_amount_total?: number
+          stripe_currency?: string
+          stripe_payment_intent?: string
+          stripe_payment_status?: string
+          stripe_product_code?: string
+          stripe_session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      find_nearby_content: {
+        Args: {
+          p_group_id: string
+          p_latitude: number
+          p_limit?: number
+          p_longitude: number
+          p_radius_meters?: number
+        }
+        Returns: {
+          distance_meters: number
+          group_id: string
+          object_id: string
+        }[]
+      }
+      match_documents: {
+        Args: { filter?: Json; match_count?: number; query_embedding: string }
+        Returns: {
+          content: string
+          id: number
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      match_perso_documents: {
+        Args: { filter?: Json; match_count?: number; query_embedding: string }
+        Returns: {
+          content: string
+          id: number
+          metadata: Json
+          similarity: number
+        }[]
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

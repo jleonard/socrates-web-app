@@ -1,13 +1,15 @@
 import { data, redirect, type LoaderFunctionArgs } from "react-router";
+import { getLocale } from "~/middleware/i18next.server";
 import { userHasAccess } from "~/server/access.manager.server";
 import { signInGuest, signOutGuest } from "~/server/guest.manager.server";
 import { getPromo, setUserPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
+import { resolveAgentId } from "~/utils/elevenlabs/agents.server";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase, headers: supabaseHeaders } =
     getSupabaseServerClient(request);
   const { session, sessionId } = await getSessionId(request);
@@ -18,20 +20,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return headers;
   };
 
+  const locale = getLocale(context);
+
   const url = new URL(request.url);
   const place = url.searchParams.get("place");
   const promo = url.searchParams.get("promo");
-  const agentCode = url.searchParams.get("aid");
-  let agentId;
 
-  if (agentCode == "bee") {
-    agentId = "agent_7401m2tn9ewrfm5rrz73js20ecqw";
-    console.log("bee! SET");
-  }
-
-  if (!agentId) {
-    agentId = process.env.ELEVENLABS_AGENT!;
-  }
+  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save place before any redirects
   if (place) {
@@ -128,7 +123,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // if you haven't onboarded, go do it
-  if (!profile.has_onboarded) {
+  if (!profile || !profile.has_onboarded) {
     throw redirect("/welcome", {
       headers: await buildHeaders(),
       //headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
@@ -155,6 +150,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         elevenLabsId: agentId,
         place: session.get("place"),
       },
+      locale,
     },
     {
       headers: await buildHeaders(),

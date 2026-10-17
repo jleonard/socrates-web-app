@@ -1,0 +1,26 @@
+{
+  "welcome": [
+    {
+      "title": "¡Hola! Soy Wonder",
+      "text": "Estoy aquí para ayudarte a descubrir historias de arte, ciencia y cultura charlando."
+    },
+    {
+      "title": "Conéctate a la red WiFi pública",
+      "text": "Necesitas conexión a internet para que la conversación no se corte."
+    },
+    {
+      "title": "Ponte los auriculares",
+      "text": "Así no molestamos a los demás."
+    },
+    {
+      "title": "Presiona y habla",
+      "text": "Presiona el botón para hablar y pregunta lo que quieras sobre dónde estás o lo que te da curiosidad."
+    },
+    {
+      "title": "Empieza preguntando",
+      "text": "Dónde estás. El nombre de la obra. Lo que quieras saber sobre ella. Y cambia de idioma en cualquier momento."
+    }
+  ],
+  "next": "Siguiente",
+  "getStarted": "Empezar"
+}

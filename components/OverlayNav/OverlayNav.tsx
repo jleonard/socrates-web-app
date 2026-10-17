@@ -1,10 +1,13 @@
 // components/OverlayNav.tsx
 import { Container } from "components/Container/Container";
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link, useMatches } from "react-router";
 import { useNavOverlay } from "~/context/nav-overlay";
 
 export function OverlayNav() {
+  const { t } = useTranslation();
+
   const { isOpen, close, toggle } = useNavOverlay();
   const matches = useMatches();
 
@@ -24,24 +27,29 @@ export function OverlayNav() {
       aria-modal="true"
     >
       <Container>
+        <img
+          className="w-[128px] mt-[22px]"
+          src="/logos/WonderWay.svg"
+          alt="Wonder Way"
+        />
         <ul className="space-y-2 w-full pt-10">
           <li className="py-3 border-b-[#FAF7F2] border-b">
             <Link
               className="w-full flex items-center justify-between text-xl"
-              to="/privacy"
+              to="/legal/privacy"
               onClick={() => close()}
             >
-              Privacy Policy
+              {t("nav.privacy")}
               <ChevronRight size={18} strokeWidth={1} color="#000000" />
             </Link>
           </li>
           <li className="py-3 border-b-[#FAF7F2] border-b">
             <Link
               className="w-full flex items-center justify-between text-xl"
-              to="/terms"
+              to="/legal/terms"
               onClick={() => close()}
             >
-              Terms &amp; Conditions
+              {t("nav.terms")}
               <ChevronRight size={18} strokeWidth={1} color="#000000" />
             </Link>
           </li>
@@ -52,7 +60,7 @@ export function OverlayNav() {
                 to="/sign-out"
                 onClick={() => close()}
               >
-                Sign Out
+                {t("global.sign_out")}
               </Link>
             ) : (
               <Link
@@ -60,7 +68,7 @@ export function OverlayNav() {
                 to="/login"
                 onClick={() => close()}
               >
-                Sign In
+                {t("global.sign_in")}
               </Link>
             )}
           </li>
