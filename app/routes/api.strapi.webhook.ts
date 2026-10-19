@@ -352,8 +352,36 @@ function buildBaseMeta(
         : (entry.place?.place_id ?? null),
     // @TODO institution_id: entry.institution_id ?? null,
     language: entry.language ?? "en",
+    scope: scopeFor(model, entry),
     ...extras,
   };
+}
+
+const SCOPES = ["venue", "object", "universal"] as const;
+type Scope = (typeof SCOPES)[number];
+
+/**
+ * The entry's `scope` enum from Strapi when an editor set it; otherwise the
+ * default for its content type, matching what the guide infers for
+ * untagged chunks (see sectionFor in app/server/guide/prompt.server.ts):
+ *   place, exhibition -> venue (about the visit)
+ *   artwork, artifact -> object (about one thing on display)
+ *   person, topic     -> universal (true anywhere)
+ * Unknown types get "venue", the narrowest scope.
+ */
+function scopeFor(model: string, entry: Record<string, any>): Scope {
+  if (SCOPES.includes(entry.scope)) return entry.scope;
+
+  switch (model) {
+    case "artwork":
+    case "artifact":
+      return "object";
+    case "person":
+    case "topic":
+      return "universal";
+    default:
+      return "venue";
+  }
 }
 
 // ─── aliases helper ────────────────────────────────────────────────────────────
