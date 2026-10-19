@@ -37,6 +37,7 @@ import { UserPen } from "lucide-react";
 import {
   Coords,
   getFreshLocation,
+  rememberLocation,
   requestInitialLocation,
   resolvePendingPermission,
 } from "~/utils/location.client";
@@ -186,6 +187,7 @@ const ParentComponent: React.FC = () => {
   const startConversation = useCallback(async () => {
     const freshCoords = await getFreshLocation(coords);
     setCoords(freshCoords);
+    rememberLocation(freshCoords);
     const user_lat = freshCoords?.lat ?? 0;
     const user_long = freshCoords?.long ?? 0;
     const user_session = `${user.id}__${sessionId}`;
@@ -299,6 +301,7 @@ const ParentComponent: React.FC = () => {
   const requestLocationPermission = async () => {
     const { coords, status } = await requestInitialLocation();
     setCoords(coords);
+    rememberLocation(coords);
     setLocationPermissionStatus(status);
     setShowLocationModal(false);
   };

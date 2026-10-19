@@ -42,7 +42,10 @@ export async function action({ request }: ActionFunctionArgs) {
    * check if the access is expired
    */
   if (intent === "greeted") {
-    const userObj = { user_id: String(userId), last_greeted: new Date() };
+    const userObj = {
+      user_id: String(userId),
+      last_greeted: new Date().toISOString(),
+    };
 
     const { data, error } = await betterUpsertUserProfile(
       userObj,

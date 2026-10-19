@@ -121,7 +121,19 @@ export type HistoryLog = {
   details?: Record<string, unknown>;
 };
 
-export type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
+// A map_locations row as sent to the map. map_locations isn't in the generated
+// types yet; `rank` is prominence_override ?? prominence ?? 0.
+export type MapLocation = {
+  id: number;
+  place_id: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  image_url: string | null;
+  lat: number;
+  lng: number;
+  rank: number;
+};
 
 export type ToolLog = {
   tool: "cache" | "rag" | "wikipedia" | "followup" | "fix-speech";

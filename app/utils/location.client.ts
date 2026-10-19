@@ -79,6 +79,59 @@ export function getFreshLocation(
 }
 
 /**
+ * Last known location, kept in localStorage so any route (e.g. the map) can
+ * start where the user is without asking again. Written by /app and /map.
+ */
+const LAST_LOCATION_KEY = "wonderway:last-location";
+const LAST_LOCATION_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export function rememberLocation(coords: Coords | null): void {
+  if (!coords) return;
+  try {
+    localStorage.setItem(
+      LAST_LOCATION_KEY,
+      JSON.stringify({ ...coords, at: Date.now() }),
+    );
+  } catch {
+    // storage blocked (private mode etc.): just don't remember
+  }
+}
+
+export function getRememberedLocation(): Coords | null {
+  try {
+    const raw = localStorage.getItem(LAST_LOCATION_KEY);
+    if (!raw) return null;
+    const { lat, long, at } = JSON.parse(raw);
+    if (typeof lat !== "number" || typeof long !== "number") return null;
+    if (typeof at !== "number" || Date.now() - at > LAST_LOCATION_MAX_AGE) {
+      return null;
+    }
+    return { lat, long };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Current geolocation permission without prompting. "prompt" means asking
+ * would show the browser's permission dialog.
+ */
+export async function getLocationPermission(): Promise<
+  PermissionState | "unsupported"
+> {
+  if (!navigator.geolocation) return "unsupported";
+  try {
+    const { state } = await navigator.permissions.query({
+      name: "geolocation",
+    });
+    return state;
+  } catch {
+    // Permissions API missing (older Safari): unknown, treat as "ask first"
+    return "prompt";
+  }
+}
+
+/**
  * Called when the user closes the permission modal without
  * explicitly granting or denying (e.g. clicking outside it).
  */
