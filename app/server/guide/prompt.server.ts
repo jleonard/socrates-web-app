@@ -40,13 +40,21 @@ Only from the SOURCES. If they don't cover it, say you don't have that informati
 - what other institutions hold or display
 - exact quotes, and anything about named staff or other living people beyond their widely known public role
 
+The visitor is in the exhibition described under ABOUT THIS EXHIBITION. Never suggest they are somewhere else.
+
+ELSEWHERE IN THIS MUSEUM sections describe other halls in the same museum. Use them when they help, and always name the hall ("In the Hall of Human Origins, there's…"). Never present anything from those sections as being in this hall. If the visitor asks about another hall and there's no section for it, say you don't have information about that hall here.
+
+Don't claim the opposite either: don't say something is not on display here, or that a person is not connected to this exhibition, unless the SOURCES say so.
+
+When the SOURCES answer part of a question (for example where one of several objects was found), give that part first, then say what you don't have, in plain words such as "I don't have that information for the mammoth here." Never say "the sources" out loud.
+
 From your own knowledge, with care:
 - well-established science, history and culture, and explaining concepts
 - facts about a kind of thing (a species, person, movement or period), worded about the kind and never as a fact about the specific object here. Say "Mastodons generally stood about three metres tall", never "This mastodon stood three metres tall."
 - well-known facts about a widely documented object, such as the Mona Lisa or the Rosetta Stone, once the SOURCES have established which object it is. For objects without a public record (most specimens, dioramas, panels and local objects) use only the SOURCES.
 - widely known facts about famous objects held elsewhere ("the Mona Lisa is at the Louvre"), but nothing specific about another institution's collection or displays.
 
-When you make a factual claim from your own knowledge, say so once, briefly and naturally, for example "That's not covered here, but generally…" or "Beyond what's in this hall…". Vary the wording. Plain definitions and explanations need no framing.
+Framing applies to each claim, not to the whole answer. Whenever a factual claim comes from your own knowledge rather than the SOURCES, including in an answer that also uses the SOURCES, mark the switch once, briefly and naturally, for example "That's not covered here, but generally…" or "Beyond what's in this hall…". Vary the wording. Plain definitions and explanations need no framing.
 
 Never:
 - invent or guess names, dates, numbers, places or quotes. If you're not sure, say so.
@@ -77,7 +85,7 @@ Otherwise, answer from your own knowledge within the rules above. Begin by sayin
 
 export type AnswerMode = "grounded" | "general";
 
-type Section = "exhibition" | "object" | "background";
+type Section = "exhibition" | "object" | "background" | "elsewhere";
 
 export type AnswerPrompt = {
   messages: ChatCompletionMessageParam[];
@@ -103,16 +111,28 @@ export function buildAnswerPrompt(opts: {
     exhibition: [],
     object: [],
     background: [],
+    elsewhere: [],
   };
   const exhibitionTexts: string[] = [...venueContext];
   const objectGroups = new Map<string, { title: string; texts: string[] }>();
   const backgroundTexts: string[] = [];
+  // other halls in this venue, grouped by hall
+  const elsewhereGroups = new Map<string, string[]>();
 
   for (const chunk of chunks) {
     const md = chunk.metadata;
     const body = String(md.text ?? "").trim();
     if (!body) continue;
     const text = sourceLabel(md) + body;
+
+    if (chunk.pool === "elsewhere") {
+      sections.elsewhere.push(chunk.id);
+      const hall = hallName(md);
+      const texts = elsewhereGroups.get(hall) ?? [];
+      texts.push(withTitle(md, text));
+      elsewhereGroups.set(hall, texts);
+      continue;
+    }
 
     const section = sectionFor(md, location);
     sections[section].push(chunk.id);
@@ -138,6 +158,11 @@ export function buildAnswerPrompt(opts: {
   }
   for (const { title, texts } of objectGroups.values()) {
     blocks.push(`## ABOUT THIS OBJECT: ${title}\n${texts.join("\n\n")}`);
+  }
+  for (const [hall, texts] of elsewhereGroups) {
+    blocks.push(
+      `## ELSEWHERE IN THIS MUSEUM: ${hall} (another hall, NOT where the visitor is)\n${texts.join("\n\n")}`,
+    );
   }
   if (backgroundTexts.length) {
     blocks.push(
@@ -228,6 +253,17 @@ function sourceLabel(md: RecordMetadata): string {
   return type === "interview"
     ? `[Interview with ${who.trim()}] `
     : `[${kind} by ${who.trim()}] `;
+}
+
+/** A hall's display name, e.g. "Hall of Human Origins". */
+function hallName(md: RecordMetadata): string {
+  if (typeof md.exhibition_name === "string" && md.exhibition_name.trim()) {
+    return md.exhibition_name.trim();
+  }
+  // e.g. "amnh-hall-of-human-origins" -> "hall of human origins"
+  return String(md.exhibition_id ?? "another exhibition")
+    .replace(/^[a-z]+-(?=hall)/, "")
+    .replace(/-/g, " ");
 }
 
 function withTitle(md: RecordMetadata, text: string): string {

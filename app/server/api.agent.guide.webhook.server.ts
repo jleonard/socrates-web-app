@@ -190,6 +190,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     });
     loggingDetails.retrieval = {
       filter: retrieval.filter,
+      elsewhere_filter: retrieval.elsewhereFilter,
       counts: retrieval.counts,
       rerank_failed: retrieval.rerankFailed,
       rerank_error: retrieval.rerankError,
@@ -198,6 +199,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
         id: c.id,
         object_id: c.metadata.object_id ?? null,
         chunk_type: c.metadata.chunk_type ?? null,
+        pool: c.pool,
         searches: c.searches,
         dense: c.dense,
         rerank: c.rerank,
@@ -214,6 +216,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       selected: retrieval.chunks.map((c) => ({
         id: c.id,
         object_id: c.metadata.object_id,
+        pool: c.pool,
         searches: c.searches,
         rerank: c.rerank,
         pass: c.pass,

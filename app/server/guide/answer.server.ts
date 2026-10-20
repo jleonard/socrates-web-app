@@ -3,8 +3,12 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
-/** Same model the old webhook answers with. */
-const ANSWER_MODEL = "gpt-4o-mini";
+/**
+ * gpt-4o: in the Oct 2026 QA replay it followed the source rules where
+ * gpt-4o-mini didn't (dropped facts that were in the sources, conflated the
+ * Last Glacial Maximum with the glacial period), at similar latency.
+ */
+const ANSWER_MODEL = "gpt-4o";
 
 /**
  * A ceiling, not a target: the prompt shapes length (max ~4 sentences).
@@ -13,10 +17,11 @@ const ANSWER_MODEL = "gpt-4o-mini";
 const MAX_ANSWER_TOKENS = 400;
 
 /**
- * Slightly above 0 so framing phrases ("That's not covered here, but…")
- * vary across a conversation as the prompt asks.
+ * 0 so the same question gets the same answer (consistent facts, and QA
+ * replays that can be compared). Variety in phrasing comes from the voice
+ * agent, which rewords the answer for speech.
  */
-const TEMPERATURE = 0.3;
+const TEMPERATURE = 0;
 
 /** Streams the answer text, chunk by chunk. Throws if the request fails. */
 export async function* streamAnswer(

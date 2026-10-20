@@ -23,6 +23,7 @@ Rules:
 - Remove facts the visitor asserts; keep only what they are asking.
   ("Confirm: X is a curator at Y" -> "Who is X?")
 - If they describe what they are looking at, keep the key nouns of that description.
+- Keep references to where they are ("this hall", "here", "what am I looking at", "these skeletons"). Don't turn "Which hall is this?" into a general question like "Which hall has elephants?".
 - Resolve pronouns and follow-ups ("it", "him", "and how old is it?") using the recent conversation.
 - Do not answer the question.`;
 
