@@ -13,7 +13,7 @@ export default function ExhibitionPage() {
         <img
           src={exhibition?.large_image}
           alt={exhibition?.name ?? ""}
-          className="mb-6 rounded-lg "
+          className="mb-6 w-full max-h-[45vh] rounded-lg object-cover"
         />
       )}
       <div className="w-full gap-1 flex flex-col">
