@@ -16,7 +16,8 @@ const SYSTEM = `You turn a museum visitor's spoken question into a search query.
 Return JSON only: {"search_query": string}
 
 Rules:
-- English. One standalone question or noun phrase, max 25 words.
+- Always write search_query in English, whatever language the visitor used (Spanish, Italian, Portuguese, …). Translate it; never return it in the visitor's language.
+- One standalone question or noun phrase, max 25 words.
 - Keep names, objects, specimens and catalog numbers (e.g. "AMNH 9951") exactly as given. Do not translate or correct them.
 - If a name looks like a speech-to-text mishearing of a name used earlier in the conversation, use the earlier spelling.
 - Remove instructions about the answer ("briefly", "describe", "without too much detail", "if available").

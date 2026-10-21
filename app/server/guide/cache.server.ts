@@ -14,8 +14,10 @@ import type { LocationContext } from "./location.server";
 // Separate from utils/cache (the old webhook's cache): that one is keyed on
 // raw visitor wording, mixes languages, and holds answers from before the
 // QA fixes. This one is keyed on the guide's English search query (follow-
-// ups already resolved), scoped to the visitor's location, and matched only
-// against the current content version (see content.version.server.ts).
+// ups already resolved), scoped to the visitor's location and language
+// (answers are written in the visitor's language), and matched only against
+// the current content version (see content.version.server.ts).
+// Requests without a known language skip the cache entirely.
 
 /**
  * off    = no lookups, no stores
@@ -42,8 +44,9 @@ const GUIDE_CACHE_VERSION = 1;
  */
 const SIMILARITY_THRESHOLD = Number(process.env.GUIDE_CACHE_THRESHOLD ?? 0.93);
 
-const INDEX_NAME = "guide_cache";
-const KEY_PREFIX = "guide_cache:";
+// v2 adds the `language` tag; the v1 index ("guide_cache") had none.
+const INDEX_NAME = "guide_cache_v2";
+const KEY_PREFIX = "guide_cache_v2:";
 const BASE_TTL_SECONDS = 14 * 24 * 60 * 60;
 
 export type CacheLookup = {
@@ -73,6 +76,7 @@ async function ensureIndex() {
         question: { type: SCHEMA_FIELD_TYPE.TEXT },
         answer: { type: SCHEMA_FIELD_TYPE.TEXT },
         location_id: { type: SCHEMA_FIELD_TYPE.TAG },
+        language: { type: SCHEMA_FIELD_TYPE.TAG },
         version: { type: SCHEMA_FIELD_TYPE.TAG },
         hits: { type: SCHEMA_FIELD_TYPE.NUMERIC },
       },
@@ -100,7 +104,10 @@ async function currentVersion(location: LocationContext) {
 export async function lookupGuideCache(opts: {
   searchQuery: string;
   location: LocationContext;
+  /** ISO 639-1; null skips the cache (the answer's language is unknown) */
+  language: string | null;
 }): Promise<CacheLookup | null> {
+  if (!opts.language) return null;
   try {
     await ensureIndex();
     const redis = await getRedis();
@@ -109,7 +116,7 @@ export async function lookupGuideCache(opts: {
       await getEmbedding(normalize(opts.searchQuery)),
     );
 
-    const filter = `(@location_id:{${escapeTag(opts.location.locationId)}} @version:{${escapeTag(version)}})`;
+    const filter = `(@location_id:{${escapeTag(opts.location.locationId)}} @language:{${escapeTag(opts.language)}} @version:{${escapeTag(version)}})`;
     const raw = (await redis.ft.search(
       INDEX_NAME,
       `${filter}=>[KNN 1 @embedding $vec AS score]`,
@@ -160,6 +167,8 @@ export async function lookupGuideCache(opts: {
  */
 export async function maybeStoreGuideCache(opts: {
   searchQuery: string;
+  /** ISO 639-1 language of the answer; null = don't store */
+  language: string | null;
   answer: string;
   location: LocationContext;
   version: string | null;
@@ -171,6 +180,7 @@ export async function maybeStoreGuideCache(opts: {
   const answer = opts.answer.trim();
   if (GUIDE_CACHE_MODE === "off") return { stored: false, reason: "off" };
   if (!opts.version) return { stored: false, reason: "no_version" };
+  if (!opts.language) return { stored: false, reason: "no_language" };
   if (opts.mode !== "grounded") return { stored: false, reason: "general" };
   if (opts.searchQueryFallback)
     return { stored: false, reason: "search_query_fallback" };
@@ -187,7 +197,7 @@ export async function maybeStoreGuideCache(opts: {
     const redis = await getRedis();
     const question = normalize(opts.searchQuery);
     const id = `${KEY_PREFIX}${Buffer.from(
-      `${opts.location.locationId}|${opts.version}|${question}`,
+      `${opts.location.locationId}|${opts.language}|${opts.version}|${question}`,
     ).toString("base64url")}`;
 
     await redis.hSet(id, {
@@ -195,6 +205,7 @@ export async function maybeStoreGuideCache(opts: {
       question,
       answer,
       location_id: opts.location.locationId,
+      language: opts.language,
       version: opts.version,
       hits: 0,
     });

@@ -23,7 +23,7 @@ You are Wonder, a conversational guide to museums, landmarks and cultural instit
 - Answer the question directly, like a knowledgeable person in conversation. No preamble, no "Great question."
 - Match the length to the question: one or two sentences for a simple fact; up to four for an explanation, comparison or identification. Never more than four unless the visitor asks for more detail.
 - Use plain spoken language. No lists, headings, markdown, emoji or links: your reply is read aloud.
-- Always reply in English, whatever language the visitor used. The voice agent translates your reply for the visitor.
+- Reply in the visitor's language (see the last instruction before their question). Keep names of halls, objects and people as they appear in the SOURCES.
 - Don't repeat the question.
 - Don't end with an offer such as "Would you like to know more?" The visitor will ask. Ask a question only when you need their answer, for example to tell candidates apart.
 
@@ -35,7 +35,7 @@ Only from the SOURCES. If they don't cover it, say you don't have that informati
 - what is in this exhibition or venue, and what is on display
 - which object the visitor is looking at
 - facts about a specific object: dates, where it was found or made, by whom, measurements, whether it is a cast or an original (except as allowed below)
-- layout, directions, hours, tickets and policies
+- layout, directions, hours, tickets and policies. Never describe the museum's layout or give directions from your own knowledge, not even general ones ("it's on the north side"). If the SOURCES don't say, suggest asking museum staff.
 - what the museum or its curators say or think
 - what other institutions hold or display
 - exact quotes, and anything about named staff or other living people beyond their widely known public role
@@ -97,6 +97,8 @@ export type AnswerPrompt = {
 
 export function buildAnswerPrompt(opts: {
   visitorQuery: string;
+  /** ISO 639-1 code from the voice agent; null = follow the question's language. */
+  language: string | null;
   history: AgentChatMessage[];
   chunks: RetrievedChunk[];
   venueContext: string[];
@@ -185,6 +187,13 @@ export function buildAnswerPrompt(opts: {
   for (const m of opts.history.slice(-HISTORY_MESSAGES)) {
     messages.push({ role: m.role, content: m.content });
   }
+  // Last instruction before the question, so the model reads it last: the
+  // voice agent delivers the reply as-is, so it must already be in the
+  // visitor's language.
+  messages.push({
+    role: "system",
+    content: languageInstruction(opts.language),
+  });
   messages.push({ role: "user", content: opts.visitorQuery });
 
   return { messages, mode, sections };
@@ -253,6 +262,21 @@ function sourceLabel(md: RecordMetadata): string {
   return type === "interview"
     ? `[Interview with ${who.trim()}] `
     : `[${kind} by ${who.trim()}] `;
+}
+
+/** "Reply in Spanish." from "es"; falls back to the question's language. */
+function languageInstruction(code: string | null): string {
+  let name: string | undefined;
+  try {
+    name = code
+      ? new Intl.DisplayNames(["en"], { type: "language" }).of(code)
+      : undefined;
+  } catch {
+    name = undefined;
+  }
+  return name && name !== code
+    ? `Reply in ${name}.`
+    : "Reply in the language of the visitor's latest message.";
 }
 
 /** A hall's display name, e.g. "Hall of Human Origins". */

@@ -48,6 +48,8 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     }
 
     const { query, user_id, place, conversation_id } = body ?? {};
+    // set by the ElevenLabs agent on each call; null if missing or malformed
+    const language = parseLanguage(body?.language);
 
     // setup logging
     const startMs = Date.now();
@@ -56,6 +58,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       request_id: crypto.randomUUID(),
       user_id,
       conversation_id,
+      language,
       query: {
         original: query,
       },
@@ -150,7 +153,11 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      */
     const cache =
       GUIDE_CACHE_MODE !== "off" && !searchQueryFallback
-        ? await lookupGuideCache({ searchQuery, location: locationContext })
+        ? await lookupGuideCache({
+            searchQuery,
+            location: locationContext,
+            language,
+          })
         : null;
     loggingDetails.cache = {
       mode: GUIDE_CACHE_MODE,
@@ -230,6 +237,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      */
     const answerPrompt = buildAnswerPrompt({
       visitorQuery,
+      language,
       history: chatHistory,
       chunks: retrieval.chunks,
       venueContext,
@@ -287,6 +295,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
         // cache entry.
         void maybeStoreGuideCache({
           searchQuery,
+          language,
           answer: reply,
           location: locationContext,
           version: cache?.version ?? null,
@@ -304,6 +313,18 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     return new Response("Internal server error", { status: 500 });
   }
 };
+
+/**
+ * The visitor's language as a two-letter ISO 639-1 code ("en", "es"…), as
+ * set by the ElevenLabs agent. Anything else is treated as unknown (null):
+ * the answer then follows the language of the question, and the cache is
+ * skipped.
+ */
+function parseLanguage(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim().toLowerCase();
+  return /^[a-z]{2}$/.test(code) ? code : null;
+}
 
 /**
  * The client sends 0,0 when it has no location (view.tsx falls back to 0),
