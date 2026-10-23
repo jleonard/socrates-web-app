@@ -27,6 +27,7 @@ import { GreetingButton } from "components/GreetingButton/GreetingButton";
 import LocationModal from "components/LocationModal/LocationModal";
 import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
+import { useThinkingSound } from "~/hooks/useThinkingSound";
 import { trackEvent } from "~/utils/googleAnalytics";
 
 import { AvatarConnection, AvatarMode } from "types/avatar";
@@ -122,6 +123,9 @@ const ParentComponent: React.FC = () => {
 
   let activePlace = usePlaceStore((state) => state.activePlace);
 
+  // audio cue while the agent works on a reply
+  const thinkingSound = useThinkingSound();
+
   const conversation = useConversation({
     onConnect: () => {
       setButtonMode("listening");
@@ -131,6 +135,7 @@ const ParentComponent: React.FC = () => {
       }, 250); // matches preconnect transition duration
     },
     onDisconnect: () => {
+      thinkingSound.stop();
       setCircleMode("idle");
       setButtonMode("disconnected");
     },
@@ -140,8 +145,10 @@ const ParentComponent: React.FC = () => {
       let responseTime;
       if (message.source === "user") {
         responseTimeComparison = now;
+        thinkingSound.start();
       }
       if (message.source === "ai") {
+        thinkingSound.stop();
         // set the response time
         responseTime = responseTimeComparison
           ? now.getTime() - responseTimeComparison.getTime()
@@ -173,6 +180,7 @@ const ParentComponent: React.FC = () => {
         setButtonMode("listening");
       }
       if (modeObj.mode === "speaking") {
+        thinkingSound.stop();
         setCircleMode("speaking");
         setButtonMode("speaking");
       }
@@ -251,6 +259,8 @@ const ParentComponent: React.FC = () => {
     ) {
       // stop the greeting right away if it is playing
       stopGreeting();
+      // unlock audio inside the tap (required on iOS) and load the file
+      thinkingSound.prepare();
 
       startConversation();
       trackEvent({
@@ -271,6 +281,7 @@ const ParentComponent: React.FC = () => {
         category: "conversation",
         label: "press to disconnect",
       });
+      thinkingSound.stop();
       stopConversation();
       if (access?.expiration && new Date(access?.expiration) > new Date()) {
         console.log("expired! revalidate ", access);
