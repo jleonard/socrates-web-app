@@ -33,7 +33,21 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
           ?.map((t: { tool_name?: string }) => t.tool_name)
           .filter(Boolean)
           .join(", ") ?? null;
-      const turn = { role, message, tool };
+      // timing for latency QA: when the turn happened, how long tools took,
+      // and ElevenLabs' own per-turn metrics (LLM / TTS time to first byte)
+      const tool_latency_secs =
+        item?.tool_results
+          ?.map((t: { tool_latency_secs?: number }) => t.tool_latency_secs)
+          .filter((s: unknown) => typeof s === "number") ?? [];
+      const turn = {
+        role,
+        message,
+        tool,
+        time_in_call_secs: item?.time_in_call_secs ?? null,
+        interrupted: item?.interrupted ?? null,
+        tool_latency_secs: tool_latency_secs.length ? tool_latency_secs : null,
+        metrics: item?.conversation_turn_metrics?.metrics ?? null,
+      };
       console.log("tool calls ", item?.tool_calls);
       console.log("turn ", turn);
 

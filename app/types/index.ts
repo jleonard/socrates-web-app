@@ -103,6 +103,8 @@ export type ElevenLabsConversationTranscript = {
 
 export type HistoryLog = {
   user_id: string;
+  conversation_id?: string | null;
+  app_version?: string | null;
   query: string;
   query_classification: string;
   response: string;

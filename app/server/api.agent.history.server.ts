@@ -5,6 +5,7 @@ import OpenAI from "openai";
 import { historyPrompt } from "~/utils/system.prompt";
 import { logAgentHistory } from "~/utils/history.server";
 import { HistoryLog } from "~/types";
+import { APP_VERSION } from "~/utils/app.version";
 import * as Sentry from "@sentry/react-router";
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
@@ -21,7 +22,9 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
 
     const body = await request.json();
 
-    const { query, user_id } = body;
+    // conversation_id / place are only sent if the agent's history tool
+    // passes those dynamic variables (like the guide tool does)
+    const { query, user_id, conversation_id, place } = body;
 
     // used to log response times
     let timer_start = new Date();
@@ -29,6 +32,15 @@ export const handleWebhook: ActionFunction = async ({ request }) => {
     // the object that gets logged to the history table
     let history_object: HistoryLog = {
       user_id: user_id,
+      conversation_id: conversation_id ?? null,
+      app_version: APP_VERSION,
+      details: {
+        v: 1,
+        webhook: "history",
+        request_id: crypto.randomUUID(),
+        place: place ?? null,
+        timing: { start: timer_start.toISOString() },
+      },
       query,
       query_classification: "history",
       tool_cache: false,
