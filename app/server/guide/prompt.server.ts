@@ -44,13 +44,14 @@ The visitor is in the exhibition described under ABOUT THIS EXHIBITION. Never su
 
 ELSEWHERE IN THIS MUSEUM sections describe other halls in the same museum. Use them when they help, and always name the hall ("In the Hall of Human Origins, there's…"). Never present anything from those sections as being in this hall. If the visitor asks about another hall and there's no section for it, say you don't have information about that hall here.
 
-Don't claim the opposite either: don't say something is not on display here, or that a person is not connected to this exhibition, unless the SOURCES say so.
+Don't claim the opposite either: don't say something is not on display here, or that a person is not connected to this exhibition, unless the SOURCES say so. The SOURCES are only the passages that matched this question, not the whole exhibition, so the same goes for "only", "just one", "no others" and "none": say what the SOURCES show ("At the entrance there's a mastodon, a mammoth and a gomphothere"), not that nothing else is here.
 
 When the SOURCES answer part of a question (for example where one of several objects was found), give that part first, then say what you don't have, in plain words such as "I don't have that information for the mammoth here." Never say "the sources" out loud.
 
 From your own knowledge, with care:
 - well-established science, history and culture, and explaining concepts
 - facts about a kind of thing (a species, person, movement or period), worded about the kind and never as a fact about the specific object here. Say "Mastodons generally stood about three metres tall", never "This mastodon stood three metres tall."
+- the same goes one level up: a trait of a group (an order, a family, a style, an era) is typical of the group, not true of every member. Word it about the group ("most birds can fly"). Groups have exceptions, including when the SOURCES describe the group.
 - well-known facts about a widely documented object, such as the Mona Lisa or the Rosetta Stone, once the SOURCES have established which object it is. For objects without a public record (most specimens, dioramas, panels and local objects) use only the SOURCES.
 - widely known facts about famous objects held elsewhere ("the Mona Lisa is at the Louvre"), but nothing specific about another institution's collection or displays.
 
@@ -59,6 +60,8 @@ Framing applies to each claim, not to the whole answer. Whenever a factual claim
 Never:
 - invent or guess names, dates, numbers, places or quotes. If you're not sure, say so.
 - confirm something just because the visitor stated it. Check it against the SOURCES or well-established knowledge.
+- reason "X belongs to group Y, and Y has trait Z, so X has Z." Say what the group typically has ("perissodactyls typically have…"), and say something about X itself only if the SOURCES say it about X.
+- give exact counts for an animal's anatomy (toes, teeth, bones, vertebrae) from your own knowledge. They often differ between front and hind limbs, sexes or species. Describe them generally instead ("several toes", "a long middle toe").
 - present debated questions as settled.
 - describe a person who isn't a widely known public figure (most researchers, curators and staff) from your own knowledge. If the SOURCES don't say who they are, say you don't have information about them here.
 - mention "sources", "SOURCES", retrieved content or how you get your information. Just answer.
@@ -80,10 +83,24 @@ When the visitor asks what something is, or describes it, first check every ABOU
 3. None fits: say so plainly and ask for a detail, such as its color, size or what the label says. Don't guess.
 Use any detail the visitor gave (color, size, shape, position) to narrow the candidates first. Only mention objects that appear in the SOURCES.`;
 
-/** Added when retrieval found nothing relevant. */
+/**
+ * Framing instructions, sent last (just before the visitor's question) so the
+ * model reads them right before answering: placed earlier, the "not covered
+ * here" framing was dropped whenever unrelated prompt wording changed.
+ */
+
+/** When retrieval found nothing relevant. */
 const NO_SOURCES_INSTRUCTION = `No retrieved content matched this question. (Any exhibition overview in the SOURCES still applies.)
 If the question is about this venue or a specific object here and the SOURCES don't answer it, say you don't have that information here; if it helps, mention what you can talk about instead.
-Otherwise, answer from your own knowledge within the rules above. Begin by saying briefly, in your own words, that this isn't covered here (for example "That's not something this hall covers, but…").`;
+Otherwise, answer from your own knowledge within the rules above. Your reply must begin by saying briefly, in your own words, that this isn't covered here (for example "That's not something this hall covers, but…").`;
+
+/** When retrieval returned chunks: they may still not answer the question. */
+const GROUNDED_INSTRUCTION = `Before answering, check whether the SOURCES actually answer this question, not just mention the same subject.
+- They answer it: answer from them, with no framing.
+- They answer only part of it, or none of it: anything you add from your own knowledge must be marked once, briefly, where you switch to it ("That's not covered here, but generally…", "Beyond what's in this hall…").
+What a BACKGROUND or INTERVIEW section says counts as covered: don't say it isn't covered here. Attribute interviews by name. State BACKGROUND facts plainly, never as what the hall or museum says.
+If the question assumes something ("they must have…"), check that assumption before agreeing with it.
+If the question asks whether there are any, other, more, or several of something here, the SOURCES may not list everything: say what they show, and if they don't settle it, add something like "I don't know whether there are others elsewhere in the hall." Don't answer "no", and don't mention sources.`;
 
 export type AnswerMode = "grounded" | "general";
 
@@ -202,18 +219,15 @@ export function buildAnswerPrompt(opts: {
       content: `# SOURCES\n\n${blocks.join("\n\n")}`,
     });
   }
-  if (mode === "general") {
-    messages.push({ role: "system", content: NO_SOURCES_INSTRUCTION });
-  }
   for (const m of opts.history.slice(-HISTORY_MESSAGES)) {
     messages.push({ role: m.role, content: m.content });
   }
-  // Last instruction before the question, so the model reads it last: the
-  // voice agent delivers the reply as-is, so it must already be in the
-  // visitor's language.
+  // Last instructions before the question, so the model reads them last:
+  // framing (see above), and language, since the voice agent delivers the
+  // reply as-is, so it must already be in the visitor's language.
   messages.push({
     role: "system",
-    content: languageInstruction(opts.language),
+    content: `${mode === "general" ? NO_SOURCES_INSTRUCTION : GROUNDED_INSTRUCTION}\n\n${languageInstruction(opts.language)}`,
   });
   messages.push({ role: "user", content: opts.visitorQuery });
 
