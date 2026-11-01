@@ -27,7 +27,7 @@ import { GreetingButton } from "components/GreetingButton/GreetingButton";
 import LocationModal from "components/LocationModal/LocationModal";
 import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
-import { useThinkingSound } from "~/hooks/useThinkingSound";
+import { useSoundEffects } from "~/hooks/useSoundEffects";
 import { trackEvent } from "~/utils/googleAnalytics";
 
 import { AvatarConnection, AvatarMode } from "types/avatar";
@@ -123,11 +123,20 @@ const ParentComponent: React.FC = () => {
 
   let activePlace = usePlaceStore((state) => state.activePlace);
 
-  // audio cue while the agent works on a reply
-  const thinkingSound = useThinkingSound();
+  // audio cues: connect, disconnect, error, and a loop while the agent works on a reply
+  const sounds = useSoundEffects();
+  // an error is usually followed by a disconnect: play error.mp3 once, not off.mp3 too
+  const errorAtRef = useRef(0);
+  const recentError = () => Date.now() - errorAtRef.current < 3000;
+  const playSound = sounds.play;
+  const playError = useCallback(() => {
+    if (Date.now() - errorAtRef.current >= 3000) playSound("error");
+    errorAtRef.current = Date.now();
+  }, [playSound]);
 
   const conversation = useConversation({
     onConnect: () => {
+      sounds.play("on");
       setButtonMode("listening");
       setCircleMode("preconnect");
       setTimeout(() => {
@@ -135,7 +144,8 @@ const ParentComponent: React.FC = () => {
       }, 250); // matches preconnect transition duration
     },
     onDisconnect: () => {
-      thinkingSound.stop();
+      if (recentError()) sounds.stopProcessing();
+      else sounds.play("off");
       setCircleMode("idle");
       setButtonMode("disconnected");
     },
@@ -145,10 +155,10 @@ const ParentComponent: React.FC = () => {
       let responseTime;
       if (message.source === "user") {
         responseTimeComparison = now;
-        thinkingSound.start();
+        sounds.startProcessing();
       }
       if (message.source === "ai") {
-        thinkingSound.stop();
+        sounds.stopProcessing();
         // set the response time
         responseTime = responseTimeComparison
           ? now.getTime() - responseTimeComparison.getTime()
@@ -180,13 +190,14 @@ const ParentComponent: React.FC = () => {
         setButtonMode("listening");
       }
       if (modeObj.mode === "speaking") {
-        thinkingSound.stop();
+        sounds.stopProcessing();
         setCircleMode("speaking");
         setButtonMode("speaking");
       }
     },
     onError: (error: string) => {
       Sentry.captureMessage(error, "error");
+      playError();
       setError(error);
     },
   });
@@ -239,9 +250,10 @@ const ParentComponent: React.FC = () => {
           ),
         );
       }
+      playError();
       setError("Couldn't start the conversation");
     }
-  }, [conversation, user, coords, elevenLabsId]);
+  }, [conversation, user, coords, elevenLabsId, playError]);
 
   const stopConversation = useCallback(async () => {
     logAppEventFromClient({
@@ -259,8 +271,8 @@ const ParentComponent: React.FC = () => {
     ) {
       // stop the greeting right away if it is playing
       stopGreeting();
-      // unlock audio inside the tap (required on iOS) and load the file
-      thinkingSound.prepare();
+      // unlock audio inside the tap (required on iOS) and load the files
+      sounds.prepare();
 
       startConversation();
       trackEvent({
@@ -281,7 +293,7 @@ const ParentComponent: React.FC = () => {
         category: "conversation",
         label: "press to disconnect",
       });
-      thinkingSound.stop();
+      sounds.stopProcessing();
       stopConversation();
       if (access?.expiration && new Date(access?.expiration) > new Date()) {
         console.log("expired! revalidate ", access);
