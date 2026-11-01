@@ -50,6 +50,13 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     const { query, user_id, place, conversation_id } = body ?? {};
     // set by the ElevenLabs agent on each call; null if missing or malformed
     const language = parseLanguage(body?.language);
+    // The visitor's message as heard, if the agent's tool sends it. `query`
+    // is the agent's own rewrite, which can smooth a mishearing into a
+    // different question before the dictionaries below ever see it.
+    const visitorWords =
+      typeof body?.visitor_words === "string" && body.visitor_words.trim()
+        ? body.visitor_words.trim()
+        : null;
 
     // setup logging
     const startMs = Date.now();
@@ -61,6 +68,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       language,
       query: {
         original: query,
+        visitor_words: visitorWords,
       },
       location: {},
       timing: {
@@ -105,21 +113,27 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     };
 
     /*
-     * ✏️ fix speech-to-text mishearings. Exhibition entries win over place
-     * entries when both define the same alias.
+     * ✏️ fix speech-to-text mishearings, in the agent's query and in the
+     * visitor's own words. Exhibition entries win over place entries when
+     * both define the same alias.
      */
-    const correctedQuery = await correctPronunciations(
-      [locationContext.exhibitionId, locationContext.placeId],
-      query,
-    );
+    const dictionaryIds = [locationContext.exhibitionId, locationContext.placeId];
+    const [correctedQuery, correctedWords] = await Promise.all([
+      correctPronunciations(dictionaryIds, query),
+      visitorWords ? correctPronunciations(dictionaryIds, visitorWords) : null,
+    ]);
     const visitorQuery = correctedQuery ?? query;
+    const heardWords = correctedWords ?? visitorWords;
     loggingDetails.query.corrected = correctedQuery;
+    loggingDetails.query.visitor_words_corrected = correctedWords;
 
-    if (correctedQuery) {
+    if (correctedQuery || correctedWords) {
       console.log("[guide] pronunciation corrected", {
         conversation_id,
         original: query,
         corrected: correctedQuery,
+        visitor_words: visitorWords,
+        visitor_words_corrected: correctedWords,
       });
     }
 
@@ -135,7 +149,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     ]);
     const searchStartMs = Date.now();
     const { searchQuery, fallback: searchQueryFallback } =
-      await buildSearchQuery(visitorQuery, chatHistory);
+      await buildSearchQuery(visitorQuery, chatHistory, heardWords);
     loggingDetails.query.search = searchQuery;
     loggingDetails.query.search_fallback = searchQueryFallback;
     loggingDetails.timing.search_query_ms = Date.now() - searchStartMs;
@@ -237,6 +251,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      */
     const answerPrompt = buildAnswerPrompt({
       visitorQuery,
+      visitorWords: heardWords,
       language,
       history: chatHistory,
       chunks: retrieval.chunks,

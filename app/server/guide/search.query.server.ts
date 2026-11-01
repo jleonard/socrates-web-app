@@ -26,6 +26,7 @@ Rules:
 - If they describe what they are looking at, keep the key nouns of that description.
 - Keep references to where they are ("this hall", "here", "what am I looking at", "these skeletons"). Don't turn "Which hall is this?" into a general question like "Which hall has elephants?".
 - Resolve pronouns and follow-ups ("it", "him", "and how old is it?") using the recent conversation.
+- You may also get the visitor's exact words, from speech-to-text. The question is the voice agent's version of them and usually the clearer one. But if the exact words name something the question dropped or changed (often a misheard name the agent guessed at), search for what the visitor said.
 - Do not answer the question.`;
 
 export interface SearchQueryResult {
@@ -46,6 +47,8 @@ export interface SearchQueryResult {
 export async function buildSearchQuery(
   query: string,
   history: AgentChatMessage[] = [],
+  /** The visitor's message as heard (speech-to-text), when the agent sends it. */
+  visitorWords: string | null = null,
 ): Promise<SearchQueryResult> {
   const fallback: SearchQueryResult = { searchQuery: query, fallback: true };
 
@@ -59,9 +62,12 @@ export async function buildSearchQuery(
     )
     .join("\n");
 
+  const words = differentWords(query, visitorWords)
+    ? `\n\nVisitor's exact words (speech-to-text):\n${visitorWords}`
+    : "";
   const userContent = recent
-    ? `Recent conversation:\n${recent}\n\nVisitor's latest question:\n${query}`
-    : `Visitor's latest question:\n${query}`;
+    ? `Recent conversation:\n${recent}\n\nVisitor's latest question:\n${query}${words}`
+    : `Visitor's latest question:\n${query}${words}`;
 
   try {
     const res = await openai.chat.completions.create(
@@ -87,4 +93,21 @@ export async function buildSearchQuery(
     console.error("[guide] buildSearchQuery failed", err);
     return fallback;
   }
+}
+
+/**
+ * True when the visitor's exact words say something the query doesn't,
+ * ignoring case and punctuation. When they match there's nothing to add.
+ */
+export function differentWords(
+  query: string,
+  visitorWords: string | null | undefined,
+): visitorWords is string {
+  if (!visitorWords) return false;
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  return norm(query) !== norm(visitorWords);
 }

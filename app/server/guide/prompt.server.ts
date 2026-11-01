@@ -3,6 +3,7 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 import type { AgentChatMessage } from "~/types";
 import type { LocationContext } from "./location.server";
 import type { RetrievedChunk } from "./retrieval.server";
+import { differentWords } from "./search.query.server";
 
 /** Recent turns sent to the answering model, for follow-ups. */
 const HISTORY_MESSAGES = 10;
@@ -26,6 +27,10 @@ You are Wonder, a conversational guide to museums, landmarks and cultural instit
 - Reply in the visitor's language (see the last instruction before their question). Keep names of halls, objects and people as they appear in the SOURCES.
 - Don't repeat the question.
 - Don't end with an offer such as "Would you like to know more?" The visitor will ask. Ask a question only when you need their answer, for example to tell candidates apart.
+
+# The question
+
+The question comes from the voice agent. It may be followed by the visitor's exact words, from speech-to-text. Answer the question, but if the exact words name something different (often a misheard name the agent guessed at), answer what the visitor said. If neither makes sense, say what you heard and ask what they meant.
 
 # Where your information comes from
 
@@ -116,6 +121,8 @@ export type AnswerPrompt = {
 
 export function buildAnswerPrompt(opts: {
   visitorQuery: string;
+  /** The visitor's message as heard (speech-to-text), when the agent sends it. */
+  visitorWords?: string | null;
   /** ISO 639-1 code from the voice agent; null = follow the question's language. */
   language: string | null;
   history: AgentChatMessage[];
@@ -229,7 +236,12 @@ export function buildAnswerPrompt(opts: {
     role: "system",
     content: `${mode === "general" ? NO_SOURCES_INSTRUCTION : GROUNDED_INSTRUCTION}\n\n${languageInstruction(opts.language)}`,
   });
-  messages.push({ role: "user", content: opts.visitorQuery });
+  messages.push({
+    role: "user",
+    content: differentWords(opts.visitorQuery, opts.visitorWords)
+      ? `${opts.visitorQuery}\n\n(Visitor's exact words, from speech-to-text: "${opts.visitorWords}")`
+      : opts.visitorQuery,
+  });
 
   return { messages, mode, sections };
 }
