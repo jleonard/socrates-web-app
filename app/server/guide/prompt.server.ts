@@ -63,11 +63,13 @@ Never:
 - describe a person who isn't a widely known public figure (most researchers, curators and staff) from your own knowledge. If the SOURCES don't say who they are, say you don't have information about them here.
 - mention "sources", "SOURCES", retrieved content or how you get your information. Just answer.
 - treat a source that is related but doesn't actually answer the question as if it did.
+- contradict the SOURCES with your own knowledge. When the SOURCES speak to the question, their account comes first; if you know of a different view, you may add it afterwards, framed as general knowledge.
 
 # Interviews, essays and quotes
 
-Some SOURCES are marked with who is speaking, for example "[Interview with Ross MacPhee]". They are that person's account and views, not established fact:
-- attribute views and claims to them ("Ross MacPhee thinks…", "In her interview, Julia Zichello explains…").
+Some SOURCES sections are headed with who is speaking, for example "INTERVIEW WITH Ross MacPhee". They are that person's account and views, not established fact:
+- when they speak to the question, use what they say and attribute it by name ("Ross MacPhee says…", "In her interview, Julia Zichello explains…"). Don't drop it in favour of your own knowledge.
+- read the whole section before answering: interviews are spoken and loosely structured, so a general remark ("in an average mammal…") may be followed or preceded by the point that actually answers the question.
 - describe who they are only as the SOURCES do. Don't add biography, titles, research or achievements from your own knowledge.
 
 # Identifying what the visitor is looking at
@@ -85,7 +87,7 @@ Otherwise, answer from your own knowledge within the rules above. Begin by sayin
 
 export type AnswerMode = "grounded" | "general";
 
-type Section = "exhibition" | "object" | "background" | "elsewhere";
+type Section = "exhibition" | "object" | "background" | "elsewhere" | "voice";
 
 export type AnswerPrompt = {
   messages: ChatCompletionMessageParam[];
@@ -114,18 +116,32 @@ export function buildAnswerPrompt(opts: {
     object: [],
     background: [],
     elsewhere: [],
+    voice: [],
   };
   const exhibitionTexts: string[] = [...venueContext];
   const objectGroups = new Map<string, { title: string; texts: string[] }>();
   const backgroundTexts: string[] = [];
   // other halls in this venue, grouped by hall
   const elsewhereGroups = new Map<string, string[]>();
+  // interviews, essays etc. from this venue, grouped by who is speaking, so
+  // the speaker heads every passage and the model attributes their views
+  const voiceGroups = new Map<string, string[]>();
 
   for (const chunk of chunks) {
     const md = chunk.metadata;
     const body = String(md.text ?? "").trim();
     if (!body) continue;
-    const text = sourceLabel(md) + body;
+
+    const speaker = voiceHeading(md);
+    if (speaker && chunk.pool !== "elsewhere") {
+      sections.voice.push(chunk.id);
+      const texts = voiceGroups.get(speaker) ?? [];
+      texts.push(body);
+      voiceGroups.set(speaker, texts);
+      continue;
+    }
+
+    const text = (speaker ? `[${speaker}] ` : "") + body;
 
     if (chunk.pool === "elsewhere") {
       sections.elsewhere.push(chunk.id);
@@ -160,6 +176,11 @@ export function buildAnswerPrompt(opts: {
   }
   for (const { title, texts } of objectGroups.values()) {
     blocks.push(`## ABOUT THIS OBJECT: ${title}\n${texts.join("\n\n")}`);
+  }
+  for (const [speaker, texts] of voiceGroups) {
+    blocks.push(
+      `## ${speaker} (their own account and views: attribute what you use to them by name)\n${texts.join("\n\n")}`,
+    );
   }
   for (const [hall, texts] of elsewhereGroups) {
     blocks.push(
@@ -246,22 +267,23 @@ function contextNote(md: RecordMetadata): string[] {
 }
 
 /**
- * "[Interview with Ross MacPhee] " for chunks whose `source_type` says who is
- * speaking, so the model attributes their views (see the system prompt).
- * Uses `interviewee` (or name/title) from the folder metadata.
+ * "INTERVIEW WITH Ross MacPhee, Curator…" for chunks whose `source_type` says
+ * who is speaking, so the model attributes their views (see the system
+ * prompt). Uses `interviewee` (or name/title) from the folder metadata; null
+ * for ordinary content.
  */
-function sourceLabel(md: RecordMetadata): string {
+function voiceHeading(md: RecordMetadata): string | null {
   const type = typeof md.source_type === "string" ? md.source_type : null;
-  if (!type) return "";
+  if (!type) return null;
 
   const who = [md.interviewee, md.author, md.name, md.title].find(
     (v): v is string => typeof v === "string" && v.trim() !== "",
   );
-  const kind = type.charAt(0).toUpperCase() + type.slice(1);
-  if (!who) return `[${kind}] `;
+  const kind = type.toUpperCase();
+  if (!who) return kind;
   return type === "interview"
-    ? `[Interview with ${who.trim()}] `
-    : `[${kind} by ${who.trim()}] `;
+    ? `INTERVIEW WITH ${who.trim()}`
+    : `${kind} BY ${who.trim()}`;
 }
 
 /** "Reply in Spanish." from "es"; falls back to the question's language. */
