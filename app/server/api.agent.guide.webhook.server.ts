@@ -106,7 +106,11 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     /*
      * 📍 resolve the posted place into its place and exhibition ids
      */
-    const locationContext = await resolveLocation(place);
+    const locationContext = await timed(
+      loggingDetails.timing,
+      "location_ms",
+      () => resolveLocation(place),
+    );
     loggingDetails.location = {
       ...loggingDetails.location,
       ...locationContext,
@@ -117,11 +121,21 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      * visitor's own words. Exhibition entries win over place entries when
      * both define the same alias.
      */
-    const dictionaryIds = [locationContext.exhibitionId, locationContext.placeId];
-    const [correctedQuery, correctedWords] = await Promise.all([
-      correctPronunciations(dictionaryIds, query),
-      visitorWords ? correctPronunciations(dictionaryIds, visitorWords) : null,
-    ]);
+    const dictionaryIds = [
+      locationContext.exhibitionId,
+      locationContext.placeId,
+    ];
+    const [correctedQuery, correctedWords] = await timed(
+      loggingDetails.timing,
+      "pronunciation_ms",
+      () =>
+        Promise.all([
+          correctPronunciations(dictionaryIds, query),
+          visitorWords
+            ? correctPronunciations(dictionaryIds, visitorWords)
+            : null,
+        ]),
+    );
     const visitorQuery = correctedQuery ?? query;
     const heardWords = correctedWords ?? visitorWords;
     loggingDetails.query.corrected = correctedQuery;
@@ -143,10 +157,15 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      * the answering model gets `visitorQuery`.
      */
     // venue context isn't needed until the answer, but both are Redis reads
-    const [chatHistory, venueContext] = await Promise.all([
-      getChatHistory(user_id),
-      getVenueContext(locationContext),
-    ]);
+    const [chatHistory, venueContext] = await timed(
+      loggingDetails.timing,
+      "history_ms",
+      () =>
+        Promise.all([
+          getChatHistory(user_id),
+          getVenueContext(locationContext),
+        ]),
+    );
     const searchStartMs = Date.now();
     const { searchQuery, fallback: searchQueryFallback } =
       await buildSearchQuery(visitorQuery, chatHistory, heardWords);
@@ -162,16 +181,32 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     });
 
     /*
+     * 🌲 retrieval starts now, alongside the cache lookup: the lookup does
+     * its own embedding + Redis search, and in shadow mode (or on a miss)
+     * waiting for it first only adds latency. On a served hit the retrieval
+     * result is simply dropped.
+     */
+    const retrievalPromise = retrieveChunks({
+      searchQuery,
+      location: locationContext,
+    });
+    // a served cache hit returns without awaiting retrieval; don't let its
+    // failure become an unhandled rejection (awaiting below still throws)
+    retrievalPromise.catch(() => {});
+
+    /*
      * ⚡ cache, keyed on the English search query at this location and
      * content version. In shadow mode we only log what would be served.
      */
     const cache =
       GUIDE_CACHE_MODE !== "off" && !searchQueryFallback
-        ? await lookupGuideCache({
-            searchQuery,
-            location: locationContext,
-            language,
-          })
+        ? await timed(loggingDetails.timing, "cache_ms", () =>
+            lookupGuideCache({
+              searchQuery,
+              location: locationContext,
+              language,
+            }),
+          )
         : null;
     loggingDetails.cache = {
       mode: GUIDE_CACHE_MODE,
@@ -202,13 +237,15 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     }
 
     /*
-     * 🌲 retrieval: "here" scope (this exhibition + place-level content),
-     * general + visual-description searches, reranked together.
+     * 🌲 retrieval (started above): "here" scope (this exhibition +
+     * place-level content), general + visual-description searches,
+     * reranked together.
      */
-    const retrieval = await retrieveChunks({
-      searchQuery,
-      location: locationContext,
-    });
+    const retrieval = await retrievalPromise;
+    // from the end of the search query to retrieval done, i.e. what the
+    // cache lookup and retrieval together cost on the critical path
+    loggingDetails.timing.retrieval_wall_ms =
+      Date.now() - searchStartMs - loggingDetails.timing.search_query_ms;
     loggingDetails.retrieval = {
       filter: retrieval.filter,
       elsewhere_filter: retrieval.elsewhereFilter,
@@ -272,9 +309,12 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let reply = "";
+        const answerStartMs = Date.now();
         try {
           for await (const text of streamAnswer(answerPrompt.messages)) {
             loggingDetails.timing.first_token_ms ??= Date.now() - startMs;
+            // the answer model's own time to first token
+            loggingDetails.timing.answer_ttft_ms ??= Date.now() - answerStartMs;
             reply += text;
             // Response bodies must be bytes, not strings
             controller.enqueue(encoder.encode(text));
@@ -339,6 +379,23 @@ function parseLanguage(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const code = value.trim().toLowerCase();
   return /^[a-z]{2}$/.test(code) ? code : null;
+}
+
+/**
+ * Runs `fn` and records its duration as `timing[key]` (ms), even if it
+ * throws.
+ */
+async function timed<T>(
+  timing: Record<string, unknown>,
+  key: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const start = Date.now();
+  try {
+    return await fn();
+  } finally {
+    timing[key] = Date.now() - start;
+  }
 }
 
 /**
