@@ -42,18 +42,24 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 
 `app/server/api.agent.guide.webhook.server.ts`, with all its helpers in `app/server/guide/`. It must not import from `app/server/agent/` (that folder is being retired). Per request:
 
-1. Parse args (`query`, `user_id`, `place`, `conversation_id`, coords). `mit` / `wonderway` are forwarded to the legacy handler.
+1. Parse args (`query`, `visitor_words`, `language`, `user_id`, `place`, `conversation_id`, coords). `mit` / `wonderway` are forwarded to the legacy handler.
 2. `location.server.ts`: `place` → `{ locationId, placeId, exhibitionId }` via `location_relationships`.
 3. `pronunciation.server.ts`: fix speech-to-text mishearings from Strapi dictionaries (`mispronunciations:<id>` in Redis).
-4. `search.query.server.ts`: one LLM call → standalone English search query (follow-ups resolved from history, answer instructions and asserted claims removed). Used for retrieval and as the cache key only; the answer model gets the visitor's words. No query types — deliberately.
-5. `cache.server.ts`: semantic cache on the search query (own Redis index `guide_cache`), scoped to location + content version. `GUIDE_CACHE_MODE` = `off` | `shadow` (default: log would-be hits, don't serve) | `serve`.
+4. `search.query.server.ts`: one LLM call → standalone English search query, whatever language the visitor spoke (follow-ups resolved from history, answer instructions and asserted claims removed). Used for retrieval and as the cache key only; the answer model gets the visitor's words. No query types — deliberately.
+5. `cache.server.ts`: semantic cache on the search query (own Redis index `guide_cache_v2`), scoped to location + answer language + content version; turns without a valid `language` skip it. The lookup runs in parallel with retrieval (it only gates the response on a served hit). `GUIDE_CACHE_MODE` = `off` | `shadow` (default: log would-be hits, don't serve) | `serve`.
 6. `retrieval.server.ts`: "here" pool = this exhibition + place-level content, both namespaces; a general search and a `chunk_type=visual_description` search, reranked together; gate on `RERANK_MIN` / `DENSE_FLOOR`; one chunk per object first, then fill by score.
-7. `prompt.server.ts`: system rules (venue facts only from sources; general knowledge allowed with guardrails and framing; species facts never stated as specimen facts; identification one/several/none; attribute interviews) + SOURCES grouped by `scope`. Always answers in English (the voice agent translates). `venue.context.server.ts` adds the CMS prompt (`prompt:<id>`) as a source.
+7. `prompt.server.ts`: system rules (venue facts only from sources; general knowledge allowed with guardrails and framing; species facts never stated as specimen facts; identification one/several/none; attribute interviews) + SOURCES grouped by `scope`. Answers in the visitor's language (the agent's `language` arg; else the language of the question), and the voice agent speaks the reply as-is, without translating. `venue.context.server.ts` adds the CMS prompt (`prompt:<id>`) as a source.
 8. `answer.server.ts` streams the reply; `save.turn.server.ts` writes chat history (`chat:<user_id>`, shared with the history agent), `agent_history` (full record in `details`, `v: 1`) and a slim `event_log` event linked by `details.request_id`, before the stream closes.
 
 ### Old and legacy webhooks (being phased out)
 
 `api.agent.webhook.server.ts` + `app/server/agent/` (query types, `QUERY_TYPE_CONFIG`) and `api.agent.webhook.legacy.server.ts`. MIT and wonderway still run on the legacy flow — **don't change it**; it will be removed once those places move to the guide.
+
+### Languages
+
+- **Visitor language** is per turn: the ElevenLabs agent has several languages enabled with its `language_detection` tool on (it switches mid-conversation), speech-to-text isn't pinned to a language, and the agent's LLM fills the tool's `language` arg (ISO 639-1) from what the visitor actually said. Voices per language are set on the agent (language presets), not by the app.
+- **UI language** (`lng` cookie, `en`/`es`) only drives UI strings and the greeting mp3. It is not sent to ElevenLabs and can differ from the spoken language.
+- **Content language**: the search query is English, so retrieval matches English content best. A venue with non-English content (Parque Explora, Spanish) needs the query written in its content language — planned, not built.
 
 ## Content, metadata and ingest
 
@@ -65,6 +71,8 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 ## Logging
 
 `agent_history` and `event_log` keep only filtered/searched/human-written fields as columns (`user_id`, `conversation_id`, `app_version`, `query`, `response`, `qa`, …); everything else goes in the jsonb details. The older `tool_*` / `rag_*` / `text_*` columns on `agent_history` are deprecated (not written by the guide). `app_version` is `package.json`'s version, injected as `__APP_VERSION__` (`utils/app.version.ts`).
+
+Guide turns log per-step latency in `details.timing` (ms): `location_ms`, `pronunciation_ms`, `history_ms`, `search_query_ms`, `cache_ms`, `embed_ms`, `search_ms`, `rerank_ms`, `retrieval_wall_ms` (what cache + retrieval cost on the critical path), `answer_ttft_ms`, `first_token_ms` and `total_ms` (both from request start).
 
 ## Running ad-hoc checks
 
