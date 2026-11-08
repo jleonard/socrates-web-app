@@ -151,7 +151,11 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   if (fullEntry?.greeting) {
     console.log("has greeting");
     try {
-      await processGreeting(fullEntry.greeting, fullEntry[`${model}_id`]);
+      await processGreeting(
+        fullEntry.greeting,
+        fullEntry[`${model}_id`],
+        contentLanguage(model, fullEntry),
+      );
       console.log("greeing processed");
     } catch (err) {
       console.log(
@@ -351,10 +355,22 @@ function buildBaseMeta(
         ? (entry.place_id ?? null)
         : (entry.place?.place_id ?? null),
     // @TODO institution_id: entry.institution_id ?? null,
-    language: entry.language ?? "en",
+    language: contentLanguage(model, entry),
     scope: scopeFor(model, entry),
     ...extras,
   };
+}
+
+/**
+ * ISO 639-1 language the entry's content is written in: the Place's
+ * `language` field (other models inherit their place's, when the place is
+ * populated); English when unset.
+ */
+function contentLanguage(model: string, entry: Record<string, any>): string {
+  const lang = model === "place" ? entry.language : entry.place?.language;
+  return typeof lang === "string" && lang.trim()
+    ? lang.trim().toLowerCase()
+    : "en";
 }
 
 const SCOPES = ["venue", "object", "universal"] as const;

@@ -12,7 +12,7 @@ type TtsLanguageConfig = {
 export const ttsLanguages: Record<SupportedLocale, TtsLanguageConfig> = {
   en: {
     elevenlabsVoiceId: "FUfBrNit0NNZAwb58KWH", // Angela
-    prompt: "",
+    prompt: "natural American English",
   },
   es: {
     elevenlabsVoiceId: "b2htR0pMe28pYwCY9gnP", // Sofia - Columbian
