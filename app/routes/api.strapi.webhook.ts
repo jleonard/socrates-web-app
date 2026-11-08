@@ -91,6 +91,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
 
   await storePromptInRedis(model, fullEntry);
+  await storeLanguageInRedis(model, fullEntry);
 
   console.log(
     `[strapi webhook] fetched full entry for ${model} fullEntry: ${JSON.stringify(fullEntry, null, 2)}`,
@@ -740,6 +741,28 @@ async function storePromptInRedis(model: string, entry: Record<string, any>) {
     await redis.set(`prompt:${id}`, entry.prompt);
   } catch (err) {
     // TODO sentry error
+  }
+}
+
+/**
+ * Stores a place's content language as `language:<place_id>`, read by the
+ * guide (guide/venue.language.server.ts) to write its search query in the
+ * language of the venue's content. Unset means English.
+ */
+async function storeLanguageInRedis(model: string, entry: Record<string, any>) {
+  if (model !== "place" || !entry?.place_id) return;
+
+  try {
+    const redis = await getRedis();
+    await redis.set(
+      `language:${entry.place_id}`,
+      contentLanguage(model, entry),
+    );
+  } catch (err) {
+    console.error(
+      `[webhook] failed to store language for place ${entry.place_id}`,
+      err,
+    );
   }
 }
 

@@ -15,6 +15,7 @@ import { correctPronunciations } from "./guide/pronunciation.server";
 import { retrieveChunks } from "./guide/retrieval.server";
 import { buildSearchQuery } from "./guide/search.query.server";
 import { getVenueContext } from "./guide/venue.context.server";
+import { getContentLanguage } from "./guide/venue.language.server";
 
 /** Places still served by the legacy webhook until they migrate. */
 const LEGACY_PLACES = new Set(["mit", "wonderway"]);
@@ -152,23 +153,30 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     }
 
     /*
-     * 🔎 build the search query: English, cleaned up for retrieval, with
-     * follow-ups resolved from recent history. Used ONLY for retrieval;
-     * the answering model gets `visitorQuery`.
+     * 🔎 build the search query: in the venue's content language, cleaned
+     * up for retrieval, with follow-ups resolved from recent history. Used
+     * ONLY for retrieval; the answering model gets `visitorQuery`.
      */
-    // venue context isn't needed until the answer, but both are Redis reads
-    const [chatHistory, venueContext] = await timed(
+    // venue context isn't needed until the answer, but all are Redis reads
+    const [chatHistory, venueContext, contentLanguage] = await timed(
       loggingDetails.timing,
       "history_ms",
       () =>
         Promise.all([
           getChatHistory(user_id),
           getVenueContext(locationContext),
+          getContentLanguage(locationContext),
         ]),
     );
+    loggingDetails.content_language = contentLanguage;
     const searchStartMs = Date.now();
     const { searchQuery, fallback: searchQueryFallback } =
-      await buildSearchQuery(visitorQuery, chatHistory, heardWords);
+      await buildSearchQuery(
+        visitorQuery,
+        chatHistory,
+        heardWords,
+        contentLanguage,
+      );
     loggingDetails.query.search = searchQuery;
     loggingDetails.query.search_fallback = searchQueryFallback;
     loggingDetails.timing.search_query_ms = Date.now() - searchStartMs;
@@ -195,7 +203,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     retrievalPromise.catch(() => {});
 
     /*
-     * ⚡ cache, keyed on the English search query at this location and
+     * ⚡ cache, keyed on the search query at this location and
      * content version. In shadow mode we only log what would be served.
      */
     const cache =

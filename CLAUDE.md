@@ -45,7 +45,7 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 1. Parse args (`query`, `visitor_words`, `language`, `user_id`, `place`, `conversation_id`, coords). `mit` / `wonderway` are forwarded to the legacy handler.
 2. `location.server.ts`: `place` → `{ locationId, placeId, exhibitionId }` via `location_relationships`.
 3. `pronunciation.server.ts`: fix speech-to-text mishearings from Strapi dictionaries (`mispronunciations:<id>` in Redis).
-4. `search.query.server.ts`: one LLM call → standalone English search query, whatever language the visitor spoke (follow-ups resolved from history, answer instructions and asserted claims removed). Used for retrieval and as the cache key only; the answer model gets the visitor's words. No query types — deliberately.
+4. `search.query.server.ts`: one LLM call → standalone search query in the venue's content language (`venue.language.server.ts`), whatever language the visitor spoke (follow-ups resolved from history, answer instructions and asserted claims removed). Used for retrieval and as the cache key only; the answer model gets the visitor's words. No query types — deliberately.
 5. `cache.server.ts`: semantic cache on the search query (own Redis index `guide_cache_v2`), scoped to location + answer language + content version; turns without a valid `language` skip it. The lookup runs in parallel with retrieval (it only gates the response on a served hit). `GUIDE_CACHE_MODE` = `off` | `shadow` (default: log would-be hits, don't serve) | `serve`.
 6. `retrieval.server.ts`: "here" pool = this exhibition + place-level content, both namespaces; a general search and a `chunk_type=visual_description` search, reranked together; gate on `RERANK_MIN` / `DENSE_FLOOR`; one chunk per object first, then fill by score.
 7. `prompt.server.ts`: system rules (venue facts only from sources; general knowledge allowed with guardrails and framing; species facts never stated as specimen facts; identification one/several/none; attribute interviews) + SOURCES grouped by `scope`. Answers in the visitor's language (the agent's `language` arg; else the language of the question), and the voice agent speaks the reply as-is, without translating. `venue.context.server.ts` adds the CMS prompt (`prompt:<id>`) as a source.
@@ -59,7 +59,8 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 
 - **Visitor language** is per turn: the ElevenLabs agent has several languages enabled with its `language_detection` tool on (it switches mid-conversation), speech-to-text isn't pinned to a language, and the agent's LLM fills the tool's `language` arg (ISO 639-1) from what the visitor actually said. Voices per language are set on the agent (language presets), not by the app.
 - **UI language** (`lng` cookie, `en`/`es`) only drives UI strings and the greeting mp3. It is not sent to ElevenLabs and can differ from the spoken language.
-- **Content language**: the search query is English, so retrieval matches English content best. A venue with non-English content (Parque Explora, Spanish) needs the query written in its content language — planned, not built.
+- **Content language** is per venue: the Strapi Place `language` field (exhibitions and other models inherit their place's; unset = `en`). The Strapi webhook stores it as `language:<place_id>` in Redis and tags chunks with it; the guide writes its search query in it so retrieval matches the content. Every Pinecone chunk has `language` (Dropbox: from `metadata.json`, default `en`).
+- **Greetings** are written in the place's language; other locales' mp3s are LLM-translated (`utils/ragIngest/greeting.server.ts`).
 
 ## Content, metadata and ingest
 
