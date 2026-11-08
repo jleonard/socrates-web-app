@@ -43,8 +43,16 @@ import {
 
 const ParentComponent: React.FC = () => {
   const { t } = useTranslation();
-  const { access, elevenLabsId, sessionId, user, user_profile, place, locale } =
-    useLoaderData<typeof loader>();
+  const {
+    access,
+    elevenLabsId,
+    startLanguage,
+    sessionId,
+    user,
+    user_profile,
+    place,
+    locale,
+  } = useLoaderData<typeof loader>();
 
   // this is used to post to the action
   const submit = useSubmit();
@@ -211,6 +219,11 @@ const ParentComponent: React.FC = () => {
           conversation_id,
           place: activePlace,
         },
+        // venue's language (from the loader) as the first guess; the agent
+        // switches to whatever language the visitor actually speaks
+        ...(startLanguage && {
+          overrides: { agent: { language: startLanguage } },
+        }),
       });
 
       logAppEventFromClient({
@@ -233,7 +246,7 @@ const ParentComponent: React.FC = () => {
       }
       setError("Couldn't start the conversation");
     }
-  }, [conversation, user, coords, elevenLabsId]);
+  }, [conversation, user, coords, elevenLabsId, startLanguage]);
 
   const stopConversation = useCallback(async () => {
     logAppEventFromClient({

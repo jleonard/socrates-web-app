@@ -16,6 +16,34 @@ const AGENTS: Record<string, string | undefined> = {
 
 export type AgentName = keyof typeof AGENTS;
 
+/**
+ * Agents that accept a starting-language override (`overrides.agent.language`,
+ * allowed in the agent's security settings), keyed by agent id, with the
+ * languages they have enabled (default + language presets). Sending a
+ * language an agent doesn't allow or doesn't have fails the session, so
+ * anything not listed here starts in the agent's default language.
+ *
+ * Keyed by id, not name, so `default` picks this up once ELEVENLABS_AGENT
+ * points at prod b.
+ */
+const START_LANGUAGES: Record<string, readonly string[]> = {
+  // wonderway - prod b (only languages we're keeping after the trim)
+  agent_0201m4yd6fh9f02t9r3dhmmwgq85: ["en", "es", "zh"],
+};
+
+/**
+ * The language to start this agent's conversation in: the venue's language
+ * if the agent can take it, else undefined (the agent's own default).
+ * Language detection still switches to whatever the visitor speaks.
+ */
+export function startLanguageFor(
+  agentId: string,
+  language: string | null,
+): string | undefined {
+  if (!language) return undefined;
+  return START_LANGUAGES[agentId]?.includes(language) ? language : undefined;
+}
+
 /** Session key holding the chosen agent name. */
 const SESSION_KEY = "agent";
 
