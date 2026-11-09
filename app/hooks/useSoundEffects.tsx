@@ -3,18 +3,25 @@ import { useCallback, useEffect, useRef } from "react";
 /**
  * The agent's sound effects. To change a sound, replace its mp3 (or point src
  * at another file in public/). volume is a gain: 1 = as recorded, above 1
- * boosts a quiet file.
+ * boosts a quiet file. enabled: false mutes a sound (it isn't loaded or
+ * played) without touching the code that triggers it.
  */
 export const SOUND_EFFECTS = {
   // the session connected
-  on: { src: "/audio/agent/on.mp3", volume: 0.5 },
+  // muted for now: testing the processing sound on its own
+  on: { src: "/audio/agent/on.mp3", volume: 0.5, enabled: false },
   // the session ended (tap, agent hang-up, timeout, dropped connection)
-  off: { src: "/audio/agent/off.mp3", volume: 0.5 },
+  off: { src: "/audio/agent/off.mp3", volume: 0.5, enabled: false },
   // a conversation error or a failed start (played instead of off)
-  error: { src: "/audio/agent/error.mp3", volume: 0.5 },
+  error: { src: "/audio/agent/error.mp3", volume: 0.5, enabled: false },
   // looped while the agent works on a reply
-  // processing.mp3 is mastered ~20 dB quieter than the others (peak 0.09), hence the boost
-  processing: { src: "/audio/agent/processing.mp3", volume: 4 },
+  // processing.mp3 is mastered very quiet (peak 0.107, RMS -38 dBFS vs -8 for
+  // on.mp3), hence the boost; 9 (peak ~0.96) was too loud in testing, 4 too quiet
+  processing: {
+    src: "/audio/agent/processing.mp3",
+    volume: 5,
+    enabled: true,
+  },
 };
 
 export type SoundEffect = keyof typeof SOUND_EFFECTS;
@@ -56,7 +63,8 @@ export function useSoundEffects() {
     if (ctx.state === "suspended") void ctx.resume();
 
     for (const name of Object.keys(SOUND_EFFECTS) as SoundEffect[]) {
-      const { src } = SOUND_EFFECTS[name];
+      const { src, enabled } = SOUND_EFFECTS[name];
+      if (!enabled) continue;
       buffersRef.current[name] ??= fetch(src)
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -124,11 +132,7 @@ export function useSoundEffects() {
     stopProcessing();
     const run = runRef.current;
     delayRef.current = setTimeout(async () => {
-      const playing = await startSource(
-        "processing",
-        true,
-        PROCESSING.fadeMs,
-      );
+      const playing = await startSource("processing", true, PROCESSING.fadeMs);
       if (!playing) return;
       // stopProcessing() may have run while the file was still loading
       if (run !== runRef.current) {
