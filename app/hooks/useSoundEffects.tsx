@@ -19,7 +19,7 @@ export const SOUND_EFFECTS = {
   // on.mp3), hence the boost; 9 (peak ~0.96) was too loud in testing, 4 too quiet
   processing: {
     src: "/audio/agent/processing.mp3",
-    volume: 5,
+    volume: 4,
     enabled: true,
   },
 };
