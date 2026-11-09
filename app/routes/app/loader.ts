@@ -6,7 +6,11 @@ import { getPromo, setUserPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
-import { resolveAgentId } from "~/utils/elevenlabs/agents.server";
+import { getPlaceLanguage } from "~/server/guide/venue.language.server";
+import {
+  resolveAgentId,
+  startLanguageFor,
+} from "~/utils/elevenlabs/agents.server";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -135,6 +139,13 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     console.log("sb error: ", error);
   }
 
+  // the conversation starts in the venue's content language (e.g. Spanish at
+  // Parque); the agent's language detection takes over once the visitor speaks
+  const startLanguage = startLanguageFor(
+    agentId,
+    await getPlaceLanguage(session.get("place")),
+  );
+
   return data(
     {
       access: access as AccessRecord | null,
@@ -145,6 +156,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: agentId,
+      startLanguage,
       place: session.get("place"),
       locale,
     },

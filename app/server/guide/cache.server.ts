@@ -13,8 +13,8 @@ import type { LocationContext } from "./location.server";
 //
 // Separate from utils/cache (the old webhook's cache): that one is keyed on
 // raw visitor wording, mixes languages, and holds answers from before the
-// QA fixes. This one is keyed on the guide's English search query (follow-
-// ups already resolved), scoped to the visitor's location and language
+// QA fixes. This one is keyed on the guide's search query (in the venue's
+// content language, follow-ups already resolved), scoped to the visitor's location and language
 // (answers are written in the visitor's language), and matched only against
 // the current content version (see content.version.server.ts).
 // Requests without a known language skip the cache entirely.

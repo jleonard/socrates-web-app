@@ -91,6 +91,7 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   const fullEntry = await fetchStrapiEntry(model, entry.documentId);
 
   await storePromptInRedis(model, fullEntry);
+  await storeLanguageInRedis(model, fullEntry);
 
   console.log(
     `[strapi webhook] fetched full entry for ${model} fullEntry: ${JSON.stringify(fullEntry, null, 2)}`,
@@ -151,7 +152,11 @@ async function handlePublish(model: string, entry: Record<string, any>) {
   if (fullEntry?.greeting) {
     console.log("has greeting");
     try {
-      await processGreeting(fullEntry.greeting, fullEntry[`${model}_id`]);
+      await processGreeting(
+        fullEntry.greeting,
+        fullEntry[`${model}_id`],
+        contentLanguage(model, fullEntry),
+      );
       console.log("greeing processed");
     } catch (err) {
       console.log(
@@ -351,10 +356,22 @@ function buildBaseMeta(
         ? (entry.place_id ?? null)
         : (entry.place?.place_id ?? null),
     // @TODO institution_id: entry.institution_id ?? null,
-    language: entry.language ?? "en",
+    language: contentLanguage(model, entry),
     scope: scopeFor(model, entry),
     ...extras,
   };
+}
+
+/**
+ * ISO 639-1 language the entry's content is written in: the Place's
+ * `language` field (other models inherit their place's, when the place is
+ * populated); English when unset.
+ */
+function contentLanguage(model: string, entry: Record<string, any>): string {
+  const lang = model === "place" ? entry.language : entry.place?.language;
+  return typeof lang === "string" && lang.trim()
+    ? lang.trim().toLowerCase()
+    : "en";
 }
 
 const SCOPES = ["venue", "object", "universal"] as const;
@@ -724,6 +741,28 @@ async function storePromptInRedis(model: string, entry: Record<string, any>) {
     await redis.set(`prompt:${id}`, entry.prompt);
   } catch (err) {
     // TODO sentry error
+  }
+}
+
+/**
+ * Stores a place's content language as `language:<place_id>`, read by the
+ * guide (guide/venue.language.server.ts) to write its search query in the
+ * language of the venue's content. Unset means English.
+ */
+async function storeLanguageInRedis(model: string, entry: Record<string, any>) {
+  if (model !== "place" || !entry?.place_id) return;
+
+  try {
+    const redis = await getRedis();
+    await redis.set(
+      `language:${entry.place_id}`,
+      contentLanguage(model, entry),
+    );
+  } catch (err) {
+    console.error(
+      `[webhook] failed to store language for place ${entry.place_id}`,
+      err,
+    );
   }
 }
 

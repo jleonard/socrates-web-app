@@ -521,6 +521,9 @@ async function pushTextToPinecone(
     values: embeddings[i],
     metadata: {
       ...file.metadata,
+      // ISO 639-1 language of the text; set `language` in a folder's
+      // metadata.json for non-English content (e.g. "es")
+      language: file.metadata?.language ?? "en",
       text: chunkText,
       chunk_index: i,
       chunk_count: chunks.length,

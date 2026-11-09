@@ -164,7 +164,8 @@ export async function upsertChunk(
     {
       id,
       values: vector,
-      metadata: { ...metadata, text },
+      // `language` (ISO 639-1) defaults to English unless the caller sets it
+      metadata: { language: "en", ...metadata, text },
     },
   ]);
 

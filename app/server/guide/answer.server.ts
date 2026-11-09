@@ -4,11 +4,12 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY! });
 
 /**
- * gpt-4o: in the Oct 2026 QA replay it followed the source rules where
- * gpt-4o-mini didn't (dropped facts that were in the sources, conflated the
- * Last Glacial Maximum with the glacial period), at similar latency.
+ * gpt-4.1: in the Nov 2026 QA replay it used and attributed an interview
+ * source that gpt-4o contradicted with its own knowledge, and framed general
+ * knowledge more reliably, at the same latency. (gpt-4o had replaced
+ * gpt-4o-mini in Oct 2026, which dropped facts that were in the sources.)
  */
-const ANSWER_MODEL = "gpt-4o";
+const ANSWER_MODEL = "gpt-4.1";
 
 /**
  * A ceiling, not a target: the prompt shapes length (max ~4 sentences).

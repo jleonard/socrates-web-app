@@ -15,6 +15,7 @@ import { correctPronunciations } from "./guide/pronunciation.server";
 import { retrieveChunks } from "./guide/retrieval.server";
 import { buildSearchQuery } from "./guide/search.query.server";
 import { getVenueContext } from "./guide/venue.context.server";
+import { getContentLanguage } from "./guide/venue.language.server";
 
 /** Places still served by the legacy webhook until they migrate. */
 const LEGACY_PLACES = new Set(["mit", "wonderway"]);
@@ -50,6 +51,13 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     const { query, user_id, place, conversation_id } = body ?? {};
     // set by the ElevenLabs agent on each call; null if missing or malformed
     const language = parseLanguage(body?.language);
+    // The visitor's message as heard, if the agent's tool sends it. `query`
+    // is the agent's own rewrite, which can smooth a mishearing into a
+    // different question before the dictionaries below ever see it.
+    const visitorWords =
+      typeof body?.visitor_words === "string" && body.visitor_words.trim()
+        ? body.visitor_words.trim()
+        : null;
 
     // setup logging
     const startMs = Date.now();
@@ -61,6 +69,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       language,
       query: {
         original: query,
+        visitor_words: visitorWords,
       },
       location: {},
       timing: {
@@ -98,44 +107,76 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     /*
      * 📍 resolve the posted place into its place and exhibition ids
      */
-    const locationContext = await resolveLocation(place);
+    const locationContext = await timed(
+      loggingDetails.timing,
+      "location_ms",
+      () => resolveLocation(place),
+    );
     loggingDetails.location = {
       ...loggingDetails.location,
       ...locationContext,
     };
 
     /*
-     * ✏️ fix speech-to-text mishearings. Exhibition entries win over place
-     * entries when both define the same alias.
+     * ✏️ fix speech-to-text mishearings, in the agent's query and in the
+     * visitor's own words. Exhibition entries win over place entries when
+     * both define the same alias.
      */
-    const correctedQuery = await correctPronunciations(
-      [locationContext.exhibitionId, locationContext.placeId],
-      query,
+    const dictionaryIds = [
+      locationContext.exhibitionId,
+      locationContext.placeId,
+    ];
+    const [correctedQuery, correctedWords] = await timed(
+      loggingDetails.timing,
+      "pronunciation_ms",
+      () =>
+        Promise.all([
+          correctPronunciations(dictionaryIds, query),
+          visitorWords
+            ? correctPronunciations(dictionaryIds, visitorWords)
+            : null,
+        ]),
     );
     const visitorQuery = correctedQuery ?? query;
+    const heardWords = correctedWords ?? visitorWords;
     loggingDetails.query.corrected = correctedQuery;
+    loggingDetails.query.visitor_words_corrected = correctedWords;
 
-    if (correctedQuery) {
+    if (correctedQuery || correctedWords) {
       console.log("[guide] pronunciation corrected", {
         conversation_id,
         original: query,
         corrected: correctedQuery,
+        visitor_words: visitorWords,
+        visitor_words_corrected: correctedWords,
       });
     }
 
     /*
-     * 🔎 build the search query: English, cleaned up for retrieval, with
-     * follow-ups resolved from recent history. Used ONLY for retrieval;
-     * the answering model gets `visitorQuery`.
+     * 🔎 build the search query: in the venue's content language, cleaned
+     * up for retrieval, with follow-ups resolved from recent history. Used
+     * ONLY for retrieval; the answering model gets `visitorQuery`.
      */
-    // venue context isn't needed until the answer, but both are Redis reads
-    const [chatHistory, venueContext] = await Promise.all([
-      getChatHistory(user_id),
-      getVenueContext(locationContext),
-    ]);
+    // venue context isn't needed until the answer, but all are Redis reads
+    const [chatHistory, venueContext, contentLanguage] = await timed(
+      loggingDetails.timing,
+      "history_ms",
+      () =>
+        Promise.all([
+          getChatHistory(user_id),
+          getVenueContext(locationContext),
+          getContentLanguage(locationContext),
+        ]),
+    );
+    loggingDetails.content_language = contentLanguage;
     const searchStartMs = Date.now();
     const { searchQuery, fallback: searchQueryFallback } =
-      await buildSearchQuery(visitorQuery, chatHistory);
+      await buildSearchQuery(
+        visitorQuery,
+        chatHistory,
+        heardWords,
+        contentLanguage,
+      );
     loggingDetails.query.search = searchQuery;
     loggingDetails.query.search_fallback = searchQueryFallback;
     loggingDetails.timing.search_query_ms = Date.now() - searchStartMs;
@@ -148,16 +189,32 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     });
 
     /*
-     * ⚡ cache, keyed on the English search query at this location and
+     * 🌲 retrieval starts now, alongside the cache lookup: the lookup does
+     * its own embedding + Redis search, and in shadow mode (or on a miss)
+     * waiting for it first only adds latency. On a served hit the retrieval
+     * result is simply dropped.
+     */
+    const retrievalPromise = retrieveChunks({
+      searchQuery,
+      location: locationContext,
+    });
+    // a served cache hit returns without awaiting retrieval; don't let its
+    // failure become an unhandled rejection (awaiting below still throws)
+    retrievalPromise.catch(() => {});
+
+    /*
+     * ⚡ cache, keyed on the search query at this location and
      * content version. In shadow mode we only log what would be served.
      */
     const cache =
       GUIDE_CACHE_MODE !== "off" && !searchQueryFallback
-        ? await lookupGuideCache({
-            searchQuery,
-            location: locationContext,
-            language,
-          })
+        ? await timed(loggingDetails.timing, "cache_ms", () =>
+            lookupGuideCache({
+              searchQuery,
+              location: locationContext,
+              language,
+            }),
+          )
         : null;
     loggingDetails.cache = {
       mode: GUIDE_CACHE_MODE,
@@ -188,13 +245,15 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     }
 
     /*
-     * 🌲 retrieval: "here" scope (this exhibition + place-level content),
-     * general + visual-description searches, reranked together.
+     * 🌲 retrieval (started above): "here" scope (this exhibition +
+     * place-level content), general + visual-description searches,
+     * reranked together.
      */
-    const retrieval = await retrieveChunks({
-      searchQuery,
-      location: locationContext,
-    });
+    const retrieval = await retrievalPromise;
+    // from the end of the search query to retrieval done, i.e. what the
+    // cache lookup and retrieval together cost on the critical path
+    loggingDetails.timing.retrieval_wall_ms =
+      Date.now() - searchStartMs - loggingDetails.timing.search_query_ms;
     loggingDetails.retrieval = {
       filter: retrieval.filter,
       elsewhere_filter: retrieval.elsewhereFilter,
@@ -237,6 +296,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      */
     const answerPrompt = buildAnswerPrompt({
       visitorQuery,
+      visitorWords: heardWords,
       language,
       history: chatHistory,
       chunks: retrieval.chunks,
@@ -257,9 +317,12 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let reply = "";
+        const answerStartMs = Date.now();
         try {
           for await (const text of streamAnswer(answerPrompt.messages)) {
             loggingDetails.timing.first_token_ms ??= Date.now() - startMs;
+            // the answer model's own time to first token
+            loggingDetails.timing.answer_ttft_ms ??= Date.now() - answerStartMs;
             reply += text;
             // Response bodies must be bytes, not strings
             controller.enqueue(encoder.encode(text));
@@ -324,6 +387,23 @@ function parseLanguage(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const code = value.trim().toLowerCase();
   return /^[a-z]{2}$/.test(code) ? code : null;
+}
+
+/**
+ * Runs `fn` and records its duration as `timing[key]` (ms), even if it
+ * throws.
+ */
+async function timed<T>(
+  timing: Record<string, unknown>,
+  key: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const start = Date.now();
+  try {
+    return await fn();
+  } finally {
+    timing[key] = Date.now() - start;
+  }
 }
 
 /**
