@@ -5,14 +5,20 @@ import type { Session } from "react-router";
  * refer to the NAME, so agent ids never appear in a URL, and only agents
  * listed here can be used.
  *
- * `default` comes from ELEVENLABS_AGENT so production keeps its current
- * agent without a code change. Add entries as `name: "agent_..."`.
+ * `default` comes from ELEVENLABS_AGENT (agentB / prod b), so the default
+ * agent can change without a deploy. MIT stays on the legacy agent until it
+ * moves to the guide (PLACE_AGENTS). Add entries as `name: "agent_..."`.
  */
 const AGENTS: Record<string, string | undefined> = {
   default: process.env.ELEVENLABS_AGENT,
   legacyMIT: "agent_7401m2tn9ewrfm5rrz73js20ecqw",
   agentB: "agent_0201m4yd6fh9f02t9r3dhmmwgq85",
   // guide: "agent_xxxxxxxxxxxxxxxxxxxxxxxx", // copy of production for the guide webhook
+};
+
+/** Places that still run on the legacy agent. */
+const PLACE_AGENTS: Record<string, AgentName> = {
+  mit: "legacyMIT",
 };
 
 export type AgentName = keyof typeof AGENTS;
@@ -54,10 +60,12 @@ const SESSION_KEY = "agent";
  *      the session so it survives redirects and reloads; `?agent=default`
  *      clears it.
  *   2. otherwise the name saved in the session
- *   3. otherwise `default`
+ *   3. otherwise the place's agent (PLACE_AGENTS), from the `place` saved
+ *      in the session by the loader (`?place=mit` → legacyMIT)
+ *   4. otherwise `default` (ELEVENLABS_AGENT)
  *
  * Unknown names are ignored (and logged), never passed through as ids.
- * Venue-based selection can be added here later, between 1 and 3.
+ * Call it after the loader has saved `?place=` to the session.
  */
 export function resolveAgentId(
   requested: string | null,
@@ -72,8 +80,13 @@ export function resolveAgentId(
   }
 
   const name = session.get(SESSION_KEY);
+  const place = session.get("place");
+  const placeAgent = typeof place === "string" ? PLACE_AGENTS[place] : undefined;
   // the dictionary may have changed since the name was stored
-  const id = (name && AGENTS[name]) || AGENTS.default;
+  const id =
+    (name && AGENTS[name]) ||
+    (placeAgent && AGENTS[placeAgent]) ||
+    AGENTS.default;
 
   if (!id) throw new Error("ELEVENLABS_AGENT is not set");
   return id;

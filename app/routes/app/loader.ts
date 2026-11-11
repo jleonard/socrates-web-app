@@ -30,12 +30,13 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const place = url.searchParams.get("place");
   const promo = url.searchParams.get("promo");
 
-  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
-
   // save place before any redirects
   if (place) {
     session.set("place", place);
   }
+
+  // after saving place: the place can pick the agent (mit → legacy)
+  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save promo before any redirect
   if (promo) {
