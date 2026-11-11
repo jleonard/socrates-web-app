@@ -10,6 +10,7 @@ import type { Session } from "react-router";
  */
 const AGENTS: Record<string, string | undefined> = {
   default: process.env.ELEVENLABS_AGENT,
+  legacyMIT: "agent_7401m2tn9ewrfm5rrz73js20ecqw",
   agentB: "agent_0201m4yd6fh9f02t9r3dhmmwgq85",
   // guide: "agent_xxxxxxxxxxxxxxxxxxxxxxxx", // copy of production for the guide webhook
 };
