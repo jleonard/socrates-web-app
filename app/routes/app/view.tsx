@@ -47,6 +47,7 @@ const ParentComponent: React.FC = () => {
     access,
     elevenLabsId,
     startLanguage,
+    shouldPlayGreeting,
     sessionId,
     user,
     user_profile,
@@ -350,11 +351,6 @@ const ParentComponent: React.FC = () => {
     play: () => void;
   };
   const audioRef = useRef<AudioPlayerHandle>(null);
-  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
-
-  const shouldPlayGreeting =
-    !user_profile?.last_greeted ||
-    Date.now() - new Date(user_profile.last_greeted).getTime() > THIRTY_DAYS;
 
   const handleGreetingEnded = () => {
     setCircleMode("idle");

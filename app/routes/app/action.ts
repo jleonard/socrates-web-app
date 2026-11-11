@@ -1,13 +1,10 @@
 import { ActionFunctionArgs } from "react-router";
 import * as Sentry from "@sentry/react-router";
-import { betterUpsertUserProfile } from "~/server/user.last-seen.server";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import { setAccessExpiration } from "~/server/access.manager.server";
+import { markGreeted } from "~/server/greeting.server";
+import { getSessionId } from "~/sessions.server";
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { supabase: subabaseServiceRole } = getSupabaseServiceRoleClient();
-
   const body = await request.formData();
 
   const intent = body.get("intent");
@@ -39,20 +36,16 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   /*
-   * check if the access is expired
+   * record that the user heard this place's greeting
    */
-  if (intent === "greeted") {
-    const userObj = { user_id: String(userId), last_greeted: new Date() };
-
-    const { data, error } = await betterUpsertUserProfile(
-      userObj,
-      subabaseServiceRole,
-    );
-
-    if (error) {
-      Sentry.captureMessage("upsertUserProfile failed", {
-        level: "error",
-        extra: { user: userObj, error },
+  if (intent === "greeted" && userId) {
+    const { session } = await getSessionId(request);
+    const place = session.get("place");
+    try {
+      await markGreeted(String(userId), place);
+    } catch (error) {
+      Sentry.captureException(error, {
+        extra: { user_id: String(userId), place },
       });
     }
     return new Response("User greeted", { status: 200 });
