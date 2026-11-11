@@ -10,6 +10,9 @@
     "continue_with": "Continuar con {{provider}}",
     "auth_tagline": "Museos. Monumentos. Cultura."
   },
+  "exhibition": {
+    "start_experience": "Iniciar experiencia"
+  },
   "nav": {
     "privacy": "Política de Privacidad",
     "terms": "Términos y Condiciones"
