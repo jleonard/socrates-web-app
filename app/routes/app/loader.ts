@@ -12,6 +12,7 @@ import {
   resolveAgentId,
   startLanguageFor,
 } from "~/utils/elevenlabs/agents.server";
+import { MIT_PLACE, normalizePlace } from "~/utils/places";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -28,15 +29,19 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const locale = getLocale(context);
 
   const url = new URL(request.url);
-  const place = url.searchParams.get("place");
+  // old ids (`mit`) map to the current one, for the URL and for sessions
+  // saved before the rename
+  const place = normalizePlace(url.searchParams.get("place"));
   const promo = url.searchParams.get("promo");
 
   // save place before any redirects
   if (place) {
     session.set("place", place);
+  } else if (typeof session.get("place") === "string") {
+    session.set("place", normalizePlace(session.get("place")));
   }
 
-  // after saving place: the place can pick the agent (mit → legacy)
+  // after saving place: the place can pick the agent (PLACE_AGENTS)
   const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save promo before any redirect
@@ -93,7 +98,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   };
 
   // corner case for mit. hele doesn't want MIT guests to go through FTUE
-  if (place && place === "mit" && user.is_anonymous) {
+  if (place === MIT_PLACE && user.is_anonymous) {
     profileUpsert.has_onboarded = true;
   }
 

@@ -53,7 +53,7 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 
 ### Old and legacy webhooks (being phased out)
 
-`api.agent.webhook.server.ts` + `app/server/agent/` (query types, `QUERY_TYPE_CONFIG`) and `api.agent.webhook.legacy.server.ts`. MIT and wonderway still run on the legacy flow — **don't change it**; it will be removed once those places move to the guide.
+`api.agent.webhook.server.ts` + `app/server/agent/` (query types, `QUERY_TYPE_CONFIG`) and `api.agent.webhook.legacy.server.ts`. Wonderway still runs on the legacy flow — **don't change it**; it will be removed once that place moves to the guide. MIT moved to the guide in Nov 2026: `?place=mit` is mapped to `ex-ai-mind-the-gap-mit` (`app/utils/places.ts`), which uses the default agent; the legacy `mit` path is only reached with `?agent=legacyMIT`.
 
 ### Languages
 

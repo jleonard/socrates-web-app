@@ -6,8 +6,9 @@ import type { Session } from "react-router";
  * listed here can be used.
  *
  * `default` comes from ELEVENLABS_AGENT (agentB / prod b), so the default
- * agent can change without a deploy. MIT stays on the legacy agent until it
- * moves to the guide (PLACE_AGENTS). Add entries as `name: "agent_..."`.
+ * agent can change without a deploy. `legacyMIT` is only used when asked
+ * for with `?agent=legacyMIT`: MIT moved to the default agent and the guide
+ * in Nov 2026. Add entries as `name: "agent_..."`.
  */
 const AGENTS: Record<string, string | undefined> = {
   default: process.env.ELEVENLABS_AGENT,
@@ -16,10 +17,8 @@ const AGENTS: Record<string, string | undefined> = {
   // guide: "agent_xxxxxxxxxxxxxxxxxxxxxxxx", // copy of production for the guide webhook
 };
 
-/** Places that still run on the legacy agent. */
-const PLACE_AGENTS: Record<string, AgentName> = {
-  mit: "legacyMIT",
-};
+/** Places that run on a specific agent instead of `default`. None today. */
+const PLACE_AGENTS: Record<string, AgentName> = {};
 
 export type AgentName = keyof typeof AGENTS;
 
@@ -61,7 +60,7 @@ const SESSION_KEY = "agent";
  *      clears it.
  *   2. otherwise the name saved in the session
  *   3. otherwise the place's agent (PLACE_AGENTS), from the `place` saved
- *      in the session by the loader (`?place=mit` → legacyMIT)
+ *      in the session by the loader
  *   4. otherwise `default` (ELEVENLABS_AGENT)
  *
  * Unknown names are ignored (and logged), never passed through as ids.

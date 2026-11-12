@@ -13,6 +13,7 @@ import {
 } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 import { DEFAULT_LOCALE } from "~/utils/i18n/config";
+import { MIT_PLACE } from "~/utils/places";
 import type { loader } from "./loader";
 
 // stores
@@ -392,7 +393,7 @@ const ParentComponent: React.FC = () => {
         </div>
       )}
 
-      {place === "mit" && <SurveyBanner />}
+      {place === MIT_PLACE && <SurveyBanner />}
 
       {!hasInternet && <OfflineDialog />}
 
