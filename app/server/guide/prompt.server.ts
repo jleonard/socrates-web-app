@@ -26,7 +26,7 @@ You are Wonder, a conversational guide to museums, landmarks and cultural instit
 - Use plain spoken language. No lists, headings, markdown, emoji or links: your reply is read aloud.
 - Reply in the visitor's language (see the last instruction before their question). Keep names of halls, objects and people as they appear in the SOURCES.
 - Don't repeat the question.
-- Don't end with an offer such as "Would you like to know more?" The visitor will ask. Ask a question only when you need their answer, for example to tell candidates apart.
+- Don't end with an offer such as "Would you like to know more?" or "Anything else?" Ask a question only when you need their answer, for example to tell candidates apart, or when the last instruction allows a follow-up suggestion.
 
 # The question
 
@@ -107,6 +107,16 @@ What a BACKGROUND or INTERVIEW section says counts as covered: don't say it isn'
 If the question assumes something ("they must have…"), check that assumption before agreeing with it.
 If the question asks whether there are any, other, more, or several of something here, the SOURCES may not list everything: say what they show, and if they don't settle it, add something like "I don't know whether there are others elsewhere in the hall." Don't answer "no", and don't mention sources.`;
 
+/**
+ * Added on the turns followUpAllowed() permits (at most one answer in
+ * three). The model may still decline: no suggestion beats a weak one.
+ */
+const FOLLOWUP_INSTRUCTION = `End this reply with one short follow-up suggestion, as a question, when all of these hold:
+- your reply actually answered the question (not "I don't have that information")
+- the SOURCES cover a next topic closely tied to this answer that neither this reply nor any earlier reply in the conversation has already covered
+- it's about content (an object, a person, an idea), never about directions, where something is, or help ("Want me to guide you there?", "Anything else?")
+Make it specific and easy to say yes to, for example "Want to hear how Effie was found?" Vary the wording. If no topic passes every check, end without one.`;
+
 export type AnswerMode = "grounded" | "general";
 
 type Section = "exhibition" | "object" | "background" | "elsewhere" | "voice";
@@ -129,6 +139,8 @@ export function buildAnswerPrompt(opts: {
   chunks: RetrievedChunk[];
   venueContext: string[];
   location: LocationContext;
+  /** From followUpAllowed(): may this reply end with a suggestion? */
+  followUp: boolean;
 }): AnswerPrompt {
   const { chunks, venueContext, location } = opts;
   const mode: AnswerMode = chunks.length > 0 ? "grounded" : "general";
@@ -230,11 +242,18 @@ export function buildAnswerPrompt(opts: {
     messages.push({ role: m.role, content: m.content });
   }
   // Last instructions before the question, so the model reads them last:
-  // framing (see above), and language, since the voice agent delivers the
-  // reply as-is, so it must already be in the visitor's language.
+  // framing (see above), follow-up permission, and language, since the voice
+  // agent delivers the reply as-is, so it must already be in the visitor's
+  // language.
   messages.push({
     role: "system",
-    content: `${mode === "general" ? NO_SOURCES_INSTRUCTION : GROUNDED_INSTRUCTION}\n\n${languageInstruction(opts.language)}`,
+    content: [
+      mode === "general" ? NO_SOURCES_INSTRUCTION : GROUNDED_INSTRUCTION,
+      opts.followUp && mode === "grounded" ? FOLLOWUP_INSTRUCTION : null,
+      languageInstruction(opts.language),
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
   });
   messages.push({
     role: "user",
