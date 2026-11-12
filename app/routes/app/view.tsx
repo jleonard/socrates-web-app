@@ -13,7 +13,6 @@ import {
 } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 import { DEFAULT_LOCALE } from "~/utils/i18n/config";
-import { MIT_PLACE } from "~/utils/places";
 import type { loader } from "./loader";
 
 // stores
@@ -33,7 +32,6 @@ import { trackEvent } from "~/utils/googleAnalytics";
 import { AvatarConnection, AvatarMode } from "types/avatar";
 
 import { Stopwatch } from "components/Stopwatch/Stopwatch";
-import { SurveyBanner } from "components/SurveyBanner/SurveyBanner";
 import { UserPen } from "lucide-react";
 import {
   Coords,
@@ -392,8 +390,6 @@ const ParentComponent: React.FC = () => {
           <EBMMessage variant="error" message={error} />
         </div>
       )}
-
-      {place === MIT_PLACE && <SurveyBanner />}
 
       {!hasInternet && <OfflineDialog />}
 
