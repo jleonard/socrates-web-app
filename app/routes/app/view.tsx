@@ -426,7 +426,7 @@ const ParentComponent: React.FC = () => {
 
       {access?.category === "unused" && (
         <div className="bg-ayapi-pink rounded-t-2xl w-[240px] h-[200px] fixed bottom-0 left-1/2 -translate-x-1/2 text-white flex flex-col gap-1 items-center justify-center">
-          <p className="font-bold pt-[132px]">Congratulations!</p>
+          <p className="font-bold pt-[132px]">Welcome</p>
           <p>
             {access.hours <= 24
               ? `${access.hours} ${access.hours === 1 ? "hour" : "hours"}`
