@@ -3,7 +3,13 @@ import * as Sentry from "@sentry/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
 import { PurchaseButton } from "components/PurchaseButton/PurchaseButton";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   useLoaderData,
@@ -77,8 +83,9 @@ const ParentComponent: React.FC = () => {
   // used to present 'no internet' dialog to the user
   const [hasInternet, setHasInternet] = useState(true);
 
-  // Location permission modal state
-  const [showLocationModal, setShowLocationModal] = useState(false);
+  // Location permission modal state. Shown from the first render (also in
+  // the server HTML), so nothing else can sit on top of it before it opens.
+  const [showLocationModal, setShowLocationModal] = useState(true);
 
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<
     "pending" | "granted" | "denied"
@@ -310,6 +317,9 @@ const ParentComponent: React.FC = () => {
   };
 
   const requestLocationPermission = async () => {
+    // the modal's tap is the user gesture browsers need before playing audio;
+    // start the greeting before awaiting anything so the gesture still counts
+    if (shouldPlayGreeting) startGreeting();
     const { coords, status } = await requestInitialLocation();
     setCoords(coords);
     setLocationPermissionStatus(status);
@@ -317,6 +327,7 @@ const ParentComponent: React.FC = () => {
   };
 
   const handleLocationModalClose = () => {
+    if (shouldPlayGreeting) startGreeting();
     setShowLocationModal(false);
     if (locationPermissionStatus === "pending") {
       const { coords, status } = resolvePendingPermission();
@@ -324,11 +335,6 @@ const ParentComponent: React.FC = () => {
       setLocationPermissionStatus(status);
     }
   };
-
-  // Effect to show location modal on mount
-  useEffect(() => {
-    setShowLocationModal(true);
-  }, []);
 
   useEffect(() => {
     setAvatarConnection(conversation.status);
@@ -351,12 +357,28 @@ const ParentComponent: React.FC = () => {
   };
   const audioRef = useRef<AudioPlayerHandle>(null);
 
+  // once started (from the location modal or the tap-anywhere overlay), the
+  // overlay goes away so it can't swallow the next tap (e.g. on Start)
+  const [greetingStarted, setGreetingStarted] = useState(false);
+
+  // stable, or AudioPlayer rebuilds its <audio> on every render and cuts the
+  // greeting off mid-play
+  const greetingSrc = `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${locale}.mp3`;
+  const greetingFallbacks = useMemo(
+    () => [
+      `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${DEFAULT_LOCALE}.mp3`,
+      "/audio/greetings/wonderway.mp3",
+    ],
+    [activePlace],
+  );
+
   const handleGreetingEnded = () => {
     setCircleMode("idle");
     submit({ intent: "greeted", user_id: user.id }, { method: "post" });
   };
 
   const startGreeting = () => {
+    setGreetingStarted(true);
     audioRef.current?.play();
   };
 
@@ -368,14 +390,15 @@ const ParentComponent: React.FC = () => {
     <>
       {shouldPlayGreeting && (
         <>
-          <GreetingButton onPress={startGreeting}></GreetingButton>
+          {/* tap-anywhere fallback, never on top of the location modal: it
+              used to swallow the first tap on "Allow" (MIT QA, Nov 2026) */}
+          {!showLocationModal && !greetingStarted && (
+            <GreetingButton onPress={startGreeting}></GreetingButton>
+          )}
           <AudioPlayer
             ref={audioRef}
-            src={`https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${locale}.mp3`}
-            fallbackSrc={[
-              `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${DEFAULT_LOCALE}.mp3`,
-              "/audio/greetings/wonderway.mp3",
-            ]}
+            src={greetingSrc}
+            fallbackSrc={greetingFallbacks}
             onStart={() => setCircleMode("speaking")}
             onEnded={() => handleGreetingEnded()}
           />
