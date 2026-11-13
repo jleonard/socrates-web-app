@@ -364,12 +364,17 @@ const ParentComponent: React.FC = () => {
   // stable, or AudioPlayer rebuilds its <audio> on every render and cuts the
   // greeting off mid-play
   const greetingSrc = `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${locale}.mp3`;
+  // without the primary src or duplicates: for English visitors the
+  // default-language file IS the primary, and retrying it just fails again
   const greetingFallbacks = useMemo(
-    () => [
-      `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${DEFAULT_LOCALE}.mp3`,
-      "/audio/greetings/wonderway.mp3",
-    ],
-    [activePlace],
+    () =>
+      [
+        ...new Set([
+          `https://d18wgkub2vz70r.cloudfront.net/greetings/${activePlace}-${DEFAULT_LOCALE}.mp3`,
+          "/audio/greetings/wonderway.mp3",
+        ]),
+      ].filter((url) => url !== greetingSrc),
+    [activePlace, greetingSrc],
   );
 
   const handleGreetingEnded = () => {
