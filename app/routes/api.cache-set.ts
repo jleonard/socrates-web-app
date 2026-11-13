@@ -51,14 +51,9 @@ async function cacheResponse({
       return;
     }
 
-    await storeCache(
-      question,
-      answer,
-      {
-        placeId,
-      },
-      decision,
-    );
+    // CacheContext is keyed by locationId now; this route keeps its public
+    // `placeId` field. Passing { placeId } stored under an undefined location.
+    await storeCache(question, answer, { locationId: placeId }, decision);
   } catch (error) {
     console.error("Failed to cache response:", error);
   }

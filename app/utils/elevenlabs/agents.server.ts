@@ -1,3 +1,4 @@
+import type { Language } from "@elevenlabs/react";
 import type { Session } from "react-router";
 
 /**
@@ -32,7 +33,7 @@ export type AgentName = keyof typeof AGENTS;
  * Keyed by id, not name, so `default` picks this up once ELEVENLABS_AGENT
  * points at prod b.
  */
-const START_LANGUAGES: Record<string, readonly string[]> = {
+const START_LANGUAGES: Record<string, readonly Language[]> = {
   // wonderway - prod b (only languages we're keeping after the trim)
   agent_0201m4yd6fh9f02t9r3dhmmwgq85: ["en", "es", "zh"],
 };
@@ -45,9 +46,10 @@ const START_LANGUAGES: Record<string, readonly string[]> = {
 export function startLanguageFor(
   agentId: string,
   language: string | null,
-): string | undefined {
+): Language | undefined {
   if (!language) return undefined;
-  return START_LANGUAGES[agentId]?.includes(language) ? language : undefined;
+  // typed as the SDK's Language, so it can go straight into startSession
+  return START_LANGUAGES[agentId]?.find((l) => l === language);
 }
 
 /** Session key holding the chosen agent name. */
@@ -80,7 +82,8 @@ export function resolveAgentId(
 
   const name = session.get(SESSION_KEY);
   const place = session.get("place");
-  const placeAgent = typeof place === "string" ? PLACE_AGENTS[place] : undefined;
+  const placeAgent =
+    typeof place === "string" ? PLACE_AGENTS[place] : undefined;
   // the dictionary may have changed since the name was stored
   const id =
     (name && AGENTS[name]) ||
