@@ -7,6 +7,8 @@ type AudioPlayerProps = {
   fallbackSrc?: string[];
   onStart: () => void;
   onEnded: () => void;
+  /** Called when the source and every fallback failed to load. */
+  onFailed?: (lastSrc: string) => void;
 };
 
 /**
@@ -29,11 +31,12 @@ export type AudioPlayerHandle = {
 };
 
 export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
-  ({ src, fallbackSrc = [], onStart, onEnded }, ref) => {
+  ({ src, fallbackSrc = [], onStart, onEnded, onFailed }, ref) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const onStartRef = useRef(onStart);
     const onEndedRef = useRef(onEnded);
+    const onFailedRef = useRef(onFailed);
     // true between play() and stop(): a fallback that finishes loading after
     // the visitor asked for the greeting should still start
     const wantPlayRef = useRef(false);
@@ -41,7 +44,8 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
     useEffect(() => {
       onStartRef.current = onStart;
       onEndedRef.current = onEnded;
-    }, [onStart, onEnded]);
+      onFailedRef.current = onFailed;
+    }, [onStart, onEnded, onFailed]);
 
     useEffect(() => {
       const audio = new Audio(src);
@@ -73,6 +77,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
           if (wantPlayRef.current) safePlay(audio);
         } else {
           console.log("[AudioPlayer] no more fallbacks, giving up");
+          onFailedRef.current?.(audio.src);
         }
       };
 

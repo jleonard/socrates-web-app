@@ -18,6 +18,12 @@ import {
   useSubmit,
 } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
+import {
+  setConversationTag,
+  setPlaceTag,
+  setVisitorScope,
+  step,
+} from "~/utils/observability.client";
 import { DEFAULT_LOCALE } from "~/utils/i18n/config";
 import type { loader } from "./loader";
 
@@ -137,20 +143,78 @@ const ParentComponent: React.FC = () => {
 
   let activePlace = usePlaceStore((state) => state.activePlace);
 
+  /*
+   * Sentry: who and where for every event from this session, and the first
+   * step breadcrumb. Tags only (no email); see observability.client.ts.
+   */
+  useEffect(() => {
+    setVisitorScope({
+      userId: user_profile?.user_id ?? user.id,
+      role: user.is_anonymous ? "guest" : "user",
+      place: place ?? null,
+      promo: access?.promo_code ?? null,
+      agentId: elevenLabsId,
+      access: access?.category ?? null,
+      locale,
+      startLanguage: startLanguage ?? null,
+    });
+    step("page shown", { place, greeting: shouldPlayGreeting });
+    // once per page load; place changes are tagged below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    setPlaceTag(activePlace);
+  }, [activePlace]);
+
+  // when Start was pressed / the conversation connected, for step timings
+  const connectStartRef = useRef<number | null>(null);
+  const connectedAtRef = useRef<number | null>(null);
+  const messageCountRef = useRef(0);
+
   const conversation = useConversation({
-    onConnect: () => {
+    onConnect: ({ conversationId }) => {
+      connectedAtRef.current = Date.now();
+      messageCountRef.current = 0;
+      setConversationTag(conversationId);
+      step("conversation connected", {
+        conversation_id: conversationId,
+        connect_ms: connectStartRef.current
+          ? Date.now() - connectStartRef.current
+          : null,
+      });
       setButtonMode("listening");
       setCircleMode("preconnect");
       setTimeout(() => {
         setCircleMode("connected");
       }, 250); // matches preconnect transition duration
     },
-    onDisconnect: () => {
+    onDisconnect: (details) => {
+      step(
+        "conversation disconnected",
+        {
+          // user = the visitor (or the app) ended it; agent = ElevenLabs
+          // closed it; error = the connection failed
+          reason: details.reason,
+          ...(details.reason === "error" && { message: details.message }),
+          ...(details.reason === "agent" && {
+            close_code: details.context?.code,
+          }),
+          duration_ms: connectedAtRef.current
+            ? Date.now() - connectedAtRef.current
+            : null,
+          messages: messageCountRef.current,
+        },
+        details.reason === "error" ? "warning" : "info",
+      );
+      connectedAtRef.current = null;
+      setConversationTag(null);
       setCircleMode("idle");
       setButtonMode("disconnected");
     },
 
     onMessage: (message) => {
+      messageCountRef.current += 1;
       const now = new Date();
       let responseTime;
       if (message.source === "user") {
@@ -215,6 +279,11 @@ const ParentComponent: React.FC = () => {
       //await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Start the conversation with your agent
+      step("conversation connecting", {
+        agent: elevenLabsId,
+        place: activePlace,
+        start_language: startLanguage ?? null,
+      });
       await conversation.startSession({
         agentId: elevenLabsId,
         connectionType: "webrtc",
@@ -242,6 +311,11 @@ const ParentComponent: React.FC = () => {
       // TODO: Implementar envío de mensaje contextual cuando tengamos el método correcto
       // El contexto ya está enviado via dynamicVariables por ahora
     } catch (error) {
+      step(
+        "conversation start failed",
+        { error: error instanceof Error ? error.message : String(error) },
+        "error",
+      );
       if (error instanceof Error) {
         Sentry.captureException(error);
       } else {
@@ -272,6 +346,8 @@ const ParentComponent: React.FC = () => {
       // stop the greeting right away if it is playing
       stopGreeting();
 
+      connectStartRef.current = Date.now();
+      step("start pressed", { greeting_started: greetingStarted });
       startConversation();
       trackEvent({
         action: "user-conversation-started",
@@ -291,6 +367,12 @@ const ParentComponent: React.FC = () => {
         category: "conversation",
         label: "press to disconnect",
       });
+      step("stop pressed", {
+        duration_ms: connectedAtRef.current
+          ? Date.now() - connectedAtRef.current
+          : null,
+        messages: messageCountRef.current,
+      });
       stopConversation();
       if (access?.expiration && new Date(access?.expiration) > new Date()) {
         console.log("expired! revalidate ", access);
@@ -303,8 +385,14 @@ const ParentComponent: React.FC = () => {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicAllowed(true);
+      step("mic allowed");
       //stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
+      step(
+        "mic denied",
+        { error: err instanceof Error ? `${err.name}: ${err.message}` : String(err) },
+        "warning",
+      );
       if (err instanceof Error) {
         Sentry.captureException(err);
       } else {
@@ -321,12 +409,15 @@ const ParentComponent: React.FC = () => {
     // start the greeting before awaiting anything so the gesture still counts
     if (shouldPlayGreeting) startGreeting();
     const { coords, status } = await requestInitialLocation();
+    // "denied" here also covers a phone that refused or timed out
+    step(status === "granted" ? "location allowed" : "location denied");
     setCoords(coords);
     setLocationPermissionStatus(status);
     setShowLocationModal(false);
   };
 
   const handleLocationModalClose = () => {
+    step("location dismissed");
     if (shouldPlayGreeting) startGreeting();
     setShowLocationModal(false);
     if (locationPermissionStatus === "pending") {
@@ -378,6 +469,7 @@ const ParentComponent: React.FC = () => {
   );
 
   const handleGreetingEnded = () => {
+    step("greeting finished");
     setCircleMode("idle");
     submit({ intent: "greeted", user_id: user.id }, { method: "post" });
   };
@@ -404,8 +496,14 @@ const ParentComponent: React.FC = () => {
             ref={audioRef}
             src={greetingSrc}
             fallbackSrc={greetingFallbacks}
-            onStart={() => setCircleMode("speaking")}
+            onStart={() => {
+              step("greeting started", { src: greetingSrc });
+              setCircleMode("speaking");
+            }}
             onEnded={() => handleGreetingEnded()}
+            onFailed={(lastSrc) =>
+              step("greeting failed", { last_src: lastSrc }, "warning")
+            }
           />
         </>
       )}
