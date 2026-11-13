@@ -1,6 +1,6 @@
 import { Carousel } from "components/Carousel/Carousel";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -13,12 +13,35 @@ const Welcome: React.FC = () => {
   const [goBack, setGoBack] = useState(0);
   const [currentContent, setCurrentContent] = useState(0);
 
+  const raw = t("welcome", { returnObjects: true });
+  const content: OnboardingStep[] = Array.isArray(raw) ? raw : [];
+  const hasContent = content.length > 0;
+
+  // Height of the bottom text/buttons overlay (+ its bottom offset), so the
+  // carousel can keep its images above it instead of underneath.
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const [overlayHeight, setOverlayHeight] = useState(0);
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    const update = () =>
+      setOverlayHeight(
+        el.offsetHeight + (window.innerHeight - el.getBoundingClientRect().bottom),
+      );
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+    // The overlay only mounts once the translations have loaded.
+  }, [hasContent]);
+
   const nextSlide = () => setGoForward(Date.now());
   const prevSlide = () => setGoBack(Date.now());
   const slideChange = (index: number) => setCurrentContent(index);
-
-  const raw = t("welcome", { returnObjects: true });
-  const content: OnboardingStep[] = Array.isArray(raw) ? raw : [];
 
   const current = content[currentContent];
   console.log(
@@ -41,9 +64,12 @@ const Welcome: React.FC = () => {
         nextTrigger={goForward}
         previousTrigger={goBack}
         onSlideChange={slideChange}
+        reservedBottom={overlayHeight}
       />
 
-      <div className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-col w-[366px] pointer-events-none">
+      <div
+        ref={overlayRef}
+        className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-col w-[366px] pointer-events-none">
         <h2
           className={`text-[32px] leading-10 font-semibold ${lightText ? "text-white" : "text-black"} text-center mb-5 w-3/4 mx-auto`}
         >
