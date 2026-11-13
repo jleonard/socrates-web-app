@@ -11,5 +11,9 @@ export function logAppEventFromClient({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ event_type, event_message, event_details }),
+    // still sent if the visitor closes or leaves the page right after
+    keepalive: true,
+  }).catch(() => {
+    // logging must never break the app
   });
 }

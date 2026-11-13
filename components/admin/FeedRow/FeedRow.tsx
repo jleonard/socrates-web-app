@@ -41,6 +41,7 @@ export function FeedRow({ appEventLog, onNotesClick }: FeedRowProps) {
     agent_webhook: "",
     agent_webhook_rag: "",
     purchase: "border-l-4 border-l-green-400",
+    funnel: "",
   };
 
   const eventType = appEventLog?.event_type as LogAppEventType | undefined;
