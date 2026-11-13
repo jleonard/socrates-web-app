@@ -177,7 +177,13 @@ export async function action({ request }: ActionFunctionArgs) {
      */
     const metadataRecords: DropboxAssetRow[] = [];
 
-    for (const file of metadata) {
+    /*
+     * Downloaded a few at a time: one by one, a sync that adds a place's
+     * worth of folders (hundreds of metadata.json files) ran past the
+     * function's time limit, so the cursor never advanced and every run
+     * retried the same batch.
+     */
+    await forEachConcurrently(metadata, METADATA_CONCURRENCY, async (file) => {
       try {
         const response = await dbx.filesDownload({
           path: file.path_lower,
@@ -190,7 +196,24 @@ export async function action({ request }: ActionFunctionArgs) {
         const fileBinary = (response.result as any).fileBinary as Buffer;
 
         const text = fileBinary.toString("utf-8");
-        const metadataJson = JSON.parse(text) as Json;
+
+        /*
+         * A content problem in one file must not hold back the cursor:
+         * retrying can't fix it, and every later change in the folder
+         * would wait behind it. Fixing the file in Dropbox is a new change
+         * that brings it back here. An empty file (just created) is no
+         * metadata; invalid JSON is reported and skipped, keeping any
+         * metadata stored for it before.
+         */
+        let metadataJson: Json;
+        try {
+          metadataJson = text.trim() ? (JSON.parse(text) as Json) : {};
+        } catch (error) {
+          const message = `Invalid metadata.json skipped: ${file.path_lower}`;
+          console.error(message, error);
+          Sentry.captureMessage(message, "warning");
+          return;
+        }
 
         metadataRecords.push({
           name: file.name,
@@ -209,7 +232,7 @@ export async function action({ request }: ActionFunctionArgs) {
           }`,
         );
       }
-    }
+    });
 
     /*
      * One Supabase request instead of one request per metadata file.
@@ -534,6 +557,26 @@ async function gatherChanges(cursor: string | null, dbx: Dropbox) {
  */
 const FOLDER_BATCH = 25;
 const PATH_BATCH = 50;
+
+/** Parallel metadata.json downloads; low enough to stay clear of Dropbox rate limits. */
+const METADATA_CONCURRENCY = 8;
+
+/** Runs `fn` over `items` with at most `limit` calls in flight. */
+async function forEachConcurrently<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+) {
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      await fn(items[next++]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
+}
 
 function batches<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];

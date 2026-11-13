@@ -1,11 +1,13 @@
 import { Button } from "components/Button/Button";
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigate } from "react-router";
 import type { loader } from "./loader";
 
 export default function ExhibitionPage() {
   const { exhibition } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="mx-auto max-w-[400px] px-4 pt-10 flex flex-col gap-1">
@@ -36,7 +38,7 @@ export default function ExhibitionPage() {
           }
           onPress={() => navigate(`/app/?place=${exhibition.child_id}`)}
         >
-          Start experience
+          {t("exhibition.start_experience")}
         </Button>
       </div>
     </div>

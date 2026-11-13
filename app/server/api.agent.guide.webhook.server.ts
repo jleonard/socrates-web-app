@@ -7,6 +7,7 @@ import {
   lookupGuideCache,
   maybeStoreGuideCache,
 } from "./guide/cache.server";
+import { endsWithQuestion, followUpAllowed } from "./guide/followup.server";
 import { saveTurn } from "./guide/save.turn.server";
 import { getChatHistory } from "./guide/chat.history.server";
 import { resolveLocation } from "./guide/location.server";
@@ -293,7 +294,13 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      * ✏️ build the answer prompt: system rules, SOURCES (venue context +
      * chunks grouped by exhibition / object / background), or the
      * no-sources instruction, then history and the visitor's own words.
+     * Follow-up suggestions are allowed on at most one answer in three
+     * (see followup.server.ts); the voice agent no longer adds its own.
      */
+    const followUp = followUpAllowed(
+      chatHistory,
+      retrieval.chunks.length > 0 ? "grounded" : "general",
+    );
     const answerPrompt = buildAnswerPrompt({
       visitorQuery,
       visitorWords: heardWords,
@@ -302,9 +309,11 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       chunks: retrieval.chunks,
       venueContext,
       location: locationContext,
+      followUp,
     });
     loggingDetails.answer = {
       mode: answerPrompt.mode,
+      followup_allowed: followUp,
       venue_context: venueContext.length,
       sections: answerPrompt.sections,
     };
@@ -350,6 +359,13 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
           loggingDetails.answer.error =
             err instanceof Error ? err.message : String(err);
           controller.error(err);
+          return;
+        }
+
+        // A reply ending in a follow-up suggestion isn't cached: served
+        // later, it would ask again out of rhythm.
+        if (followUp && endsWithQuestion(reply)) {
+          console.log("[guide] cache store skipped: follow-up suggestion");
           return;
         }
 

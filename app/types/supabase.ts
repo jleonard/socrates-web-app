@@ -361,60 +361,6 @@ export type Database = {
         }
         Relationships: []
       }
-      locations: {
-        Row: {
-          category: string
-          city: string | null
-          country: string | null
-          created_at: string
-          description: string | null
-          geom: unknown
-          id: number
-          image_url: string | null
-          lat: number
-          lng: number
-          name: string
-          source: string
-          updated_at: string
-          wikidata_qid: string
-          wikipedia_url: string | null
-        }
-        Insert: {
-          category: string
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          description?: string | null
-          geom: unknown
-          id?: number
-          image_url?: string | null
-          lat: number
-          lng: number
-          name: string
-          source?: string
-          updated_at?: string
-          wikidata_qid: string
-          wikipedia_url?: string | null
-        }
-        Update: {
-          category?: string
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          description?: string | null
-          geom?: unknown
-          id?: number
-          image_url?: string | null
-          lat?: number
-          lng?: number
-          name?: string
-          source?: string
-          updated_at?: string
-          wikidata_qid?: string
-          wikipedia_url?: string | null
-        }
-        Relationships: []
-      }
       logs_elevenlabs: {
         Row: {
           call_duration_seconds: number | null
@@ -442,6 +388,96 @@ export type Database = {
           id?: number
           payload?: Json | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      map_location_exclusions: {
+        Row: {
+          created_at: string
+          name: string | null
+          reason: string | null
+          wikidata_qid: string
+        }
+        Insert: {
+          created_at?: string
+          name?: string | null
+          reason?: string | null
+          wikidata_qid: string
+        }
+        Update: {
+          created_at?: string
+          name?: string | null
+          reason?: string | null
+          wikidata_qid?: string
+        }
+        Relationships: []
+      }
+      map_locations: {
+        Row: {
+          category: string
+          city: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          geom: unknown
+          id: number
+          image_url: string | null
+          lat: number
+          lng: number
+          name: string
+          pageviews: number | null
+          place_id: string | null
+          prominence: number | null
+          prominence_override: number | null
+          sitelinks: number | null
+          source: string
+          updated_at: string
+          wikidata_qid: string
+          wikipedia_url: string | null
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          geom: unknown
+          id?: number
+          image_url?: string | null
+          lat: number
+          lng: number
+          name: string
+          pageviews?: number | null
+          place_id?: string | null
+          prominence?: number | null
+          prominence_override?: number | null
+          sitelinks?: number | null
+          source?: string
+          updated_at?: string
+          wikidata_qid: string
+          wikipedia_url?: string | null
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          geom?: unknown
+          id?: number
+          image_url?: string | null
+          lat?: number
+          lng?: number
+          name?: string
+          pageviews?: number | null
+          place_id?: string | null
+          prominence?: number | null
+          prominence_override?: number | null
+          sitelinks?: number | null
+          source?: string
+          updated_at?: string
+          wikidata_qid?: string
+          wikipedia_url?: string | null
         }
         Relationships: []
       }
@@ -532,7 +568,6 @@ export type Database = {
           email: string | null
           has_onboarded: boolean | null
           id: number
-          last_greeted: string | null
           last_seen: string | null
           promo_code: string | null
           role: string | null
@@ -543,7 +578,6 @@ export type Database = {
           email?: string | null
           has_onboarded?: boolean | null
           id?: number
-          last_greeted?: string | null
           last_seen?: string | null
           promo_code?: string | null
           role?: string | null
@@ -554,7 +588,6 @@ export type Database = {
           email?: string | null
           has_onboarded?: boolean | null
           id?: number
-          last_greeted?: string | null
           last_seen?: string | null
           promo_code?: string | null
           role?: string | null

@@ -10,6 +10,9 @@
     "continue_with": "Continue with {{provider}}",
     "auth_tagline": "Museums. Landmarks. Culture."
   },
+  "exhibition": {
+    "start_experience": "Start experience"
+  },
   "nav": {
     "privacy": "Privacy Policy",
     "terms": "Terms &amp; Conditions"

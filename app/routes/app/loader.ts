@@ -7,10 +7,12 @@ import { upsertUserProfile } from "~/server/user.last-seen.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
 import { getPlaceLanguage } from "~/server/guide/venue.language.server";
+import { hasBeenGreeted } from "~/server/greeting.server";
 import {
   resolveAgentId,
   startLanguageFor,
 } from "~/utils/elevenlabs/agents.server";
+import { MIT_PLACE, normalizePlace } from "~/utils/places";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -27,15 +29,20 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const locale = getLocale(context);
 
   const url = new URL(request.url);
-  const place = url.searchParams.get("place");
+  // old ids (`mit`) map to the current one, for the URL and for sessions
+  // saved before the rename
+  const place = normalizePlace(url.searchParams.get("place"));
   const promo = url.searchParams.get("promo");
-
-  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save place before any redirects
   if (place) {
     session.set("place", place);
+  } else if (typeof session.get("place") === "string") {
+    session.set("place", normalizePlace(session.get("place")));
   }
+
+  // after saving place: the place can pick the agent (PLACE_AGENTS)
+  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save promo before any redirect
   if (promo) {
@@ -91,7 +98,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   };
 
   // corner case for mit. hele doesn't want MIT guests to go through FTUE
-  if (place && place === "mit" && user.is_anonymous) {
+  if (place === MIT_PLACE && user.is_anonymous) {
     profileUpsert.has_onboarded = true;
   }
 
@@ -141,10 +148,11 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   // the conversation starts in the venue's content language (e.g. Spanish at
   // Parque); the agent's language detection takes over once the visitor speaks
-  const startLanguage = startLanguageFor(
-    agentId,
-    await getPlaceLanguage(session.get("place")),
-  );
+  const [placeLanguage, greeted] = await Promise.all([
+    getPlaceLanguage(session.get("place")),
+    hasBeenGreeted(user.id, session.get("place")),
+  ]);
+  const startLanguage = startLanguageFor(agentId, placeLanguage);
 
   return data(
     {
@@ -157,6 +165,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: agentId,
       startLanguage,
+      // greeted per place (Redis), so a new venue greets the visitor again
+      shouldPlayGreeting: !greeted,
       place: session.get("place"),
       locale,
     },

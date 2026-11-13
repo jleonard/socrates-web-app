@@ -17,7 +17,19 @@ import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 
+// production only on the live site, so local and preview errors don't land
+// in production issues (local dev tabs did, Nov 2026)
+const host = window.location.hostname;
+const environment =
+  host === "app.wonderway.ai"
+    ? "production"
+    : host === "localhost" || host === "127.0.0.1"
+      ? "development"
+      : "preview";
+
 Sentry.init({
+  environment,
+  release: __APP_RELEASE__,
   dsn: "https://99830f5974dcb7c9561aff8c62fd8a54@o4510411602198528.ingest.us.sentry.io/4510411604688896",
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/react-router/configuration/options/#sendDefaultPii
