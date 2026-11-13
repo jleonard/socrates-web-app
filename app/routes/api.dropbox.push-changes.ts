@@ -15,12 +15,39 @@ import OpenAI from "openai";
 import { ActionFunctionArgs } from "react-router";
 import type { Database } from "~/types/supabase";
 import { bumpContentVersions } from "~/utils/cache/content.version.server";
-import { deleteByIds } from "~/utils/pinecone";
+import {
+  DEFAULT_INGEST_INDEX,
+  deleteFromIngestIndexes,
+  INGEST_INDEXES,
+} from "~/utils/pinecone";
 import { describeImage, ocrImage } from "~/utils/ragIngest/vision.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-const pineconeIndex = pinecone.index("wonderway");
+
+/*
+ * Indexes a folder's metadata.json may route to with `"index": "..."`
+ * (merged root → leaf like every other key). Unset = "wonderway", the venue
+ * content the guide reads; "wonderway-about" is product content (how the app
+ * works, privacy) read by the about agent, which queries namespace
+ * "__default__". Anything else is rejected so a typo fails the file instead
+ * of writing somewhere nothing reads.
+ */
+function indexFor(file: {
+  metadata?: Record<string, unknown> | null;
+  dropbox_path?: string | null;
+}): string {
+  const name = file.metadata?.index ?? DEFAULT_INGEST_INDEX;
+  if (
+    typeof name !== "string" ||
+    !(INGEST_INDEXES as readonly string[]).includes(name)
+  ) {
+    throw new Error(
+      `Unknown Pinecone index "${name}" in metadata.json for ${file.dropbox_path} (allowed: ${INGEST_INDEXES.join(", ")})`,
+    );
+  }
+  return name;
+}
 
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 
@@ -472,7 +499,7 @@ async function getEmbeddings(chunks: string[]): Promise<number[][]> {
 async function clearFileVectors(file: any, supabase: SupabaseClient) {
   if (!file.pinecone_ids || file.pinecone_ids.length === 0) return;
 
-  await deleteByIds("wonderway", file.pinecone_ids);
+  await deleteFromIngestIndexes(file.pinecone_ids);
 
   const { error } = await supabase
     .from("dropbox_assets")
@@ -511,8 +538,10 @@ async function pushTextToPinecone(
   // if this file's already been processed before, clean up its old
   // vectors first so a shrinking/changed chunk count doesn't leave
   // orphaned records behind under stale ids
+  // Resolve before deleting anything: a bad index leaves old vectors alone
+  const indexName = indexFor(file);
   if (file.pinecone_ids && file.pinecone_ids.length > 0) {
-    await deleteByIds("wonderway", file.pinecone_ids);
+    await deleteFromIngestIndexes(file.pinecone_ids);
   }
   const embeddings = await getEmbeddings(chunks);
 
@@ -533,9 +562,9 @@ async function pushTextToPinecone(
     },
   }));
 
-  let namespace = file.metadata?.namespace ? file.metadata.namespace : "global";
+  const namespace = file.metadata?.namespace ? file.metadata.namespace : "global";
 
-  await pineconeIndex.namespace(namespace).upsert(vectors);
+  await pinecone.index(indexName).namespace(namespace).upsert(vectors);
 
   const pineconeIds = vectors.map((v) => v.id);
 

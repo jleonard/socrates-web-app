@@ -48,10 +48,7 @@ export function startLanguageFor(
   language: string | null,
 ): Language | undefined {
   if (!language) return undefined;
-<<<<<<< HEAD
-=======
   // typed as the SDK's Language, so it can go straight into startSession
->>>>>>> fix/parque-prep
   return START_LANGUAGES[agentId]?.find((l) => l === language);
 }
 

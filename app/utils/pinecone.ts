@@ -127,7 +127,14 @@ export async function deleteByIds(
 
   await Promise.all(
     PINECONE_NAMESPACES.map(async (namespace) => {
-      await index.namespace(namespace).deleteMany(idList);
+      try {
+        await index.namespace(namespace).deleteMany(idList);
+      } catch (err) {
+        // Pinecone 404s when the namespace doesn't exist in this index
+        // (e.g. wonderway-about has only __default__): nothing to delete
+        if (err instanceof Error && err.name === "PineconeNotFoundError") return;
+        throw err;
+      }
 
       console.log(
         `Requested deletion of ${idList.length} record(s) from namespace "${namespace}"`,
@@ -136,6 +143,23 @@ export async function deleteByIds(
   );
 
   return idList.length;
+}
+
+/**
+ * Indexes the Dropbox ingest writes to (a folder's metadata.json picks one
+ * with `"index"`; unset = DEFAULT_INGEST_INDEX).
+ */
+export const DEFAULT_INGEST_INDEX = "wonderway";
+export const INGEST_INDEXES = [DEFAULT_INGEST_INDEX, "wonderway-about"] as const;
+
+/**
+ * Delete Dropbox-ingested vectors by id from every ingest index.
+ * dropbox_assets doesn't record which index a file went to (and a folder's
+ * index can change), so try them all. Ids are per Dropbox file, so this
+ * can't touch another file's vectors.
+ */
+export async function deleteFromIngestIndexes(ids: string[]) {
+  await Promise.all(INGEST_INDEXES.map((name) => deleteByIds(name, ids)));
 }
 
 /**

@@ -5,7 +5,7 @@ import { ActionFunctionArgs, data } from "react-router";
 import type { DropboxAssetRow } from "~/types";
 import type { Json } from "~/types/supabase";
 import { bumpContentVersions } from "~/utils/cache/content.version.server";
-import { deleteByIds } from "~/utils/pinecone";
+import { deleteFromIngestIndexes } from "~/utils/pinecone";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 /**
@@ -370,7 +370,7 @@ export async function action({ request }: ActionFunctionArgs) {
         );
 
         /*
-         * deleteByIds() handles the configured Pinecone namespaces and
+         * deleteFromIngestIndexes() covers every ingest index and namespace and
          * batches the IDs into Pinecone deleteMany() requests.
          *
          * This is one logical deletion operation for the entire sync,
@@ -378,7 +378,7 @@ export async function action({ request }: ActionFunctionArgs) {
          */
         if (pineconeIds.length > 0) {
           try {
-            await deleteByIds("wonderway", pineconeIds);
+            await deleteFromIngestIndexes(pineconeIds);
           } catch (error) {
             processingErrors.push(
               `Failed to delete Pinecone vectors: ${
