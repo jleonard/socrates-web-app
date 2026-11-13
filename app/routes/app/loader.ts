@@ -58,7 +58,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   if (authUser) {
     user = authUser;
-    signOutGuest(authUser.id, session);
   }
 
   // if there's no user, check if the promo allows guest access before redirecting
@@ -103,6 +102,17 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   }
 
   const { data: profile, error } = await upsertUserProfile(profileUpsert);
+
+  // A real account signed in after being a guest in this browser: move the
+  // guest's history and access over, then delete the guest. Never for a guest
+  // (it would try to delete itself). Runs here, after the profile upsert,
+  // because `access` references `profiles`: on the first load after sign-in
+  // the new user's profile didn't exist yet and the access move failed. And
+  // before the access check, so the guest's access counts for the new user.
+  // Awaited so session.unset("guest_id") is saved with this response.
+  if (!user.is_anonymous) {
+    await signOutGuest(user.id, session);
+  }
 
   // set the promo for the user
   const { data: promoRecord, error: promoError } = await setUserPromo(
