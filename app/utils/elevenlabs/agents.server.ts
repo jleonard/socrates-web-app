@@ -48,6 +48,10 @@ export function startLanguageFor(
   language: string | null,
 ): Language | undefined {
   if (!language) return undefined;
+<<<<<<< HEAD
+=======
+  // typed as the SDK's Language, so it can go straight into startSession
+>>>>>>> fix/parque-prep
   return START_LANGUAGES[agentId]?.find((l) => l === language);
 }
 
@@ -81,7 +85,8 @@ export function resolveAgentId(
 
   const name = session.get(SESSION_KEY);
   const place = session.get("place");
-  const placeAgent = typeof place === "string" ? PLACE_AGENTS[place] : undefined;
+  const placeAgent =
+    typeof place === "string" ? PLACE_AGENTS[place] : undefined;
   // the dictionary may have changed since the name was stored
   const id =
     (name && AGENTS[name]) ||

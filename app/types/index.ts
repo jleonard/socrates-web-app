@@ -1,4 +1,4 @@
-import type { Database } from "~/types/supabase";
+import type { Database, Json } from "~/types/supabase";
 
 export type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 export type AccessCategory = "active" | "unused" | "expired" | "trial" | "none";
@@ -120,12 +120,12 @@ export type HistoryLog = {
   text_rag?: string | null;
   rag_index?: string | null;
   tools?: ToolLog[];
-  details?: Record<string, unknown>;
+  details?: Json;
 };
 
 export type ToolLog = {
   tool: "cache" | "rag" | "wikipedia" | "followup" | "fix-speech";
-  details?: Record<string, unknown>; // score, index, original_query, text, etc.
+  details?: Json; // score, index, original_query, text, etc.
 };
 
 export type ProductInfo = {

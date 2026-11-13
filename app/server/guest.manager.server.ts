@@ -25,42 +25,53 @@ export async function signInGuest(
   return { user: data?.user, error };
 }
 
+/**
+ * Converts a guest into the real account that just signed in: moves the
+ * guest's history, access and app events to `authUserId`, then deletes the
+ * guest. Call it only when a REAL (non-anonymous) user is signed in.
+ *
+ * Until Nov 2026 the /app loader called this for every signed-in user,
+ * including the guest itself (authUserId === guest_id), so on every load a
+ * guest "moved" its rows onto itself and tried to delete its own account.
+ * That failed only because the guest's `access` row blocks the delete; a
+ * guest without one would have been deleted mid-visit.
+ *
+ * Deleting a guest removes its `profiles` row (cascade) but leaves
+ * `event_log` rows behind, so those are moved too.
+ */
 export async function signOutGuest(authUserId: string, session: Session) {
+  const guestId = session.get("guest_id");
+  if (typeof guestId !== "string" || !guestId) return;
+
+  // the guest itself is signed in: nothing to convert, never delete it
+  if (guestId === authUserId) return;
+
   const { supabase } = getSupabaseServiceRoleClient();
+  const move = (
+    table: "elevenlabs_history" | "agent_history" | "access" | "event_log",
+  ) =>
+    supabase.from(table).update({ user_id: authUserId }).eq("user_id", guestId);
 
-  if (session.has("guest_id")) {
-    let guestId = session.get("guest_id");
+  const results = await Promise.all([
+    move("elevenlabs_history"),
+    move("agent_history"),
+    move("access"),
+    move("event_log"),
+  ]);
+  const moveError = results.find((r) => r.error)?.error ?? null;
 
-    // migrate all of the elevenlabs history to the real user
-    const { error: elevenLabsHistoryError } = await supabase
-      .from("elevenlabs_history")
-      .update({ user_id: authUserId })
-      .eq("user_id", guestId);
+  const { error: deleteError } = moveError
+    ? { error: null }
+    : await supabase.auth.admin.deleteUser(guestId);
 
-    // migrate all of the agent history to the real user
-    const { error: agentHistoryError } = await supabase
-      .from("agent_history")
-      .update({ user_id: authUserId })
-      .eq("user_id", guestId);
-
-    // migrate all of the access records to the real user
-    const { error: accessError } = await supabase
-      .from("access")
-      .update({ user_id: authUserId })
-      .eq("user_id", guestId);
-
-    // todo - log the conversion
-
-    if (!elevenLabsHistoryError && !agentHistoryError && !accessError) {
-      const { error } = await supabase.auth.admin.deleteUser(guestId);
-      if (!error) {
-        session.unset("guest_id");
-      } else {
-        Sentry.captureMessage("guest.manager converting guest to user", {
-          level: "error",
-          extra: { error },
-        });
-      }
-    }
+  if (moveError || deleteError) {
+    Sentry.captureMessage("guest.manager converting guest to user", {
+      level: "error",
+      extra: { guestId, authUserId, moveError, deleteError },
+    });
   }
+
+  // Clear it either way: a failure is reported once, not retried (and
+  // re-reported) on every page load. A leftover guest account is harmless.
+  session.unset("guest_id");
 }

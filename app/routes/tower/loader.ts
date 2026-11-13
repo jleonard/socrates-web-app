@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import {
@@ -30,7 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log("sb error: ", error);
   }
 
-  if (profile.role !== "admin") {
+  if (profile?.role !== "admin") {
     return redirect("/app");
   }
 
@@ -67,7 +67,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .select("*")
     .gte("created_at", since.toISOString());
 
-  return Response.json(
+  return data(
     {
       pageTitle: "WonderWay",
       user: user,
