@@ -17,7 +17,8 @@ export type LogAppEventType =
   | "agent_webhook"
   | "agent_webhook_rag"
   | "purchase"
-  // first-screen steps from the /app view (event_message = step name)
+  // steps from the /app view (event_message = step name): first screen,
+  // session start, and how sessions end (stop pressed, conversation disconnected)
   | "funnel";
 
 export type LogAppEventProps = {

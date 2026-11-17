@@ -84,6 +84,11 @@ const FUNNEL_STEPS: ReadonlySet<AppStep> = new Set<AppStep>([
   "mic denied",
   "conversation connected",
   "conversation start failed",
+  // how sessions end: a tap on the main button (with the state it was in)
+  // or the SDK's disconnect (reason user / agent / error), so accidental
+  // hang-ups can be counted
+  "stop pressed",
+  "conversation disconnected",
 ]);
 
 let funnelContext: { user_id: string; place: string | null } | null = null;

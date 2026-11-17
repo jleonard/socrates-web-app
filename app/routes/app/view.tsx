@@ -190,6 +190,8 @@ const ParentComponent: React.FC = () => {
   const connectStartRef = useRef<number | null>(null);
   const connectedAtRef = useRef<number | null>(null);
   const messageCountRef = useRef(0);
+  // ElevenLabs conversation id of the live session, for the logged steps
+  const conversationIdRef = useRef<string | null>(null);
   // pending switch back to "listening" after the agent stops speaking
   const listeningTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -199,6 +201,7 @@ const ParentComponent: React.FC = () => {
       connectedAtRef.current = Date.now();
       messageCountRef.current = 0;
       setConversationTag(conversationId);
+      conversationIdRef.current = conversationId;
       step("conversation connected", {
         conversation_id: conversationId,
         connect_ms: connectStartRef.current
@@ -224,6 +227,7 @@ const ParentComponent: React.FC = () => {
           ...(details.reason === "agent" && {
             close_code: details.context?.code,
           }),
+          conversation_id: conversationIdRef.current,
           duration_ms: connectedAtRef.current
             ? Date.now() - connectedAtRef.current
             : null,
@@ -232,6 +236,7 @@ const ParentComponent: React.FC = () => {
         details.reason === "error" ? "warning" : "info",
       );
       connectedAtRef.current = null;
+      conversationIdRef.current = null;
       clearTimeout(listeningTimerRef.current);
       setConversationTag(null);
       setCircleMode("idle");
@@ -406,6 +411,11 @@ const ParentComponent: React.FC = () => {
       });
       sounds.stopProcessing();
       step("stop pressed", {
+        // what the visitor saw when they tapped (connecting / listening /
+        // speaking), and whether the agent's audio was actually playing
+        button_mode: buttonMode,
+        agent_speaking: conversation.isSpeaking,
+        conversation_id: conversationIdRef.current,
         duration_ms: connectedAtRef.current
           ? Date.now() - connectedAtRef.current
           : null,
