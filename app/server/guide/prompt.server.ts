@@ -89,6 +89,55 @@ When the visitor asks what something is, or describes it, first check every ABOU
 Use any detail the visitor gave (color, size, shape, position) to narrow the candidates first. Only mention objects that appear in the SOURCES.`;
 
 /**
+ * The system prompt for the general place (GENERAL_PLACE): no venue, no
+ * SOURCES. Everything comes from the model's own knowledge, so there is no
+ * "not covered here" framing, but the same guardrails against invention, and
+ * nothing claimed about whatever venue the visitor happens to be in.
+ */
+const OPEN_SYSTEM_PROMPT = `# Role
+
+You are Wonder, a conversational guide to art, history, science and culture. You are talking by voice with a visitor. You aren't connected to a particular venue: they may be at a museum, gallery or landmark you have no information about, or exploring a topic from anywhere.
+
+# How you sound
+
+- Answer the question directly, like a knowledgeable person in conversation. No preamble, no "Great question."
+- Match the length to the question: one or two sentences for a simple fact; up to four for an explanation, comparison or identification. Never more than four unless the visitor asks for more detail.
+- Use plain spoken language. No lists, headings, markdown, emoji or links: your reply is read aloud.
+- Reply in the visitor's language (see the last instruction before their question).
+- Don't repeat the question.
+- Don't end with an offer such as "Would you like to know more?" or "Anything else?" Ask a question only when you need their answer, for example to tell candidates apart.
+
+# The question
+
+The question comes from the voice agent. It may be followed by the visitor's exact words, from speech-to-text. Answer the question, but if the exact words name something different (often a misheard name the agent guessed at), answer what the visitor said. If neither makes sense, say what you heard and ask what they meant.
+
+# Where your information comes from
+
+Answer from your own knowledge, like a well-read guide: well-established art, history, science and culture, explaining concepts, and widely documented artists, works, objects, places and events. Don't say that something "isn't covered here" or mention what information you have or lack, unless the question needs it (below).
+
+You know nothing about the venue the visitor may be in. Never say what is on display there, its layout, directions, hours, tickets, current exhibitions or policies. If they ask, say you don't have that venue's details and suggest asking staff or checking the venue's website.
+
+When the visitor talks about something in front of them, you only know what they tell you:
+- facts about a kind of thing (a species, an artist, a style, a period) are worded about the kind, never as facts about their specific object. Say "Mastodons generally stood about three metres tall", never "This mastodon stood three metres tall."
+- a trait of a group is typical of the group, not true of every member ("most birds can fly").
+- well-known facts about a widely documented work, such as the Mona Lisa, are fine once it's clear which work it is. Whether the one in front of them is the original, a copy or a cast, you can't know unless they tell you.
+
+Never:
+- invent or guess names, dates, numbers, places or quotes. If you're not sure, say so.
+- confirm something just because the visitor stated it. Check it against well-established knowledge.
+- give exact counts for an animal's anatomy (toes, teeth, bones, vertebrae). Describe them generally instead.
+- present debated questions as settled.
+- describe a person who isn't a widely known public figure. Say you don't know about them.
+- quote anyone word for word unless you are certain of the wording; paraphrase instead.
+
+# Identifying what the visitor is looking at
+
+You can't see it. When they describe something and ask what it is:
+1. The description clearly fits one well-known work or thing: say what it sounds like, in one or two sentences, without claiming certainty ("That sounds like…").
+2. It could be several: name the likely ones briefly and ask for a detail that tells them apart.
+3. You can't tell: say so and ask what the label says, such as the title, artist or date. Don't guess.`;
+
+/**
  * Framing instructions, sent last (just before the visitor's question) so the
  * model reads them right before answering: placed earlier, the "not covered
  * here" framing was dropped whenever unrelated prompt wording changed.
@@ -117,13 +166,16 @@ const FOLLOWUP_INSTRUCTION = `End this reply with one short follow-up suggestion
 - it's about content (an object, a person, an idea), never about directions, where something is, or help ("Want me to guide you there?", "Anything else?")
 Make it specific and easy to say yes to, for example "Want to hear how Effie was found?" Vary the wording. If no topic passes every check, end without one.`;
 
-export type AnswerMode = "grounded" | "general";
+/**
+ * grounded = retrieval returned chunks; general = it returned none; open =
+ * the general place, where nothing is retrieved (OPEN_SYSTEM_PROMPT).
+ */
+export type AnswerMode = "grounded" | "general" | "open";
 
 type Section = "exhibition" | "object" | "background" | "elsewhere" | "voice";
 
 export type AnswerPrompt = {
   messages: ChatCompletionMessageParam[];
-  /** grounded = retrieval returned chunks; general = it returned none. */
   mode: AnswerMode;
   /** Which chunks went into which section, for logging. */
   sections: Record<Section, string[]>;
@@ -141,9 +193,15 @@ export function buildAnswerPrompt(opts: {
   location: LocationContext;
   /** From followUpAllowed(): may this reply end with a suggestion? */
   followUp: boolean;
+  /** The general place: no venue, answer from general knowledge. */
+  open?: boolean;
 }): AnswerPrompt {
   const { chunks, venueContext, location } = opts;
-  const mode: AnswerMode = chunks.length > 0 ? "grounded" : "general";
+  const mode: AnswerMode = opts.open
+    ? "open"
+    : chunks.length > 0
+      ? "grounded"
+      : "general";
 
   // Group chunks by what they're about. Objects keep their own heading so
   // the model can tell which object each fact belongs to.
@@ -230,9 +288,12 @@ export function buildAnswerPrompt(opts: {
   }
 
   const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: SYSTEM_PROMPT },
+    {
+      role: "system",
+      content: mode === "open" ? OPEN_SYSTEM_PROMPT : SYSTEM_PROMPT,
+    },
   ];
-  if (blocks.length) {
+  if (blocks.length && mode !== "open") {
     messages.push({
       role: "system",
       content: `# SOURCES\n\n${blocks.join("\n\n")}`,
@@ -248,7 +309,11 @@ export function buildAnswerPrompt(opts: {
   messages.push({
     role: "system",
     content: [
-      mode === "general" ? NO_SOURCES_INSTRUCTION : GROUNDED_INSTRUCTION,
+      mode === "general"
+        ? NO_SOURCES_INSTRUCTION
+        : mode === "grounded"
+          ? GROUNDED_INSTRUCTION
+          : null,
       opts.followUp && mode === "grounded" ? FOLLOWUP_INSTRUCTION : null,
       languageInstruction(opts.language),
     ]

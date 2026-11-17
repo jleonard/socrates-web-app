@@ -6,6 +6,12 @@
 export const MIT_PLACE = "ex-ai-mind-the-gap-mit";
 
 /**
+ * The place a visitor has when they haven't scanned a venue (the placeStore
+ * default). It has no content: the guide answers from general knowledge.
+ */
+export const GENERAL_PLACE = "wonderway";
+
+/**
  * Old ids still in printed links and saved sessions, mapped to the current
  * id. `mit` used to route MIT to the legacy agent and webhook; MIT now runs
  * on the default agent and the guide (Nov 2026).

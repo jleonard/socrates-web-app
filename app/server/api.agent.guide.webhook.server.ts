@@ -11,15 +11,19 @@ import { endsWithQuestion, followUpAllowed } from "./guide/followup.server";
 import { saveTurn } from "./guide/save.turn.server";
 import { getChatHistory } from "./guide/chat.history.server";
 import { resolveLocation } from "./guide/location.server";
-import { buildAnswerPrompt } from "./guide/prompt.server";
+import { buildAnswerPrompt, type AnswerPrompt } from "./guide/prompt.server";
+import { GENERAL_PLACE } from "~/utils/places";
 import { correctPronunciations } from "./guide/pronunciation.server";
 import { retrieveChunks } from "./guide/retrieval.server";
 import { buildSearchQuery } from "./guide/search.query.server";
 import { getVenueContext } from "./guide/venue.context.server";
 import { getContentLanguage } from "./guide/venue.language.server";
 
-/** Places still served by the legacy webhook until they migrate. */
-const LEGACY_PLACES = new Set(["mit", "wonderway"]);
+/**
+ * Places still served by the legacy webhook. Only `mit`, reached through
+ * `?agent=legacyMIT`; `wonderway` (the no-venue default) runs on the guide.
+ */
+const LEGACY_PLACES = new Set(["mit"]);
 
 const TEXT_HEADERS = {
   "Content-Type": "text/plain; charset=utf-8",
@@ -79,7 +83,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     };
 
     /*
-     * 📦 temp route to the legacy webhook until MIT migrates.
+     * 📦 temp route to the legacy webhook for the legacy MIT agent.
      */
     if (LEGACY_PLACES.has(place)) {
       console.log("[guide] using legacy webhook", { conversation_id, place });
@@ -150,6 +154,40 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
         corrected: correctedQuery,
         visitor_words: visitorWords,
         visitor_words_corrected: correctedWords,
+      });
+    }
+
+    /*
+     * 🌐 the general place has no content: skip the search query, cache and
+     * retrieval, and answer from general knowledge (OPEN_SYSTEM_PROMPT).
+     * Such answers are never cached, so there is nothing to look up.
+     */
+    if (place === GENERAL_PLACE) {
+      const chatHistory = await timed(loggingDetails.timing, "history_ms", () =>
+        getChatHistory(user_id),
+      );
+      const answerPrompt = buildAnswerPrompt({
+        visitorQuery,
+        visitorWords: heardWords,
+        language,
+        history: chatHistory,
+        chunks: [],
+        venueContext: [],
+        location: locationContext,
+        followUp: false,
+        open: true,
+      });
+      loggingDetails.answer = { mode: answerPrompt.mode };
+      return streamReply({
+        answerPrompt,
+        startMs,
+        loggingDetails,
+        turn: {
+          userId: user_id,
+          conversationId: conversation_id,
+          history: chatHistory,
+          visitorQuery,
+        },
       });
     }
 
@@ -318,50 +356,17 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       sections: answerPrompt.sections,
     };
 
-    /*
-     * 🤖 stream the answer. Errors inside the stream are logged and end the
-     * stream; the HTTP status is already 200 by then.
-     */
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        let reply = "";
-        const answerStartMs = Date.now();
-        try {
-          for await (const text of streamAnswer(answerPrompt.messages)) {
-            loggingDetails.timing.first_token_ms ??= Date.now() - startMs;
-            // the answer model's own time to first token
-            loggingDetails.timing.answer_ttft_ms ??= Date.now() - answerStartMs;
-            reply += text;
-            // Response bodies must be bytes, not strings
-            controller.enqueue(encoder.encode(text));
-          }
-          reply = reply.trim();
-          loggingDetails.answer.reply = reply;
-          loggingDetails.timing.total_ms = Date.now() - startMs;
-
-          // Save before closing: on Vercel, work left running after the
-          // response ends may never finish. These writes are small.
-          await saveTurn({
-            userId: user_id,
-            conversationId: conversation_id,
-            history: chatHistory,
-            visitorQuery,
-            reply,
-            source: answerPrompt.mode,
-            responseTimeMs: loggingDetails.timing.total_ms,
-            loggingDetails,
-          });
-          controller.close();
-        } catch (err) {
-          console.error("[guide] answer stream failed", err);
-          Sentry.captureException(err);
-          loggingDetails.answer.error =
-            err instanceof Error ? err.message : String(err);
-          controller.error(err);
-          return;
-        }
-
+    return streamReply({
+      answerPrompt,
+      startMs,
+      loggingDetails,
+      turn: {
+        userId: user_id,
+        conversationId: conversation_id,
+        history: chatHistory,
+        visitorQuery,
+      },
+      afterSave: (reply) => {
         // A reply ending in a follow-up suggestion isn't cached: served
         // later, it would ask again out of rhythm.
         if (followUp && endsWithQuestion(reply)) {
@@ -378,20 +383,78 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
           answer: reply,
           location: locationContext,
           version: cache?.version ?? null,
-          mode: answerPrompt.mode,
+          mode: answerPrompt.mode === "grounded" ? "grounded" : "general",
           searchQueryFallback,
           rerankFailed: retrieval.rerankFailed,
         }).then((r) => console.log("[guide] cache store", r));
       },
     });
-
-    return new Response(stream, { headers: TEXT_HEADERS });
   } catch (err) {
     console.error("agent webhook error:", err);
     Sentry.captureException(err);
     return new Response("Internal server error", { status: 500 });
   }
 };
+
+/**
+ * 🤖 streams the answer, then saves the turn before closing the stream (on
+ * Vercel, work left running after the response ends may never finish; these
+ * writes are small). `afterSave` runs once the turn is saved. Errors inside
+ * the stream are logged and end the stream; the HTTP status is already 200
+ * by then.
+ */
+function streamReply(opts: {
+  answerPrompt: AnswerPrompt;
+  startMs: number;
+  loggingDetails: Record<string, any>;
+  turn: Pick<
+    Parameters<typeof saveTurn>[0],
+    "userId" | "conversationId" | "history" | "visitorQuery"
+  >;
+  afterSave?: (reply: string) => void;
+}): Response {
+  const { answerPrompt, startMs, loggingDetails } = opts;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let reply = "";
+      const answerStartMs = Date.now();
+      try {
+        for await (const text of streamAnswer(answerPrompt.messages)) {
+          loggingDetails.timing.first_token_ms ??= Date.now() - startMs;
+          // the answer model's own time to first token
+          loggingDetails.timing.answer_ttft_ms ??= Date.now() - answerStartMs;
+          reply += text;
+          // Response bodies must be bytes, not strings
+          controller.enqueue(encoder.encode(text));
+        }
+        reply = reply.trim();
+        loggingDetails.answer.reply = reply;
+        loggingDetails.timing.total_ms = Date.now() - startMs;
+
+        await saveTurn({
+          ...opts.turn,
+          reply,
+          source: answerPrompt.mode,
+          responseTimeMs: loggingDetails.timing.total_ms,
+          loggingDetails,
+        });
+        controller.close();
+      } catch (err) {
+        console.error("[guide] answer stream failed", err);
+        Sentry.captureException(err);
+        loggingDetails.answer.error =
+          err instanceof Error ? err.message : String(err);
+        controller.error(err);
+        return;
+      }
+
+      opts.afterSave?.(reply);
+    },
+  });
+
+  return new Response(stream, { headers: TEXT_HEADERS });
+}
 
 /**
  * The visitor's language as a two-letter ISO 639-1 code ("en", "es"…), as

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * The agent's sound effects. To change a sound, replace its mp3 (or point src
@@ -8,10 +8,9 @@ import { useCallback, useEffect, useRef } from "react";
  */
 export const SOUND_EFFECTS = {
   // the session connected
-  // muted for now: testing the processing sound on its own
-  on: { src: "/audio/agent/on.mp3", volume: 0.5, enabled: false },
+  on: { src: "/audio/agent/on.mp3", volume: 0.25, enabled: true },
   // the session ended (tap, agent hang-up, timeout, dropped connection)
-  off: { src: "/audio/agent/off.mp3", volume: 0.5, enabled: false },
+  off: { src: "/audio/agent/off.mp3", volume: 0.25, enabled: true },
   // a conversation error or a failed start (played instead of off)
   error: { src: "/audio/agent/error.mp3", volume: 0.5, enabled: false },
   // looped while the agent works on a reply
@@ -38,8 +37,13 @@ const PROCESSING = {
  * Plays SOUND_EFFECTS through Web Audio: volume that works on iOS
  * (HTMLAudioElement.volume is ignored there), a gapless processing loop and a
  * fast fade-out the moment the agent speaks. A missing file only logs a warning.
+ *
+ * `thinking` is true while the processing loop is on (same delay and safety
+ * net), even if the sound itself is muted or failed to load, so the UI can
+ * show the thinking state in step with the sound.
  */
 export function useSoundEffects() {
+  const [thinking, setThinking] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
   const buffersRef = useRef<
     Partial<Record<SoundEffect, Promise<AudioBuffer | null>>>
@@ -113,6 +117,7 @@ export function useSoundEffects() {
     runRef.current++;
     clearTimeout(delayRef.current);
     clearTimeout(maxRef.current);
+    setThinking(false);
 
     const ctx = ctxRef.current;
     const playing = processingRef.current;
@@ -132,6 +137,10 @@ export function useSoundEffects() {
     stopProcessing();
     const run = runRef.current;
     delayRef.current = setTimeout(async () => {
+      // the thinking state doesn't wait for (or depend on) the audio
+      setThinking(true);
+      maxRef.current = setTimeout(stopProcessing, PROCESSING.maxMs);
+      if (!SOUND_EFFECTS.processing.enabled) return;
       const playing = await startSource("processing", true, PROCESSING.fadeMs);
       if (!playing) return;
       // stopProcessing() may have run while the file was still loading
@@ -140,7 +149,6 @@ export function useSoundEffects() {
         return;
       }
       processingRef.current = playing;
-      maxRef.current = setTimeout(stopProcessing, PROCESSING.maxMs);
     }, PROCESSING.startDelayMs);
   }, [stopProcessing, startSource]);
 
@@ -161,5 +169,5 @@ export function useSoundEffects() {
     [stopProcessing],
   );
 
-  return { prepare, play, startProcessing, stopProcessing };
+  return { prepare, play, startProcessing, stopProcessing, thinking };
 }

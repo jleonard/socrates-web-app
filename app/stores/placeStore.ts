@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { GENERAL_PLACE } from "~/utils/places";
 
 /*
  * IMPORTANT
@@ -28,7 +29,7 @@ type PlaceState = {
 export const usePlaceStore = create(
   persist<PlaceState>(
     (set) => ({
-      activePlace: "wonderway",
+      activePlace: GENERAL_PLACE,
       setActivePlace: (place) => set({ activePlace: place }),
     }),
     {

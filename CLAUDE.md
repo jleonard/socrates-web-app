@@ -42,7 +42,7 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 
 `app/server/api.agent.guide.webhook.server.ts`, with all its helpers in `app/server/guide/`. It must not import from `app/server/agent/` (that folder is being retired). Per request:
 
-1. Parse args (`query`, `visitor_words`, `language`, `user_id`, `place`, `conversation_id`, coords). `mit` / `wonderway` are forwarded to the legacy handler.
+1. Parse args (`query`, `visitor_words`, `language`, `user_id`, `place`, `conversation_id`, coords). Only `mit` is forwarded to the legacy handler. `wonderway` (`GENERAL_PLACE`, the client's default when no venue was scanned) has no content: after step 3 it skips steps 4–6 and answers from general knowledge with `OPEN_SYSTEM_PROMPT` (mode `open`, never cached).
 2. `location.server.ts`: `place` → `{ locationId, placeId, exhibitionId }` via `location_relationships`.
 3. `pronunciation.server.ts`: fix speech-to-text mishearings from Strapi dictionaries (`mispronunciations:<id>` in Redis).
 4. `search.query.server.ts`: one LLM call → standalone search query in the venue's content language (`venue.language.server.ts`), whatever language the visitor spoke (follow-ups resolved from history, answer instructions and asserted claims removed). Used for retrieval and as the cache key only; the answer model gets the visitor's words. No query types — deliberately.
@@ -53,7 +53,7 @@ The ElevenLabs agent calls a webhook as a tool (plain-text response; the agent's
 
 ### Old and legacy webhooks (being phased out)
 
-`api.agent.webhook.server.ts` + `app/server/agent/` (query types, `QUERY_TYPE_CONFIG`) and `api.agent.webhook.legacy.server.ts`. Wonderway still runs on the legacy flow — **don't change it**; it will be removed once that place moves to the guide. MIT moved to the guide in Nov 2026: `?place=mit` is mapped to `ex-ai-mind-the-gap-mit` (`app/utils/places.ts`), which uses the default agent; the legacy `mit` path is only reached with `?agent=legacyMIT`.
+`api.agent.webhook.server.ts` + `app/server/agent/` (query types, `QUERY_TYPE_CONFIG`) and `api.agent.webhook.legacy.server.ts`. Wonderway moved to the guide in Nov 2026. MIT moved to the guide in Nov 2026: `?place=mit` is mapped to `ex-ai-mind-the-gap-mit` (`app/utils/places.ts`), which uses the default agent; the legacy `mit` path is only reached with `?agent=legacyMIT`.
 
 ### Languages
 

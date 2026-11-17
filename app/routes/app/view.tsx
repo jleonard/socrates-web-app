@@ -53,6 +53,13 @@ import {
   resolvePendingPermission,
 } from "~/utils/location.client";
 
+/**
+ * How long the agent must stay quiet before the UI goes from "speaking" back
+ * to "listening". Longer than a pause between sentences, short enough that
+ * the end of a reply still feels immediate.
+ */
+const AGENT_PAUSE_MS = 500;
+
 const ParentComponent: React.FC = () => {
   const { t } = useTranslation();
   const {
@@ -183,6 +190,8 @@ const ParentComponent: React.FC = () => {
   const connectStartRef = useRef<number | null>(null);
   const connectedAtRef = useRef<number | null>(null);
   const messageCountRef = useRef(0);
+  // pending switch back to "listening" after the agent stops speaking
+  const listeningTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const conversation = useConversation({
     onConnect: ({ conversationId }) => {
@@ -223,6 +232,7 @@ const ParentComponent: React.FC = () => {
         details.reason === "error" ? "warning" : "info",
       );
       connectedAtRef.current = null;
+      clearTimeout(listeningTimerRef.current);
       setConversationTag(null);
       setCircleMode("idle");
       setButtonMode("disconnected");
@@ -264,15 +274,20 @@ const ParentComponent: React.FC = () => {
       );
     },
     onModeChange: (modeObj) => {
-      if (modeObj.mode === "listening") {
-        setCircleMode("connected");
-        setButtonMode("listening");
-      }
+      clearTimeout(listeningTimerRef.current);
       if (modeObj.mode === "speaking") {
         sounds.stopProcessing();
         setCircleMode("speaking");
         setButtonMode("speaking");
+        return;
       }
+      // over WebRTC the SDK takes the mode from LiveKit's active speaker, so
+      // it reports "listening" in every pause between sentences: only switch
+      // once the agent has stayed quiet, or the button and circles flicker
+      listeningTimerRef.current = setTimeout(() => {
+        setCircleMode("connected");
+        setButtonMode("listening");
+      }, AGENT_PAUSE_MS);
     },
     onError: (error: string) => {
       Sentry.captureMessage(error, "error");
@@ -534,7 +549,16 @@ const ParentComponent: React.FC = () => {
         </>
       )}
       <div className="fixed w-dvw h-dvh top-0 left-0 pointer-events-none pt-14 z-30">
-        <Circles key="avatar-circle" mode={circleMode}></Circles>
+        {/* thinking (in step with the processing sound) shows over the
+            listening state, between the visitor's question and the reply */}
+        <Circles
+          key="avatar-circle"
+          mode={
+            sounds.thinking && circleMode === "connected"
+              ? "processing"
+              : circleMode
+          }
+        ></Circles>
       </div>
 
       {error && (
