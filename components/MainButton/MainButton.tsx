@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Button as ReactAriaButton } from "react-aria-components";
+import { useTranslation } from "react-i18next";
 
 import { MainButtonStyles } from "./MainButton.styles";
 import { MainButtonModes, MainButtonProps } from "./MainButton.types";
@@ -19,12 +20,16 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       ...rest
     } = props;
 
+    const { t } = useTranslation();
+
     // used to set the text under the button
     const stateText: Record<MainButtonModes, string | null> = {
-      disconnected: `Press to ${label.toLowerCase()}`,
-      listening: "Ask away",
-      speaking: "Stop response",
-      connecting: "Just a moment",
+      disconnected: t("main_button.press_to", {
+        action: label.toLowerCase(),
+      }),
+      listening: t("main_button.listening"),
+      speaking: t("main_button.speaking"),
+      connecting: t("main_button.connecting"),
     };
 
     function getTimeRemainingLabel(expiration: string) {
@@ -36,26 +41,26 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
 
       const minutes = Math.floor(diffMs / 60_000);
       if (minutes < 60) {
-        return `${minutes} minute${minutes === 1 ? "" : "s"} remaining`;
+        return t("main_button.minutes_remaining", { count: minutes });
       }
 
       const hours = Math.floor(minutes / 60);
       if (hours < 24) {
-        return `${hours} hour${hours === 1 ? "" : "s"} remaining`;
+        return t("main_button.hours_remaining", { count: hours });
       }
 
       const days = Math.floor(hours / 24);
       if (days < 7) {
-        return `${days} day${days === 1 ? "" : "s"} remaining`;
+        return t("main_button.days_remaining", { count: days });
       }
 
       if (days < 30) {
         const weeks = Math.floor(days / 7);
-        return `${weeks} week${weeks === 1 ? "" : "s"} remaining`;
+        return t("main_button.weeks_remaining", { count: weeks });
       }
 
       const months = Math.floor(days / 30);
-      return `${months} month${months === 1 ? "" : "s"} remaining`;
+      return t("main_button.months_remaining", { count: months });
     }
 
     return (
