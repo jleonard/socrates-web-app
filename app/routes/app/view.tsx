@@ -40,6 +40,7 @@ import LocationModal from "components/LocationModal/LocationModal";
 import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { useSoundEffects } from "~/hooks/useSoundEffects";
+import { useSpeechStats } from "~/hooks/useSpeechStats";
 import { trackEvent } from "~/utils/googleAnalytics";
 
 import { AvatarConnection, AvatarMode } from "types/avatar";
@@ -194,6 +195,10 @@ const ParentComponent: React.FC = () => {
   const conversationIdRef = useRef<string | null>(null);
   // pending switch back to "listening" after the agent stops speaking
   const listeningTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  // mic level and speech detection per session, logged on disconnect
+  const speech = useSpeechStats();
+  // the SDK callbacks below read the latest conversation through this
+  const conversationRef = useRef<ReturnType<typeof useConversation>>();
 
   const conversation = useConversation({
     onConnect: ({ conversationId }) => {
@@ -202,6 +207,10 @@ const ParentComponent: React.FC = () => {
       messageCountRef.current = 0;
       setConversationTag(conversationId);
       conversationIdRef.current = conversationId;
+      speech.start(
+        () => conversationRef.current?.getInputVolume() ?? NaN,
+        () => conversationRef.current?.isSpeaking ?? false,
+      );
       step("conversation connected", {
         conversation_id: conversationId,
         connect_ms: connectStartRef.current
@@ -232,6 +241,8 @@ const ParentComponent: React.FC = () => {
             ? Date.now() - connectedAtRef.current
             : null,
           messages: messageCountRef.current,
+          // user_transcripts, mic_*, vad_*, first_speech_ms
+          ...speech.stop(),
         },
         details.reason === "error" ? "warning" : "info",
       );
@@ -250,6 +261,7 @@ const ParentComponent: React.FC = () => {
       if (message.source === "user") {
         responseTimeComparison = now;
         sounds.startProcessing();
+        speech.userTranscript();
       }
       if (message.source === "ai") {
         sounds.stopProcessing();
@@ -294,12 +306,15 @@ const ParentComponent: React.FC = () => {
         setButtonMode("listening");
       }, AGENT_PAUSE_MS);
     },
+    // only sent when the agent lists vad_score in its client_events
+    onVadScore: ({ vadScore }) => speech.vad(vadScore),
     onError: (error: string) => {
       Sentry.captureMessage(error, "error");
       playError();
       setError(error);
     },
   });
+  conversationRef.current = conversation;
 
   const startConversation = useCallback(async () => {
     const freshCoords = await getFreshLocation(coords);
