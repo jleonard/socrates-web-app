@@ -80,7 +80,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
               <LoaderCircle className="animate-spin" size={24} />
             )}
             {mode === "listening" && (
-              <img className="size-[36px]" src="/icons/EQ.svg" />
+              <img src="/icons/Stop.svg" className="size-[26px]" />
             )}
 
             {mode === "speaking" && (
