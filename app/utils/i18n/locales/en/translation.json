@@ -11,10 +11,12 @@
     "auth_tagline": "Museums. Landmarks. Culture."
   },
   "main_button": {
-    "press_to": "Press to {{action}}",
-    "listening": "Ask away",
-    "speaking": "Stop response",
-    "connecting": "Just a moment",
+    "tap_talk": "Tap {{label}} to start",
+    "tap_start": "Tap {{label}} to begin",
+    "listening": "Listening",
+    "thinking": "Thinking",
+    "speaking": "Talking",
+    "connecting": "Connecting...",
     "minutes_remaining_one": "{{count}} minute remaining",
     "minutes_remaining_other": "{{count}} minutes remaining",
     "hours_remaining_one": "{{count}} hour remaining",

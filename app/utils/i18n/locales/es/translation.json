@@ -11,10 +11,12 @@
     "auth_tagline": "Museos. Monumentos. Cultura."
   },
   "main_button": {
-    "press_to": "Pulsa para {{action}}",
-    "listening": "Pregunta lo que quieras",
-    "speaking": "Detener respuesta",
-    "connecting": "Un momento",
+    "tap_talk": "Toca {{label}} para empezar",
+    "tap_start": "Toca {{label}} para comenzar",
+    "listening": "Escuchando",
+    "thinking": "Pensando",
+    "speaking": "Hablando",
+    "connecting": "Conectando...",
     "minutes_remaining_one": "Queda {{count}} minuto",
     "minutes_remaining_other": "Quedan {{count}} minutos",
     "hours_remaining_one": "Queda {{count}} hora",

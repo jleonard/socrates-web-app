@@ -18,13 +18,13 @@ import {
   useSubmit,
 } from "react-router";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
+import { DEFAULT_LOCALE } from "~/utils/i18n/config";
 import {
   setConversationTag,
   setPlaceTag,
   setVisitorScope,
   step,
 } from "~/utils/observability.client";
-import { DEFAULT_LOCALE } from "~/utils/i18n/config";
 import type { loader } from "./loader";
 
 // stores
@@ -563,8 +563,41 @@ const ParentComponent: React.FC = () => {
     audioRef.current?.stop();
   };
 
+  const buttonLabel = shouldPlayGreeting
+    ? t("global.start_btn")
+    : t("global.talk_btn");
+
+  // text feedback on the agent's state, shown at the top of the screen
+  const stateText: Record<MainButtonModes, string> = {
+    // names the button, since this text sits at the top of the screen;
+    // "begin" when the button itself says Start ("Tap Start to begin")
+    disconnected: t(
+      shouldPlayGreeting ? "main_button.tap_start" : "main_button.tap_talk",
+      { label: buttonLabel },
+    ),
+    listening: t("main_button.listening"),
+    speaking: t("main_button.speaking"),
+    connecting: t("main_button.connecting"),
+  };
+  // thinking (in step with the circles and the processing sound) shows over
+  // the listening text, between the visitor's question and the reply
+  const currentStateText =
+    sounds.thinking && buttonMode === "listening"
+      ? t("main_button.thinking")
+      : stateText[buttonMode];
+  const showStateText =
+    access?.category !== "unused" && access?.category !== "expired";
+
   return (
     <>
+      {/* in flow at the start of <main>, so it sits right under the nav;
+          above the full-screen circles layer (z-30) */}
+      {showStateText && (
+        <p className="relative z-40 w-full pt-2 text-center pointer-events-none font-bold">
+          {currentStateText}
+        </p>
+      )}
+
       {shouldPlayGreeting && (
         <>
           {/* tap-anywhere fallback, never on top of the location modal: it
@@ -636,9 +669,7 @@ const ParentComponent: React.FC = () => {
             mode={buttonMode}
             userAccess={access?.category ?? "none"}
             expiration={access?.expiration ?? new Date().toISOString()}
-            label={
-              shouldPlayGreeting ? t("global.start_btn") : t("global.talk_btn")
-            }
+            label={buttonLabel}
           ></MainButton>
         </>
       ) : (

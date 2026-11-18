@@ -4,7 +4,7 @@ import { Button as ReactAriaButton } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 
 import { MainButtonStyles } from "./MainButton.styles";
-import { MainButtonModes, MainButtonProps } from "./MainButton.types";
+import { MainButtonProps } from "./MainButton.types";
 
 import { LoaderCircle } from "lucide-react";
 
@@ -21,16 +21,6 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
     } = props;
 
     const { t } = useTranslation();
-
-    // used to set the text under the button
-    const stateText: Record<MainButtonModes, string | null> = {
-      disconnected: t("main_button.press_to", {
-        action: label.toLowerCase(),
-      }),
-      listening: t("main_button.listening"),
-      speaking: t("main_button.speaking"),
-      connecting: t("main_button.connecting"),
-    };
 
     function getTimeRemainingLabel(expiration: string) {
       const end = new Date(expiration);
@@ -65,11 +55,8 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
 
     return (
       <>
-        {userAccess !== "unused" && (
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-36 z-20 text-center">
-            {stateText[mode]}
-          </span>
-        )}
+        {/* the agent-state text ("Press to talk", "Ask away", …) lives in
+            app/routes/app/view.tsx */}
         <ReactAriaButton
           ref={ref}
           className={MainButtonStyles({ mode, className })}
