@@ -15,7 +15,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       mode,
       userAccess,
       expiration,
-      label = "Talk",
+      label = "Start",
       children,
       ...rest
     } = props;

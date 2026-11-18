@@ -1,6 +1,6 @@
 {
   "global": {
-    "talk_btn": "Talk",
+    "talk_btn": "Start",
     "start_btn": "Start",
     "sign_out": "Sign Out",
     "sign_in": "Sign In",
@@ -11,7 +11,7 @@
     "auth_tagline": "Museums. Landmarks. Culture."
   },
   "main_button": {
-    "tap_talk": "Tap {{label}} to start",
+    "tap_talk": "Tap {{label}} to begin",
     "tap_start": "Tap {{label}} to begin",
     "listening": "Listening",
     "thinking": "Thinking",
