@@ -1,4 +1,4 @@
-import { useConversation } from "@elevenlabs/react";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import * as Sentry from "@sentry/react";
 import { MainButton } from "components/MainButton/MainButton";
 import { MainButtonModes } from "components/MainButton/MainButton.types";
@@ -217,6 +217,13 @@ const ParentComponent: React.FC = () => {
           ? Date.now() - connectStartRef.current
           : null,
       });
+      // logged here, not after startSession(): with SDK 1.x it returns
+      // nothing, and only sessions that actually connected should count
+      logAppEventFromClient({
+        event_type: "conversation_started",
+        event_message: "New Conversation",
+        event_details: { user_id: user_profile.user_id },
+      });
       setButtonMode("listening");
       setCircleMode("preconnect");
       setTimeout(() => {
@@ -258,12 +265,14 @@ const ParentComponent: React.FC = () => {
       messageCountRef.current += 1;
       const now = new Date();
       let responseTime;
-      if (message.source === "user") {
+      // the transcript store and event_log keep the old "user" / "ai" names
+      const speaker = message.role === "user" ? "user" : "ai";
+      if (speaker === "user") {
         responseTimeComparison = now;
         sounds.startProcessing();
         speech.userTranscript();
       }
-      if (message.source === "ai") {
+      if (speaker === "ai") {
         sounds.stopProcessing();
         // set the response time
         responseTime = responseTimeComparison
@@ -274,7 +283,7 @@ const ParentComponent: React.FC = () => {
       }
 
       logAppEventFromClient({
-        event_type: message.source == "user" ? "user_spoke" : "agent_spoke",
+        event_type: speaker === "user" ? "user_spoke" : "agent_spoke",
         event_message: message.message,
         event_details: { user_id: user_profile.user_id },
       });
@@ -283,7 +292,7 @@ const ParentComponent: React.FC = () => {
         {
           timestamp: new Date(),
           text: message.message,
-          speaker: message.source,
+          speaker,
           location: coords ?? undefined,
           ...(responseTime !== undefined && { response_time: responseTime }),
         },
@@ -309,6 +318,15 @@ const ParentComponent: React.FC = () => {
     // only sent when the agent lists vad_score in its client_events
     onVadScore: ({ vadScore }) => speech.vad(vadScore),
     onError: (error: string) => {
+      // SDK 1.x reports a failed start here (startSession() no longer
+      // throws): before the session connected, it's a start failure
+      if (connectedAtRef.current === null) {
+        step("conversation start failed", { error }, "error");
+        Sentry.captureMessage(`app view : start failed: ${error}`, "error");
+        playError();
+        setError("Couldn't start the conversation");
+        return;
+      }
       Sentry.captureMessage(error, "error");
       playError();
       setError(error);
@@ -338,7 +356,9 @@ const ParentComponent: React.FC = () => {
         place: activePlace,
         start_language: startLanguage ?? null,
       });
-      await conversation.startSession({
+      // returns right away; connection, failure and the rest arrive through
+      // the callbacks above (onConnect / onError / onDisconnect)
+      conversation.startSession({
         agentId: elevenLabsId,
         connectionType: "webrtc",
         dynamicVariables: {
@@ -355,15 +375,6 @@ const ParentComponent: React.FC = () => {
           overrides: { agent: { language: startLanguage } },
         }),
       });
-
-      logAppEventFromClient({
-        event_type: "conversation_started",
-        event_message: "New Conversation",
-        event_details: { user_id: user_profile.user_id },
-      });
-
-      // TODO: Implementar envío de mensaje contextual cuando tengamos el método correcto
-      // El contexto ya está enviado via dynamicVariables por ahora
     } catch (error) {
       step(
         "conversation start failed",
@@ -384,20 +395,18 @@ const ParentComponent: React.FC = () => {
     }
   }, [conversation, user, coords, elevenLabsId, startLanguage, playError]);
 
-  const stopConversation = useCallback(async () => {
+  const stopConversation = useCallback(() => {
     logAppEventFromClient({
       event_type: "conversation_ended",
       event_message: "Conversation Ended",
       event_details: { user_id: user_profile.user_id },
     });
-    await conversation.endSession();
+    // SDK 1.x also ends a session that is still connecting
+    conversation.endSession();
   }, [conversation]);
 
   const handleMainButtonPress = () => {
-    if (
-      avatarConnection === "disconnected" ||
-      avatarConnection === "disconnecting"
-    ) {
+    if (avatarConnection === "disconnected" || avatarConnection === "error") {
       // stop the greeting right away if it is playing
       stopGreeting();
       // unlock audio inside the tap (required on iOS) and load the files
@@ -502,6 +511,11 @@ const ParentComponent: React.FC = () => {
       // CONNECTING
       setCircleMode("processing");
       setButtonMode("connecting");
+    }
+    // a failed start never connects, so onDisconnect doesn't reset the UI
+    if (avatarConnection === "error") {
+      setCircleMode("idle");
+      setButtonMode("disconnected");
     }
   }, [avatarConnection]);
 
@@ -655,4 +669,14 @@ const ParentComponent: React.FC = () => {
   );
 };
 
-export default ParentComponent;
+/*
+ * SDK 1.x keeps the session in a provider. It ends the session on unmount,
+ * including one still connecting (0.6 left those running).
+ */
+const AppView: React.FC = () => (
+  <ConversationProvider>
+    <ParentComponent />
+  </ConversationProvider>
+);
+
+export default AppView;
