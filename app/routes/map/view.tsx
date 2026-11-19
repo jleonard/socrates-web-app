@@ -51,20 +51,29 @@ const dotLayer: LayerProps = {
   },
 };
 
+const LABEL_TEXT_SIZE = 12; // px
+const LABEL_TEXT_OFFSET_EM = 1.4; // text bottom sits this far above the dot
+const LABEL_PAD_Y = 8;
+const LABEL_PAD_X = 14;
+// Popup tip sits just above a one-line label's box: text offset + one line
+// (Mapbox's default 1.2em line height) + top padding, plus a small gap.
+const POPUP_OFFSET =
+  Math.ceil(LABEL_TEXT_SIZE * (LABEL_TEXT_OFFSET_EM + 1.2)) + LABEL_PAD_Y + 2;
+
 const labelLayer: LayerProps = {
   id: LABEL_LAYER,
   type: "symbol",
   filter: visibleAtZoom,
   layout: {
     "text-field": ["get", "name"],
-    "text-size": 12,
+    "text-size": LABEL_TEXT_SIZE,
     "text-anchor": "bottom",
-    "text-offset": [0, -1.4],
+    "text-offset": [0, -LABEL_TEXT_OFFSET_EM],
     "text-max-width": 14,
     // White box behind the label, sized to the text.
     "icon-image": LABEL_BG_IMAGE,
     "icon-text-fit": "both",
-    "icon-text-fit-padding": [6, 12, 6, 12],
+    "icon-text-fit-padding": [LABEL_PAD_Y, LABEL_PAD_X, LABEL_PAD_Y, LABEL_PAD_X],
     // Lower sort key wins placement: on overlap the most prominent label stays.
     "symbol-sort-key": ["-", 0, ["get", "rank"]],
   },
@@ -73,11 +82,36 @@ const labelLayer: LayerProps = {
   },
 };
 
+// White rounded rectangle, drawn at 2x for crisp corners. Only the middle
+// band stretches (9-slice), so the corners keep their radius at any size.
+const LABEL_RADIUS = 4; // CSS px
+const LABEL_BG_PIXEL_RATIO = 2;
+
 function addLabelBackground(map: MapInstance) {
   if (map.hasImage(LABEL_BG_IMAGE)) return;
-  const size = 8;
-  const pixels = new Uint8Array(size * size * 4).fill(255); // solid white
-  map.addImage(LABEL_BG_IMAGE, { width: size, height: size, data: pixels });
+  const r = LABEL_RADIUS * LABEL_BG_PIXEL_RATIO;
+  const size = r * 2 + 4;
+  const pixels = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      // Distance from this pixel's center to the nearest corner circle's center.
+      const dx = Math.max(r - (x + 0.5), x + 0.5 - (size - r), 0);
+      const dy = Math.max(r - (y + 0.5), y + 0.5 - (size - r), 0);
+      const coverage = Math.min(Math.max(r - Math.hypot(dx, dy) + 0.5, 0), 1);
+      const i = (y * size + x) * 4;
+      pixels[i] = pixels[i + 1] = pixels[i + 2] = 255;
+      pixels[i + 3] = Math.round(coverage * 255);
+    }
+  }
+  map.addImage(
+    LABEL_BG_IMAGE,
+    { width: size, height: size, data: pixels },
+    {
+      pixelRatio: LABEL_BG_PIXEL_RATIO,
+      stretchX: [[r, size - r]],
+      stretchY: [[r, size - r]],
+    },
+  );
 }
 
 const MapView: React.FC = () => {
@@ -188,7 +222,7 @@ const MapView: React.FC = () => {
                 onClose={() => setSelectedLocation(null)}
                 closeOnClick={false}
                 anchor="bottom"
-                offset={14}
+                offset={POPUP_OFFSET}
               >
                 <div
                   style={{ minWidth: 180, fontFamily: "system-ui, sans-serif" }}
@@ -200,18 +234,6 @@ const MapView: React.FC = () => {
                     <div style={{ fontSize: 13, opacity: 0.8 }}>
                       {selectedLocation.description}
                     </div>
-                  )}
-                  {selectedLocation.image_url && (
-                    <img
-                      src={selectedLocation.image_url}
-                      alt={selectedLocation.name}
-                      style={{
-                        width: "100%",
-                        marginTop: 6,
-                        borderRadius: 4,
-                        display: "block",
-                      }}
-                    />
                   )}
                 </div>
               </Popup>

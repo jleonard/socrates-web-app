@@ -30,7 +30,7 @@ export const ControlBar = ({ className }: { className?: string }) => {
         <div className="flex flex-row gap-3">
           <Link
             to="/map"
-            className="pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
+            className="hidden pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
           >
             <div className="w-6 h-6 flex items-center justify-center">
               {/* icon img */}
@@ -38,15 +38,7 @@ export const ControlBar = ({ className }: { className?: string }) => {
             </div>
             Map
           </Link>
-        </div>
 
-        {/* center */}
-        <div className="pointer-events-auto absolute inset-x-0 flex justify-center">
-          {/* <Agent /> */}
-        </div>
-
-        {/* right side */}
-        <div className="flex flex-row gap-3">
           <Link
             to="/history"
             className="pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
@@ -57,6 +49,15 @@ export const ControlBar = ({ className }: { className?: string }) => {
             </div>
             {t("global.history")}
           </Link>
+        </div>
+
+        {/* center */}
+        <div className="pointer-events-auto absolute inset-x-0 flex justify-center">
+          {/* <Agent /> */}
+        </div>
+
+        {/* right side */}
+        <div className="flex flex-row gap-3">
           <button
             onClick={toggle}
             className="pointer-events-auto inline-flex flex-col gap-0 items-center justify-center w-[68px] h-[54px] text-xs"
