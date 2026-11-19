@@ -7,5 +7,9 @@ export { default } from "./view";
 //export { action } from "./action";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  return [{ title: data?.pageTitle }];
+  // Unlinked test route: keep it out of search results.
+  return [
+    { title: data?.pageTitle },
+    { name: "robots", content: "noindex, nofollow" },
+  ];
 };
