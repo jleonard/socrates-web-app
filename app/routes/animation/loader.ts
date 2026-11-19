@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -18,7 +18,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
   const user = "foo";
 
-  return Response.json({
+  return data({
     pageTitle: "WonderWay",
     user: user,
     n8nEndpoint: process.env.N8N_URL!,

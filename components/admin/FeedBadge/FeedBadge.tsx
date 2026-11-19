@@ -31,7 +31,12 @@ const eventThemeMap: Record<LogAppEventType, string> = {
   user_spoke: successTheme,
   agent_spoke: neutralTheme,
   agent_log: infoTheme,
+  // guide / webhook answers (one per guide turn); without these the feed
+  // rendered an undefined icon for them
+  agent_webhook: neutralTheme,
+  agent_webhook_rag: neutralTheme,
   purchase: successTheme,
+  funnel: neutralTheme,
 };
 
 const eventIconMap: Record<LogAppEventType, LucideIcon> = {
@@ -46,7 +51,10 @@ const eventIconMap: Record<LogAppEventType, LucideIcon> = {
   user_spoke: MessageCircle,
   agent_spoke: BotMessageSquare,
   agent_log: ScrollText,
+  agent_webhook: BotMessageSquare,
+  agent_webhook_rag: BotMessageSquare,
   purchase: CircleDollarSign,
+  funnel: ScrollText,
 };
 
 type FeedBadgeProps = {

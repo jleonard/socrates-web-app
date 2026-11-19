@@ -1,5 +1,5 @@
 import { products } from "~/server/product.manager.server";
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 
@@ -14,12 +14,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/login");
   }
 
-  const { data: profile, error } = await upsertUserProfile(
-    { user_id: user.id, email: user.email },
-    request
-  );
+  const { data: profile, error } = await upsertUserProfile({
+    user_id: user.id,
+    email: user.email,
+  });
 
-  return Response.json({
+  return data({
     pageTitle: "WonderWay",
     products,
     gaTrackingId: process.env.GA_TRACKING_ID,

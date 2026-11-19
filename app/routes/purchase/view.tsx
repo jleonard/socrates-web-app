@@ -10,6 +10,8 @@ export default function Purchase() {
   const [gaClientId, setGaClientId] = useState<string>(" ");
 
   useEffect(() => {
+    // GA_TRACKING_ID can be unset (e.g. locally): skip the lookup then
+    if (!gaTrackingId) return;
     getGAClientId(gaTrackingId).then((id) => setGaClientId(id));
   }, []);
 

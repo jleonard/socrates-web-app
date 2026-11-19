@@ -6,7 +6,7 @@ import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 import { appendChatHistory } from "./chat.history.server";
 
 /** How the reply was produced. */
-export type TurnSource = "grounded" | "general" | "cache";
+export type TurnSource = "grounded" | "general" | "open" | "cache";
 
 /**
  * Version of the `details` shape written to agent_history and event_log.

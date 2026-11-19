@@ -26,17 +26,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // Upsert profile data on every load
-  const { data: profile, error } = await upsertUserProfile(
-    { user_id: user.id, email: user.email },
-    request,
-  );
+  const { data: profile, error } = await upsertUserProfile({
+    user_id: user.id,
+    email: user.email,
+  });
 
   // @todo sentry
   if (error) {
     console.log("sb error: ", error);
   }
 
-  if (profile.role !== "admin") {
+  if (profile?.role !== "admin") {
     return redirect("/app");
   }
 

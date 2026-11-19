@@ -1,6 +1,6 @@
 {
   "global": {
-    "talk_btn": "Talk",
+    "talk_btn": "Start",
     "start_btn": "Start",
     "sign_out": "Sign Out",
     "sign_in": "Sign In",
@@ -9,6 +9,27 @@
     "close": "Close",
     "continue_with": "Continue with {{provider}}",
     "auth_tagline": "Museums. Landmarks. Culture."
+  },
+  "main_button": {
+    "tap_talk": "Tap {{label}} to begin",
+    "tap_start": "Tap {{label}} to begin",
+    "listening": "Listening",
+    "thinking": "Thinking",
+    "speaking": "Talking",
+    "connecting": "Connecting...",
+    "minutes_remaining_one": "{{count}} minute remaining",
+    "minutes_remaining_other": "{{count}} minutes remaining",
+    "hours_remaining_one": "{{count}} hour remaining",
+    "hours_remaining_other": "{{count}} hours remaining",
+    "days_remaining_one": "{{count}} day remaining",
+    "days_remaining_other": "{{count}} days remaining",
+    "weeks_remaining_one": "{{count}} week remaining",
+    "weeks_remaining_other": "{{count}} weeks remaining",
+    "months_remaining_one": "{{count}} month remaining",
+    "months_remaining_other": "{{count}} months remaining"
+  },
+  "exhibition": {
+    "start_experience": "Start experience"
   },
   "nav": {
     "privacy": "Privacy Policy",

@@ -2,7 +2,7 @@ import { tv } from "../../app/utils/tv";
 
 export const MainButtonStyles = tv({
   base: [
-    "bg-black text-white",
+    "bg-green-600 text-white",
     "flex items-center justify-center",
     "size-[72px]",
     //"w-full max-w-[700px] p-0",
@@ -18,7 +18,7 @@ export const MainButtonStyles = tv({
       connecting: "",
       speaking: "bg-red-600 delay-100",
       disconnected: "",
-      listening: "bg-green-600 delay-100",
+      listening: "bg-red-600 delay-100",
     },
   },
 });

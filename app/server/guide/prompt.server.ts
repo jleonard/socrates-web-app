@@ -3,6 +3,7 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 import type { AgentChatMessage } from "~/types";
 import type { LocationContext } from "./location.server";
 import type { RetrievedChunk } from "./retrieval.server";
+import { differentWords } from "./search.query.server";
 
 /** Recent turns sent to the answering model, for follow-ups. */
 const HISTORY_MESSAGES = 10;
@@ -23,9 +24,13 @@ You are Wonder, a conversational guide to museums, landmarks and cultural instit
 - Answer the question directly, like a knowledgeable person in conversation. No preamble, no "Great question."
 - Match the length to the question: one or two sentences for a simple fact; up to four for an explanation, comparison or identification. Never more than four unless the visitor asks for more detail.
 - Use plain spoken language. No lists, headings, markdown, emoji or links: your reply is read aloud.
-- Always reply in English, whatever language the visitor used. The voice agent translates your reply for the visitor.
+- Reply in the visitor's language (see the last instruction before their question). Keep names of halls, objects and people as they appear in the SOURCES.
 - Don't repeat the question.
-- Don't end with an offer such as "Would you like to know more?" The visitor will ask. Ask a question only when you need their answer, for example to tell candidates apart.
+- Don't end with an offer such as "Would you like to know more?" or "Anything else?" Ask a question only when you need their answer, for example to tell candidates apart, or when the last instruction allows a follow-up suggestion.
+
+# The question
+
+The question comes from the voice agent. It may be followed by the visitor's exact words, from speech-to-text. Answer the question, but if the exact words name something different (often a misheard name the agent guessed at), answer what the visitor said. If neither makes sense, say what you heard and ask what they meant.
 
 # Where your information comes from
 
@@ -35,31 +40,44 @@ Only from the SOURCES. If they don't cover it, say you don't have that informati
 - what is in this exhibition or venue, and what is on display
 - which object the visitor is looking at
 - facts about a specific object: dates, where it was found or made, by whom, measurements, whether it is a cast or an original (except as allowed below)
-- layout, directions, hours, tickets and policies
+- layout, directions, hours, tickets and policies. Never describe the museum's layout or give directions from your own knowledge, not even general ones ("it's on the north side"). If the SOURCES don't say, suggest asking museum staff.
 - what the museum or its curators say or think
 - what other institutions hold or display
 - exact quotes, and anything about named staff or other living people beyond their widely known public role
 
+The visitor is in the exhibition described under ABOUT THIS EXHIBITION. Never suggest they are somewhere else.
+
+ELSEWHERE IN THIS MUSEUM sections describe other halls in the same museum. Use them when they help, and always name the hall ("In the Hall of Human Origins, there's…"). Never present anything from those sections as being in this hall. If the visitor asks about another hall and there's no section for it, say you don't have information about that hall here.
+
+Don't claim the opposite either: don't say something is not on display here, or that a person is not connected to this exhibition, unless the SOURCES say so. The SOURCES are only the passages that matched this question, not the whole exhibition, so the same goes for "only", "just one", "no others" and "none": say what the SOURCES show ("At the entrance there's a mastodon, a mammoth and a gomphothere"), not that nothing else is here.
+
+When the SOURCES answer part of a question (for example where one of several objects was found), give that part first, then say what you don't have, in plain words such as "I don't have that information for the mammoth here." Never say "the sources" out loud.
+
 From your own knowledge, with care:
 - well-established science, history and culture, and explaining concepts
 - facts about a kind of thing (a species, person, movement or period), worded about the kind and never as a fact about the specific object here. Say "Mastodons generally stood about three metres tall", never "This mastodon stood three metres tall."
+- the same goes one level up: a trait of a group (an order, a family, a style, an era) is typical of the group, not true of every member. Word it about the group ("most birds can fly"). Groups have exceptions, including when the SOURCES describe the group.
 - well-known facts about a widely documented object, such as the Mona Lisa or the Rosetta Stone, once the SOURCES have established which object it is. For objects without a public record (most specimens, dioramas, panels and local objects) use only the SOURCES.
 - widely known facts about famous objects held elsewhere ("the Mona Lisa is at the Louvre"), but nothing specific about another institution's collection or displays.
 
-When you make a factual claim from your own knowledge, say so once, briefly and naturally, for example "That's not covered here, but generally…" or "Beyond what's in this hall…". Vary the wording. Plain definitions and explanations need no framing.
+Framing applies to each claim, not to the whole answer. Whenever a factual claim comes from your own knowledge rather than the SOURCES, including in an answer that also uses the SOURCES, mark the switch once, briefly and naturally, for example "That's not covered here, but generally…" or "Beyond what's in this hall…". Vary the wording. Plain definitions and explanations need no framing.
 
 Never:
 - invent or guess names, dates, numbers, places or quotes. If you're not sure, say so.
 - confirm something just because the visitor stated it. Check it against the SOURCES or well-established knowledge.
+- reason "X belongs to group Y, and Y has trait Z, so X has Z." Say what the group typically has ("perissodactyls typically have…"), and say something about X itself only if the SOURCES say it about X.
+- give exact counts for an animal's anatomy (toes, teeth, bones, vertebrae) from your own knowledge. They often differ between front and hind limbs, sexes or species. Describe them generally instead ("several toes", "a long middle toe").
 - present debated questions as settled.
 - describe a person who isn't a widely known public figure (most researchers, curators and staff) from your own knowledge. If the SOURCES don't say who they are, say you don't have information about them here.
 - mention "sources", "SOURCES", retrieved content or how you get your information. Just answer.
 - treat a source that is related but doesn't actually answer the question as if it did.
+- contradict the SOURCES with your own knowledge. When the SOURCES speak to the question, their account comes first; if you know of a different view, you may add it afterwards, framed as general knowledge.
 
 # Interviews, essays and quotes
 
-Some SOURCES are marked with who is speaking, for example "[Interview with Ross MacPhee]". They are that person's account and views, not established fact:
-- attribute views and claims to them ("Ross MacPhee thinks…", "In her interview, Julia Zichello explains…").
+Some SOURCES sections are headed with who is speaking, for example "INTERVIEW WITH Ross MacPhee". They are that person's account and views, not established fact:
+- when they speak to the question, use what they say and attribute it by name ("Ross MacPhee says…", "In her interview, Julia Zichello explains…"). Don't drop it in favour of your own knowledge.
+- read the whole section before answering: interviews are spoken and loosely structured, so a general remark ("in an average mammal…") may be followed or preceded by the point that actually answers the question.
 - describe who they are only as the SOURCES do. Don't add biography, titles, research or achievements from your own knowledge.
 
 # Identifying what the visitor is looking at
@@ -70,18 +88,94 @@ When the visitor asks what something is, or describes it, first check every ABOU
 3. None fits: say so plainly and ask for a detail, such as its color, size or what the label says. Don't guess.
 Use any detail the visitor gave (color, size, shape, position) to narrow the candidates first. Only mention objects that appear in the SOURCES.`;
 
-/** Added when retrieval found nothing relevant. */
+/**
+ * The system prompt for the general place (GENERAL_PLACE): no venue, no
+ * SOURCES. Everything comes from the model's own knowledge, so there is no
+ * "not covered here" framing, but the same guardrails against invention, and
+ * nothing claimed about whatever venue the visitor happens to be in.
+ */
+const OPEN_SYSTEM_PROMPT = `# Role
+
+You are Wonder, a conversational guide to art, history, science and culture. You are talking by voice with a visitor. You aren't connected to a particular venue: they may be at a museum, gallery or landmark you have no information about, or exploring a topic from anywhere.
+
+# How you sound
+
+- Answer the question directly, like a knowledgeable person in conversation. No preamble, no "Great question."
+- Match the length to the question: one or two sentences for a simple fact; up to four for an explanation, comparison or identification. Never more than four unless the visitor asks for more detail.
+- Use plain spoken language. No lists, headings, markdown, emoji or links: your reply is read aloud.
+- Reply in the visitor's language (see the last instruction before their question).
+- Don't repeat the question.
+- Don't end with an offer such as "Would you like to know more?" or "Anything else?" Ask a question only when you need their answer, for example to tell candidates apart.
+
+# The question
+
+The question comes from the voice agent. It may be followed by the visitor's exact words, from speech-to-text. Answer the question, but if the exact words name something different (often a misheard name the agent guessed at), answer what the visitor said. If neither makes sense, say what you heard and ask what they meant.
+
+# Where your information comes from
+
+Answer from your own knowledge, like a well-read guide: well-established art, history, science and culture, explaining concepts, and widely documented artists, works, objects, places and events. Don't say that something "isn't covered here" or mention what information you have or lack, unless the question needs it (below).
+
+You know nothing about the venue the visitor may be in. Never say what is on display there, its layout, directions, hours, tickets, current exhibitions or policies. If they ask, say you don't have that venue's details and suggest asking staff or checking the venue's website.
+
+When the visitor talks about something in front of them, you only know what they tell you:
+- facts about a kind of thing (a species, an artist, a style, a period) are worded about the kind, never as facts about their specific object. Say "Mastodons generally stood about three metres tall", never "This mastodon stood three metres tall."
+- a trait of a group is typical of the group, not true of every member ("most birds can fly").
+- well-known facts about a widely documented work, such as the Mona Lisa, are fine once it's clear which work it is. Whether the one in front of them is the original, a copy or a cast, you can't know unless they tell you.
+
+Never:
+- invent or guess names, dates, numbers, places or quotes. If you're not sure, say so.
+- confirm something just because the visitor stated it. Check it against well-established knowledge.
+- give exact counts for an animal's anatomy (toes, teeth, bones, vertebrae). Describe them generally instead.
+- present debated questions as settled.
+- describe a person who isn't a widely known public figure. Say you don't know about them.
+- quote anyone word for word unless you are certain of the wording; paraphrase instead.
+
+# Identifying what the visitor is looking at
+
+You can't see it. When they describe something and ask what it is:
+1. The description clearly fits one well-known work or thing: say what it sounds like, in one or two sentences, without claiming certainty ("That sounds like…").
+2. It could be several: name the likely ones briefly and ask for a detail that tells them apart.
+3. You can't tell: say so and ask what the label says, such as the title, artist or date. Don't guess.`;
+
+/**
+ * Framing instructions, sent last (just before the visitor's question) so the
+ * model reads them right before answering: placed earlier, the "not covered
+ * here" framing was dropped whenever unrelated prompt wording changed.
+ */
+
+/** When retrieval found nothing relevant. */
 const NO_SOURCES_INSTRUCTION = `No retrieved content matched this question. (Any exhibition overview in the SOURCES still applies.)
 If the question is about this venue or a specific object here and the SOURCES don't answer it, say you don't have that information here; if it helps, mention what you can talk about instead.
-Otherwise, answer from your own knowledge within the rules above. Begin by saying briefly, in your own words, that this isn't covered here (for example "That's not something this hall covers, but…").`;
+Otherwise, answer from your own knowledge within the rules above. Your reply must begin by saying briefly, in your own words, that this isn't covered here (for example "That's not something this hall covers, but…").`;
 
-export type AnswerMode = "grounded" | "general";
+/** When retrieval returned chunks: they may still not answer the question. */
+const GROUNDED_INSTRUCTION = `Before answering, check whether the SOURCES actually answer this question, not just mention the same subject.
+- They answer it: answer from them, with no framing.
+- They answer only part of it, or none of it: anything you add from your own knowledge must be marked once, briefly, where you switch to it ("That's not covered here, but generally…", "Beyond what's in this hall…").
+What a BACKGROUND or INTERVIEW section says counts as covered: don't say it isn't covered here. Attribute interviews by name. State BACKGROUND facts plainly, never as what the hall or museum says.
+If the question assumes something ("they must have…"), check that assumption before agreeing with it.
+If the question asks whether there are any, other, more, or several of something here, the SOURCES may not list everything: say what they show, and if they don't settle it, add something like "I don't know whether there are others elsewhere in the hall." Don't answer "no", and don't mention sources.`;
 
-type Section = "exhibition" | "object" | "background";
+/**
+ * Added on the turns followUpAllowed() permits (at most one answer in
+ * three). The model may still decline: no suggestion beats a weak one.
+ */
+const FOLLOWUP_INSTRUCTION = `End this reply with one short follow-up suggestion, as a question, when all of these hold:
+- your reply actually answered the question (not "I don't have that information")
+- the SOURCES cover a next topic closely tied to this answer that neither this reply nor any earlier reply in the conversation has already covered
+- it's about content (an object, a person, an idea), never about directions, where something is, or help ("Want me to guide you there?", "Anything else?")
+Make it specific and easy to say yes to, for example "Want to hear how Effie was found?" Vary the wording. If no topic passes every check, end without one.`;
+
+/**
+ * grounded = retrieval returned chunks; general = it returned none; open =
+ * the general place, where nothing is retrieved (OPEN_SYSTEM_PROMPT).
+ */
+export type AnswerMode = "grounded" | "general" | "open";
+
+type Section = "exhibition" | "object" | "background" | "elsewhere" | "voice";
 
 export type AnswerPrompt = {
   messages: ChatCompletionMessageParam[];
-  /** grounded = retrieval returned chunks; general = it returned none. */
   mode: AnswerMode;
   /** Which chunks went into which section, for logging. */
   sections: Record<Section, string[]>;
@@ -89,13 +183,25 @@ export type AnswerPrompt = {
 
 export function buildAnswerPrompt(opts: {
   visitorQuery: string;
+  /** The visitor's message as heard (speech-to-text), when the agent sends it. */
+  visitorWords?: string | null;
+  /** ISO 639-1 code from the voice agent; null = follow the question's language. */
+  language: string | null;
   history: AgentChatMessage[];
   chunks: RetrievedChunk[];
   venueContext: string[];
   location: LocationContext;
+  /** From followUpAllowed(): may this reply end with a suggestion? */
+  followUp: boolean;
+  /** The general place: no venue, answer from general knowledge. */
+  open?: boolean;
 }): AnswerPrompt {
   const { chunks, venueContext, location } = opts;
-  const mode: AnswerMode = chunks.length > 0 ? "grounded" : "general";
+  const mode: AnswerMode = opts.open
+    ? "open"
+    : chunks.length > 0
+      ? "grounded"
+      : "general";
 
   // Group chunks by what they're about. Objects keep their own heading so
   // the model can tell which object each fact belongs to.
@@ -103,16 +209,42 @@ export function buildAnswerPrompt(opts: {
     exhibition: [],
     object: [],
     background: [],
+    elsewhere: [],
+    voice: [],
   };
   const exhibitionTexts: string[] = [...venueContext];
   const objectGroups = new Map<string, { title: string; texts: string[] }>();
   const backgroundTexts: string[] = [];
+  // other halls in this venue, grouped by hall
+  const elsewhereGroups = new Map<string, string[]>();
+  // interviews, essays etc. from this venue, grouped by who is speaking, so
+  // the speaker heads every passage and the model attributes their views
+  const voiceGroups = new Map<string, string[]>();
 
   for (const chunk of chunks) {
     const md = chunk.metadata;
     const body = String(md.text ?? "").trim();
     if (!body) continue;
-    const text = sourceLabel(md) + body;
+
+    const speaker = voiceHeading(md);
+    if (speaker && chunk.pool !== "elsewhere") {
+      sections.voice.push(chunk.id);
+      const texts = voiceGroups.get(speaker) ?? [];
+      texts.push(body);
+      voiceGroups.set(speaker, texts);
+      continue;
+    }
+
+    const text = (speaker ? `[${speaker}] ` : "") + body;
+
+    if (chunk.pool === "elsewhere") {
+      sections.elsewhere.push(chunk.id);
+      const hall = hallName(md);
+      const texts = elsewhereGroups.get(hall) ?? [];
+      texts.push(withTitle(md, text));
+      elsewhereGroups.set(hall, texts);
+      continue;
+    }
 
     const section = sectionFor(md, location);
     sections[section].push(chunk.id);
@@ -139,6 +271,16 @@ export function buildAnswerPrompt(opts: {
   for (const { title, texts } of objectGroups.values()) {
     blocks.push(`## ABOUT THIS OBJECT: ${title}\n${texts.join("\n\n")}`);
   }
+  for (const [speaker, texts] of voiceGroups) {
+    blocks.push(
+      `## ${speaker} (their own account and views: attribute what you use to them by name)\n${texts.join("\n\n")}`,
+    );
+  }
+  for (const [hall, texts] of elsewhereGroups) {
+    blocks.push(
+      `## ELSEWHERE IN THIS MUSEUM: ${hall} (another hall, NOT where the visitor is)\n${texts.join("\n\n")}`,
+    );
+  }
   if (backgroundTexts.length) {
     blocks.push(
       `## BACKGROUND (general reference, not claims about what is on display)\n${backgroundTexts.join("\n\n")}`,
@@ -146,21 +288,44 @@ export function buildAnswerPrompt(opts: {
   }
 
   const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: SYSTEM_PROMPT },
+    {
+      role: "system",
+      content: mode === "open" ? OPEN_SYSTEM_PROMPT : SYSTEM_PROMPT,
+    },
   ];
-  if (blocks.length) {
+  if (blocks.length && mode !== "open") {
     messages.push({
       role: "system",
       content: `# SOURCES\n\n${blocks.join("\n\n")}`,
     });
   }
-  if (mode === "general") {
-    messages.push({ role: "system", content: NO_SOURCES_INSTRUCTION });
-  }
   for (const m of opts.history.slice(-HISTORY_MESSAGES)) {
     messages.push({ role: m.role, content: m.content });
   }
-  messages.push({ role: "user", content: opts.visitorQuery });
+  // Last instructions before the question, so the model reads them last:
+  // framing (see above), follow-up permission, and language, since the voice
+  // agent delivers the reply as-is, so it must already be in the visitor's
+  // language.
+  messages.push({
+    role: "system",
+    content: [
+      mode === "general"
+        ? NO_SOURCES_INSTRUCTION
+        : mode === "grounded"
+          ? GROUNDED_INSTRUCTION
+          : null,
+      opts.followUp && mode === "grounded" ? FOLLOWUP_INSTRUCTION : null,
+      languageInstruction(opts.language),
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+  });
+  messages.push({
+    role: "user",
+    content: differentWords(opts.visitorQuery, opts.visitorWords)
+      ? `${opts.visitorQuery}\n\n(Visitor's exact words, from speech-to-text: "${opts.visitorWords}")`
+      : opts.visitorQuery,
+  });
 
   return { messages, mode, sections };
 }
@@ -212,22 +377,49 @@ function contextNote(md: RecordMetadata): string[] {
 }
 
 /**
- * "[Interview with Ross MacPhee] " for chunks whose `source_type` says who is
- * speaking, so the model attributes their views (see the system prompt).
- * Uses `interviewee` (or name/title) from the folder metadata.
+ * "INTERVIEW WITH Ross MacPhee, Curator…" for chunks whose `source_type` says
+ * who is speaking, so the model attributes their views (see the system
+ * prompt). Uses `interviewee` (or name/title) from the folder metadata; null
+ * for ordinary content.
  */
-function sourceLabel(md: RecordMetadata): string {
+function voiceHeading(md: RecordMetadata): string | null {
   const type = typeof md.source_type === "string" ? md.source_type : null;
-  if (!type) return "";
+  if (!type) return null;
 
   const who = [md.interviewee, md.author, md.name, md.title].find(
     (v): v is string => typeof v === "string" && v.trim() !== "",
   );
-  const kind = type.charAt(0).toUpperCase() + type.slice(1);
-  if (!who) return `[${kind}] `;
+  const kind = type.toUpperCase();
+  if (!who) return kind;
   return type === "interview"
-    ? `[Interview with ${who.trim()}] `
-    : `[${kind} by ${who.trim()}] `;
+    ? `INTERVIEW WITH ${who.trim()}`
+    : `${kind} BY ${who.trim()}`;
+}
+
+/** "Reply in Spanish." from "es"; falls back to the question's language. */
+function languageInstruction(code: string | null): string {
+  let name: string | undefined;
+  try {
+    name = code
+      ? new Intl.DisplayNames(["en"], { type: "language" }).of(code)
+      : undefined;
+  } catch {
+    name = undefined;
+  }
+  return name && name !== code
+    ? `Reply in ${name}.`
+    : "Reply in the language of the visitor's latest message.";
+}
+
+/** A hall's display name, e.g. "Hall of Human Origins". */
+function hallName(md: RecordMetadata): string {
+  if (typeof md.exhibition_name === "string" && md.exhibition_name.trim()) {
+    return md.exhibition_name.trim();
+  }
+  // e.g. "amnh-hall-of-human-origins" -> "hall of human origins"
+  return String(md.exhibition_id ?? "another exhibition")
+    .replace(/^[a-z]+-(?=hall)/, "")
+    .replace(/-/g, " ");
 }
 
 function withTitle(md: RecordMetadata, text: string): string {

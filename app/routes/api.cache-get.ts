@@ -13,7 +13,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return data({ error: "placeId parameter is required" }, { status: 400 });
   }
 
-  const cached = await searchCache(query, { placeId });
+  // CacheContext is keyed by locationId now; this route keeps its public
+  // `placeId` parameter. Passing { placeId } searched an undefined location.
+  const cached = await searchCache(query, { locationId: placeId });
   console.log(cached);
 
   if (cached) {

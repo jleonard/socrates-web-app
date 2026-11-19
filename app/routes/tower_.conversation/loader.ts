@@ -35,7 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   console.log("profile ", profile);
-  if (profile.role !== "admin") {
+  if (profile?.role !== "admin") {
     return redirect("/app");
   }
   /**

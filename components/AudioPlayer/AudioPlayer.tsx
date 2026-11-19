@@ -7,7 +7,23 @@ type AudioPlayerProps = {
   fallbackSrc?: string[];
   onStart: () => void;
   onEnded: () => void;
+  /** Called when the source and every fallback failed to load. */
+  onFailed?: (lastSrc: string) => void;
 };
+
+/**
+ * play() returns a promise that rejects when the browser blocks playback
+ * (no tap yet, iOS rules) or the source is broken. Unhandled, each rejection
+ * became a Sentry error for MIT visitors; a skipped greeting isn't one.
+ */
+function safePlay(audio: HTMLAudioElement) {
+  audio.play()?.catch((err: unknown) => {
+    console.log(
+      "[AudioPlayer] play() rejected:",
+      err instanceof Error ? `${err.name}: ${err.message}` : err,
+    );
+  });
+}
 
 export type AudioPlayerHandle = {
   stop: () => void;
@@ -15,16 +31,21 @@ export type AudioPlayerHandle = {
 };
 
 export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
-  ({ src, fallbackSrc = [], onStart, onEnded }, ref) => {
+  ({ src, fallbackSrc = [], onStart, onEnded, onFailed }, ref) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const onStartRef = useRef(onStart);
     const onEndedRef = useRef(onEnded);
+    const onFailedRef = useRef(onFailed);
+    // true between play() and stop(): a fallback that finishes loading after
+    // the visitor asked for the greeting should still start
+    const wantPlayRef = useRef(false);
 
     useEffect(() => {
       onStartRef.current = onStart;
       onEndedRef.current = onEnded;
-    }, [onStart, onEnded]);
+      onFailedRef.current = onFailed;
+    }, [onStart, onEnded, onFailed]);
 
     useEffect(() => {
       const audio = new Audio(src);
@@ -35,7 +56,10 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
       let fallbackIndex = -1;
 
       const handlePlay = () => onStartRef.current();
-      const handleEnded = () => onEndedRef.current();
+      const handleEnded = () => {
+        wantPlayRef.current = false;
+        onEndedRef.current();
+      };
       const handleError = () => {
         console.log("[AudioPlayer] failed to load:", audio.src);
 
@@ -46,9 +70,14 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
           console.log("[AudioPlayer] trying fallback:", nextSrc);
           audio.src = nextSrc;
           audio.load();
-          audio.play();
+          // Load errors usually happen before the visitor taps, so just
+          // switch sources and wait: the tap then plays the working file.
+          // Only play now if they already asked (may be blocked outside the
+          // tap on iOS; that's caught, not thrown).
+          if (wantPlayRef.current) safePlay(audio);
         } else {
           console.log("[AudioPlayer] no more fallbacks, giving up");
+          onFailedRef.current?.(audio.src);
         }
       };
 
@@ -71,15 +100,15 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
 
     useImperativeHandle(ref, () => ({
       stop: () => {
+        wantPlayRef.current = false;
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
         }
       },
       play: () => {
-        if (audioRef.current) {
-          audioRef.current.play();
-        }
+        wantPlayRef.current = true;
+        if (audioRef.current) safePlay(audioRef.current);
       },
     }));
 

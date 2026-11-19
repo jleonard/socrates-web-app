@@ -7,17 +7,23 @@ import {
   lookupGuideCache,
   maybeStoreGuideCache,
 } from "./guide/cache.server";
+import { endsWithQuestion, followUpAllowed } from "./guide/followup.server";
 import { saveTurn } from "./guide/save.turn.server";
 import { getChatHistory } from "./guide/chat.history.server";
 import { resolveLocation } from "./guide/location.server";
-import { buildAnswerPrompt } from "./guide/prompt.server";
+import { buildAnswerPrompt, type AnswerPrompt } from "./guide/prompt.server";
+import { GENERAL_PLACE } from "~/utils/places";
 import { correctPronunciations } from "./guide/pronunciation.server";
 import { retrieveChunks } from "./guide/retrieval.server";
 import { buildSearchQuery } from "./guide/search.query.server";
 import { getVenueContext } from "./guide/venue.context.server";
+import { getContentLanguage } from "./guide/venue.language.server";
 
-/** Places still served by the legacy webhook until they migrate. */
-const LEGACY_PLACES = new Set(["mit", "wonderway"]);
+/**
+ * Places still served by the legacy webhook. Only `mit`, reached through
+ * `?agent=legacyMIT`; `wonderway` (the no-venue default) runs on the guide.
+ */
+const LEGACY_PLACES = new Set(["mit"]);
 
 const TEXT_HEADERS = {
   "Content-Type": "text/plain; charset=utf-8",
@@ -48,6 +54,15 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     }
 
     const { query, user_id, place, conversation_id } = body ?? {};
+    // set by the ElevenLabs agent on each call; null if missing or malformed
+    const language = parseLanguage(body?.language);
+    // The visitor's message as heard, if the agent's tool sends it. `query`
+    // is the agent's own rewrite, which can smooth a mishearing into a
+    // different question before the dictionaries below ever see it.
+    const visitorWords =
+      typeof body?.visitor_words === "string" && body.visitor_words.trim()
+        ? body.visitor_words.trim()
+        : null;
 
     // setup logging
     const startMs = Date.now();
@@ -56,8 +71,10 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       request_id: crypto.randomUUID(),
       user_id,
       conversation_id,
+      language,
       query: {
         original: query,
+        visitor_words: visitorWords,
       },
       location: {},
       timing: {
@@ -66,7 +83,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     };
 
     /*
-     * 📦 temp route to the legacy webhook until MIT migrates.
+     * 📦 temp route to the legacy webhook for the legacy MIT agent.
      */
     if (LEGACY_PLACES.has(place)) {
       console.log("[guide] using legacy webhook", { conversation_id, place });
@@ -95,44 +112,110 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     /*
      * 📍 resolve the posted place into its place and exhibition ids
      */
-    const locationContext = await resolveLocation(place);
+    const locationContext = await timed(
+      loggingDetails.timing,
+      "location_ms",
+      () => resolveLocation(place),
+    );
     loggingDetails.location = {
       ...loggingDetails.location,
       ...locationContext,
     };
 
     /*
-     * ✏️ fix speech-to-text mishearings. Exhibition entries win over place
-     * entries when both define the same alias.
+     * ✏️ fix speech-to-text mishearings, in the agent's query and in the
+     * visitor's own words. Exhibition entries win over place entries when
+     * both define the same alias.
      */
-    const correctedQuery = await correctPronunciations(
-      [locationContext.exhibitionId, locationContext.placeId],
-      query,
+    const dictionaryIds = [
+      locationContext.exhibitionId,
+      locationContext.placeId,
+    ];
+    const [correctedQuery, correctedWords] = await timed(
+      loggingDetails.timing,
+      "pronunciation_ms",
+      () =>
+        Promise.all([
+          correctPronunciations(dictionaryIds, query),
+          visitorWords
+            ? correctPronunciations(dictionaryIds, visitorWords)
+            : null,
+        ]),
     );
     const visitorQuery = correctedQuery ?? query;
+    const heardWords = correctedWords ?? visitorWords;
     loggingDetails.query.corrected = correctedQuery;
+    loggingDetails.query.visitor_words_corrected = correctedWords;
 
-    if (correctedQuery) {
+    if (correctedQuery || correctedWords) {
       console.log("[guide] pronunciation corrected", {
         conversation_id,
         original: query,
         corrected: correctedQuery,
+        visitor_words: visitorWords,
+        visitor_words_corrected: correctedWords,
       });
     }
 
     /*
-     * 🔎 build the search query: English, cleaned up for retrieval, with
-     * follow-ups resolved from recent history. Used ONLY for retrieval;
-     * the answering model gets `visitorQuery`.
+     * 🌐 the general place has no content: skip the search query, cache and
+     * retrieval, and answer from general knowledge (OPEN_SYSTEM_PROMPT).
+     * Such answers are never cached, so there is nothing to look up.
      */
-    // venue context isn't needed until the answer, but both are Redis reads
-    const [chatHistory, venueContext] = await Promise.all([
-      getChatHistory(user_id),
-      getVenueContext(locationContext),
-    ]);
+    if (place === GENERAL_PLACE) {
+      const chatHistory = await timed(loggingDetails.timing, "history_ms", () =>
+        getChatHistory(user_id),
+      );
+      const answerPrompt = buildAnswerPrompt({
+        visitorQuery,
+        visitorWords: heardWords,
+        language,
+        history: chatHistory,
+        chunks: [],
+        venueContext: [],
+        location: locationContext,
+        followUp: false,
+        open: true,
+      });
+      loggingDetails.answer = { mode: answerPrompt.mode };
+      return streamReply({
+        answerPrompt,
+        startMs,
+        loggingDetails,
+        turn: {
+          userId: user_id,
+          conversationId: conversation_id,
+          history: chatHistory,
+          visitorQuery,
+        },
+      });
+    }
+
+    /*
+     * 🔎 build the search query: in the venue's content language, cleaned
+     * up for retrieval, with follow-ups resolved from recent history. Used
+     * ONLY for retrieval; the answering model gets `visitorQuery`.
+     */
+    // venue context isn't needed until the answer, but all are Redis reads
+    const [chatHistory, venueContext, contentLanguage] = await timed(
+      loggingDetails.timing,
+      "history_ms",
+      () =>
+        Promise.all([
+          getChatHistory(user_id),
+          getVenueContext(locationContext),
+          getContentLanguage(locationContext),
+        ]),
+    );
+    loggingDetails.content_language = contentLanguage;
     const searchStartMs = Date.now();
     const { searchQuery, fallback: searchQueryFallback } =
-      await buildSearchQuery(visitorQuery, chatHistory);
+      await buildSearchQuery(
+        visitorQuery,
+        chatHistory,
+        heardWords,
+        contentLanguage,
+      );
     loggingDetails.query.search = searchQuery;
     loggingDetails.query.search_fallback = searchQueryFallback;
     loggingDetails.timing.search_query_ms = Date.now() - searchStartMs;
@@ -145,12 +228,32 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     });
 
     /*
-     * ⚡ cache, keyed on the English search query at this location and
+     * 🌲 retrieval starts now, alongside the cache lookup: the lookup does
+     * its own embedding + Redis search, and in shadow mode (or on a miss)
+     * waiting for it first only adds latency. On a served hit the retrieval
+     * result is simply dropped.
+     */
+    const retrievalPromise = retrieveChunks({
+      searchQuery,
+      location: locationContext,
+    });
+    // a served cache hit returns without awaiting retrieval; don't let its
+    // failure become an unhandled rejection (awaiting below still throws)
+    retrievalPromise.catch(() => {});
+
+    /*
+     * ⚡ cache, keyed on the search query at this location and
      * content version. In shadow mode we only log what would be served.
      */
     const cache =
       GUIDE_CACHE_MODE !== "off" && !searchQueryFallback
-        ? await lookupGuideCache({ searchQuery, location: locationContext })
+        ? await timed(loggingDetails.timing, "cache_ms", () =>
+            lookupGuideCache({
+              searchQuery,
+              location: locationContext,
+              language,
+            }),
+          )
         : null;
     loggingDetails.cache = {
       mode: GUIDE_CACHE_MODE,
@@ -181,15 +284,18 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     }
 
     /*
-     * 🌲 retrieval: "here" scope (this exhibition + place-level content),
-     * general + visual-description searches, reranked together.
+     * 🌲 retrieval (started above): "here" scope (this exhibition +
+     * place-level content), general + visual-description searches,
+     * reranked together.
      */
-    const retrieval = await retrieveChunks({
-      searchQuery,
-      location: locationContext,
-    });
+    const retrieval = await retrievalPromise;
+    // from the end of the search query to retrieval done, i.e. what the
+    // cache lookup and retrieval together cost on the critical path
+    loggingDetails.timing.retrieval_wall_ms =
+      Date.now() - searchStartMs - loggingDetails.timing.search_query_ms;
     loggingDetails.retrieval = {
       filter: retrieval.filter,
+      elsewhere_filter: retrieval.elsewhereFilter,
       counts: retrieval.counts,
       rerank_failed: retrieval.rerankFailed,
       rerank_error: retrieval.rerankError,
@@ -198,6 +304,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
         id: c.id,
         object_id: c.metadata.object_id ?? null,
         chunk_type: c.metadata.chunk_type ?? null,
+        pool: c.pool,
         searches: c.searches,
         dense: c.dense,
         rerank: c.rerank,
@@ -214,6 +321,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       selected: retrieval.chunks.map((c) => ({
         id: c.id,
         object_id: c.metadata.object_id,
+        pool: c.pool,
         searches: c.searches,
         rerank: c.rerank,
         pass: c.pass,
@@ -224,58 +332,45 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
      * ✏️ build the answer prompt: system rules, SOURCES (venue context +
      * chunks grouped by exhibition / object / background), or the
      * no-sources instruction, then history and the visitor's own words.
+     * Follow-up suggestions are allowed on at most one answer in three
+     * (see followup.server.ts); the voice agent no longer adds its own.
      */
+    const followUp = followUpAllowed(
+      chatHistory,
+      retrieval.chunks.length > 0 ? "grounded" : "general",
+    );
     const answerPrompt = buildAnswerPrompt({
       visitorQuery,
+      visitorWords: heardWords,
+      language,
       history: chatHistory,
       chunks: retrieval.chunks,
       venueContext,
       location: locationContext,
+      followUp,
     });
     loggingDetails.answer = {
       mode: answerPrompt.mode,
+      followup_allowed: followUp,
       venue_context: venueContext.length,
       sections: answerPrompt.sections,
     };
 
-    /*
-     * 🤖 stream the answer. Errors inside the stream are logged and end the
-     * stream; the HTTP status is already 200 by then.
-     */
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        let reply = "";
-        try {
-          for await (const text of streamAnswer(answerPrompt.messages)) {
-            loggingDetails.timing.first_token_ms ??= Date.now() - startMs;
-            reply += text;
-            // Response bodies must be bytes, not strings
-            controller.enqueue(encoder.encode(text));
-          }
-          reply = reply.trim();
-          loggingDetails.answer.reply = reply;
-          loggingDetails.timing.total_ms = Date.now() - startMs;
-
-          // Save before closing: on Vercel, work left running after the
-          // response ends may never finish. These writes are small.
-          await saveTurn({
-            userId: user_id,
-            conversationId: conversation_id,
-            history: chatHistory,
-            visitorQuery,
-            reply,
-            source: answerPrompt.mode,
-            responseTimeMs: loggingDetails.timing.total_ms,
-            loggingDetails,
-          });
-          controller.close();
-        } catch (err) {
-          console.error("[guide] answer stream failed", err);
-          Sentry.captureException(err);
-          loggingDetails.answer.error =
-            err instanceof Error ? err.message : String(err);
-          controller.error(err);
+    return streamReply({
+      answerPrompt,
+      startMs,
+      loggingDetails,
+      turn: {
+        userId: user_id,
+        conversationId: conversation_id,
+        history: chatHistory,
+        visitorQuery,
+      },
+      afterSave: (reply) => {
+        // A reply ending in a follow-up suggestion isn't cached: served
+        // later, it would ask again out of rhythm.
+        if (followUp && endsWithQuestion(reply)) {
+          console.log("[guide] cache store skipped: follow-up suggestion");
           return;
         }
 
@@ -284,23 +379,111 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
         // cache entry.
         void maybeStoreGuideCache({
           searchQuery,
+          language,
           answer: reply,
           location: locationContext,
           version: cache?.version ?? null,
-          mode: answerPrompt.mode,
+          mode: answerPrompt.mode === "grounded" ? "grounded" : "general",
           searchQueryFallback,
           rerankFailed: retrieval.rerankFailed,
         }).then((r) => console.log("[guide] cache store", r));
       },
     });
-
-    return new Response(stream, { headers: TEXT_HEADERS });
   } catch (err) {
     console.error("agent webhook error:", err);
     Sentry.captureException(err);
     return new Response("Internal server error", { status: 500 });
   }
 };
+
+/**
+ * 🤖 streams the answer, then saves the turn before closing the stream (on
+ * Vercel, work left running after the response ends may never finish; these
+ * writes are small). `afterSave` runs once the turn is saved. Errors inside
+ * the stream are logged and end the stream; the HTTP status is already 200
+ * by then.
+ */
+function streamReply(opts: {
+  answerPrompt: AnswerPrompt;
+  startMs: number;
+  loggingDetails: Record<string, any>;
+  turn: Pick<
+    Parameters<typeof saveTurn>[0],
+    "userId" | "conversationId" | "history" | "visitorQuery"
+  >;
+  afterSave?: (reply: string) => void;
+}): Response {
+  const { answerPrompt, startMs, loggingDetails } = opts;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let reply = "";
+      const answerStartMs = Date.now();
+      try {
+        for await (const text of streamAnswer(answerPrompt.messages)) {
+          loggingDetails.timing.first_token_ms ??= Date.now() - startMs;
+          // the answer model's own time to first token
+          loggingDetails.timing.answer_ttft_ms ??= Date.now() - answerStartMs;
+          reply += text;
+          // Response bodies must be bytes, not strings
+          controller.enqueue(encoder.encode(text));
+        }
+        reply = reply.trim();
+        loggingDetails.answer.reply = reply;
+        loggingDetails.timing.total_ms = Date.now() - startMs;
+
+        await saveTurn({
+          ...opts.turn,
+          reply,
+          source: answerPrompt.mode,
+          responseTimeMs: loggingDetails.timing.total_ms,
+          loggingDetails,
+        });
+        controller.close();
+      } catch (err) {
+        console.error("[guide] answer stream failed", err);
+        Sentry.captureException(err);
+        loggingDetails.answer.error =
+          err instanceof Error ? err.message : String(err);
+        controller.error(err);
+        return;
+      }
+
+      opts.afterSave?.(reply);
+    },
+  });
+
+  return new Response(stream, { headers: TEXT_HEADERS });
+}
+
+/**
+ * The visitor's language as a two-letter ISO 639-1 code ("en", "es"…), as
+ * set by the ElevenLabs agent. Anything else is treated as unknown (null):
+ * the answer then follows the language of the question, and the cache is
+ * skipped.
+ */
+function parseLanguage(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim().toLowerCase();
+  return /^[a-z]{2}$/.test(code) ? code : null;
+}
+
+/**
+ * Runs `fn` and records its duration as `timing[key]` (ms), even if it
+ * throws.
+ */
+async function timed<T>(
+  timing: Record<string, unknown>,
+  key: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const start = Date.now();
+  try {
+    return await fn();
+  } finally {
+    timing[key] = Date.now() - start;
+  }
+}
 
 /**
  * The client sends 0,0 when it has no location (view.tsx falls back to 0),

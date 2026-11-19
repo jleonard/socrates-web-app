@@ -64,8 +64,10 @@ export async function correctPronunciations(
 }
 
 /**
- * Reads one stored dictionary: `{ mispronunciations: [{ entry, aliases }] }`,
- * where `aliases` is a newline-separated string. Skips anything malformed.
+ * Reads one stored dictionary. api.strapi.webhook.ts stores the Strapi
+ * component as a plain array, `[{ entry, aliases }]`; the wrapped shape
+ * `{ mispronunciations: [...] }` is accepted too. `aliases` is a
+ * newline-separated string. Skips anything malformed.
  */
 function parseDictionary(
   raw: string | null,
@@ -82,9 +84,11 @@ function parseDictionary(
   }
 
   const pairs: { alias: string; entry: string }[] = [];
-  const entries = Array.isArray(dictionary?.mispronunciations)
-    ? dictionary.mispronunciations
-    : [];
+  const entries = Array.isArray(dictionary)
+    ? dictionary
+    : Array.isArray(dictionary?.mispronunciations)
+      ? dictionary.mispronunciations
+      : [];
 
   for (const item of entries) {
     if (typeof item?.entry !== "string" || typeof item?.aliases !== "string") {

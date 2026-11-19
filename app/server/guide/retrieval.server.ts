@@ -8,23 +8,30 @@ import type { LocationContext } from "./location.server";
 
 // Retrieval for the guide webhook.
 //
-//   1. SEARCH:  two searches over both namespaces, run in parallel:
-//               - general: everything in scope
-//               - visual:  only `chunk_type = visual_description` in scope,
-//                 with its own slots so appearance-based questions ("the big
-//                 skeleton with curved tusks") always reach the reranker
+//   1. SEARCH:  three searches over both namespaces, run in parallel:
+//               - general:   everything in the "here" pool
+//               - visual:    only `chunk_type = visual_description` in the
+//                 "here" pool, with its own slots so appearance-based
+//                 questions ("the big skeleton with curved tusks") always
+//                 reach the reranker
+//               - elsewhere: other exhibitions at the same place
 //   2. RERANK:  every candidate scored against the search query together
-//   3. GATE:    keep the top FINAL_N that clear RERANK_MIN
+//   3. GATE:    keep chunks that clear RERANK_MIN; up to FINAL_N from
+//               "here" and up to ELSEWHERE_N from "elsewhere", each pool
+//               with its own slots so one can't crowd out the other
 //
-// Scope ("here"): this exhibition, plus place-level content that isn't tied
-// to any exhibition (e.g. place:amnh-nyc:identity). Other halls and other
-// venues are excluded. Later pools (background, elsewhere in this venue,
-// elsewhere outside) will be added as more searches with their own slots.
+// Pools:
+// - here: this exhibition, plus place-level content that isn't tied to any
+//   exhibition (e.g. place:amnh-nyc:identity).
+// - elsewhere: other exhibitions in the same place (other AMNH halls), only
+//   content shareable within the venue. The prompt always names their hall.
+// Other venues are excluded. Later pools (background, elsewhere outside)
+// will be added the same way.
 
 type Match = ScoredPineconeRecord<RecordMetadata>;
 
-export type RetrievalPool = "here";
-export type RetrievalSearch = "general" | "visual";
+export type RetrievalPool = "here" | "elsewhere";
+export type RetrievalSearch = "general" | "visual" | "elsewhere";
 
 export type RetrievedChunk = {
   id: string;
@@ -46,9 +53,12 @@ export type RetrievalResult = {
   /** Every candidate that went to the reranker, with scores, for logging. */
   candidates: RetrievedChunk[];
   filter: Record<string, any>;
+  /** null when the visitor isn't in an exhibition (no "elsewhere" pool). */
+  elsewhereFilter: Record<string, any> | null;
   counts: {
     general_raw: number;
     visual_raw: number;
+    elsewhere_raw: number;
     candidates: number;
     final: number;
   };
@@ -90,8 +100,14 @@ const GENERAL_TOP_K = 8;
 /** Candidates per namespace for the visual-description search. */
 const VISUAL_TOP_K = 4;
 
-/** Max chunks passed to the answering model. */
+/** Candidates per namespace for the elsewhere-in-this-venue search. */
+const ELSEWHERE_TOP_K = 4;
+
+/** Max "here" chunks passed to the answering model. */
 const FINAL_N = 5;
+
+/** Max "elsewhere" chunks passed to the answering model, on top of FINAL_N. */
+const ELSEWHERE_N = 2;
 
 /** Dense floor used ONLY when the reranker fails (stricter than DENSE_FLOOR). */
 const FALLBACK_DENSE_FLOOR = 0.5;
@@ -128,6 +144,38 @@ export function buildHereFilter(
 }
 
 /**
+ * "Elsewhere" pool: other exhibitions at the same place, limited to content
+ * shareable within the venue: `share` venue/public, or no `share` with a
+ * scope whose default is shareable (object -> venue, universal -> public).
+ * venue-scoped content (another hall's own framing) stays in its hall.
+ * Null when the visitor isn't in an exhibition: "here" already covers the
+ * whole place.
+ */
+export function buildElsewhereFilter(
+  location: LocationContext,
+): Record<string, any> | null {
+  if (!location.exhibitionId) return null;
+  return {
+    $and: [
+      { place_id: { $eq: location.placeId } },
+      { exhibition_id: { $exists: true } },
+      { exhibition_id: { $ne: location.exhibitionId } },
+      {
+        $or: [
+          { share: { $in: ["venue", "public"] } },
+          {
+            $and: [
+              { share: { $exists: false } },
+              { scope: { $in: ["object", "universal"] } },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/**
  * Throws if embedding or the Pinecone searches fail: without retrieval the
  * answer would silently drop to general knowledge for venue questions.
  * A reranker failure does NOT throw; it falls back to dense scores.
@@ -138,6 +186,7 @@ export async function retrieveChunks(opts: {
 }): Promise<RetrievalResult> {
   const index = pc.index(INDEX);
   const filter = buildHereFilter(opts.location);
+  const elsewhereFilter = buildElsewhereFilter(opts.location);
   const visualFilter = {
     $and: [filter, { chunk_type: { $eq: "visual_description" } }],
   };
@@ -155,19 +204,29 @@ export async function retrieveChunks(opts: {
       .query({ vector, topK, includeMetadata: true, filter: f })
       .then((res) => res.matches.map((m) => ({ ns, m })));
 
-  const [general, visual] = await Promise.all([
+  const [general, visual, elsewhere] = await Promise.all([
     Promise.all(NAMESPACES.map((ns) => query(ns, GENERAL_TOP_K, filter))).then(
       (r) => r.flat(),
     ),
     Promise.all(
       NAMESPACES.map((ns) => query(ns, VISUAL_TOP_K, visualFilter)),
     ).then((r) => r.flat()),
+    elsewhereFilter
+      ? Promise.all(
+          NAMESPACES.map((ns) => query(ns, ELSEWHERE_TOP_K, elsewhereFilter)),
+        ).then((r) => r.flat())
+      : Promise.resolve([]),
   ]);
   const search_ms = Date.now() - searchStart;
 
   // merge, dedupe (a chunk can be found by both searches), apply recall floor
   const byId = new Map<string, RetrievedChunk>();
-  const add = (search: RetrievalSearch, ns: Namespace, m: Match) => {
+  const add = (
+    search: RetrievalSearch,
+    ns: Namespace,
+    m: Match,
+    pool: RetrievalPool = "here",
+  ) => {
     const existing = byId.get(m.id);
     if (existing) {
       if (!existing.searches.includes(search)) existing.searches.push(search);
@@ -176,7 +235,7 @@ export async function retrieveChunks(opts: {
     byId.set(m.id, {
       id: m.id,
       namespace: ns,
-      pool: "here",
+      pool,
       searches: [search],
       dense: m.score ?? 0,
       rerank: null,
@@ -186,6 +245,8 @@ export async function retrieveChunks(opts: {
   };
   general.forEach(({ ns, m }) => add("general", ns, m));
   visual.forEach(({ ns, m }) => add("visual", ns, m));
+  // the filters are disjoint, so an elsewhere chunk is never also "here"
+  elsewhere.forEach(({ ns, m }) => add("elsewhere", ns, m, "elsewhere"));
 
   const candidates = [...byId.values()].filter(
     (c) => c.dense >= DENSE_FLOOR && typeof c.metadata.text === "string",
@@ -194,6 +255,7 @@ export async function retrieveChunks(opts: {
   const counts = {
     general_raw: general.length,
     visual_raw: visual.length,
+    elsewhere_raw: elsewhere.length,
     candidates: candidates.length,
     final: 0,
   };
@@ -203,6 +265,7 @@ export async function retrieveChunks(opts: {
       chunks: [],
       candidates,
       filter,
+      elsewhereFilter,
       counts,
       rerankFailed: false,
       rerankError: null,
@@ -226,8 +289,8 @@ export async function retrieveChunks(opts: {
     for (const r of ranked.data) candidates[r.index].rerank = r.score;
     candidates.sort((a, b) => (b.rerank ?? 0) - (a.rerank ?? 0));
 
-    // 4. gate, then pick with one-per-object first
-    const chunks = selectChunks(
+    // 4. gate, then pick with one-per-object first, each pool separately
+    const chunks = selectPools(
       candidates.filter((c) => (c.rerank ?? 0) >= RERANK_MIN),
     );
 
@@ -235,6 +298,7 @@ export async function retrieveChunks(opts: {
       chunks,
       candidates,
       filter,
+      elsewhereFilter,
       counts: { ...counts, final: chunks.length },
       rerankFailed: false,
       rerankError: null,
@@ -244,7 +308,7 @@ export async function retrieveChunks(opts: {
     // Degraded mode: reranker unavailable. Use a stricter dense-only floor.
     console.error("[guide] rerank failed, falling back to dense floor", err);
     candidates.sort((a, b) => b.dense - a.dense);
-    const chunks = selectChunks(
+    const chunks = selectPools(
       candidates.filter((c) => c.dense >= FALLBACK_DENSE_FLOOR),
     );
 
@@ -252,6 +316,7 @@ export async function retrieveChunks(opts: {
       chunks,
       candidates,
       filter,
+      elsewhereFilter,
       counts: { ...counts, final: chunks.length },
       rerankFailed: true,
       rerankError: err instanceof Error ? err.message : String(err),
@@ -260,8 +325,23 @@ export async function retrieveChunks(opts: {
   }
 }
 
+/** Selects each pool within its own limit; result stays in score order. */
+function selectPools(sorted: RetrievedChunk[]): RetrievedChunk[] {
+  const picked = new Set([
+    ...selectChunks(
+      sorted.filter((c) => c.pool === "here"),
+      FINAL_N,
+    ),
+    ...selectChunks(
+      sorted.filter((c) => c.pool === "elsewhere"),
+      ELSEWHERE_N,
+    ),
+  ]);
+  return sorted.filter((c) => picked.has(c));
+}
+
 /**
- * Picks up to FINAL_N chunks from candidates already gated and sorted best
+ * Picks up to `limit` chunks from candidates already gated and sorted best
  * first:
  *   pass 1: the best chunk from each object, so several photos of the same
  *           skeleton can't crowd out other objects (or the comparison panel)
@@ -269,12 +349,15 @@ export async function retrieveChunks(opts: {
  *           about ONE object (e.g. several interview sections) loses nothing
  * Chunks with no object_id count as their own object.
  */
-function selectChunks(sorted: RetrievedChunk[]): RetrievedChunk[] {
+function selectChunks(
+  sorted: RetrievedChunk[],
+  limit: number,
+): RetrievedChunk[] {
   const picked: RetrievedChunk[] = [];
   const seenObjects = new Set<string>();
 
   for (const c of sorted) {
-    if (picked.length >= FINAL_N) break;
+    if (picked.length >= limit) break;
     const objectKey = String(c.metadata.object_id ?? c.id);
     if (seenObjects.has(objectKey)) continue;
     seenObjects.add(objectKey);
@@ -283,7 +366,7 @@ function selectChunks(sorted: RetrievedChunk[]): RetrievedChunk[] {
   }
 
   for (const c of sorted) {
-    if (picked.length >= FINAL_N) break;
+    if (picked.length >= limit) break;
     if (c.pass) continue;
     c.pass = 2;
     picked.push(c);
@@ -294,11 +377,16 @@ function selectChunks(sorted: RetrievedChunk[]): RetrievedChunk[] {
 }
 
 /**
- * Text sent to the reranker: title and description first, so it sees the
- * same identifying context as the answering model.
+ * Text sent to the reranker: hall name, title and description first, so it
+ * sees the same identifying context as the answering model ("…in the Hall
+ * of Human Origins" can match the right hall's content).
  */
 function rerankText(md: RecordMetadata): string {
-  const head = [md.title ?? md.name, md.description ?? md.subject]
+  const head = [
+    md.exhibition_name,
+    md.title ?? md.name,
+    md.description ?? md.subject,
+  ]
     .filter(Boolean)
     .join(" — ");
   return `${head ? head + "\n" : ""}${String(md.text)}`.slice(

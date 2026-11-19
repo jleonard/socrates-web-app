@@ -5,7 +5,11 @@ import * as Sentry from "@sentry/react-router";
 export async function action({ request }: ActionFunctionArgs) {
   const SUPABASE_TABLE = "event_log";
   const form = await request.formData();
-  const id = form.get("id") as string;
+  // row ids are numbers in the database; the form sends a string
+  const id = Number(form.get("id"));
+  if (!Number.isInteger(id)) {
+    return data({ error: "invalid id" }, { status: 400 });
+  }
   const qa = form.get("qa") as string;
 
   const { supabase } = getSupabaseServiceRoleClient();

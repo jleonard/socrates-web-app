@@ -25,12 +25,17 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
               processing: {
                 x: 0,
                 y: -100, // moved up from 0,
+                scale: 1,
                 transition: {
                   x: {
                     duration: 0.6,
                     ease: "easeInOut",
                   },
                   y: {
+                    duration: 0.3,
+                    ease: "easeInOut",
+                  },
+                  scale: {
                     duration: 0.3,
                     ease: "easeInOut",
                   },
@@ -122,12 +127,13 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             initial={["idle"]}
             variants={{
               processing: {
-                y: -100,
+                x: 0,
+                y: -100, // moved up from 0
                 scale: 0.95,
                 transition: {
                   scale: { duration: 0.1, ease: "easeInOut" },
                 },
-              }, // moved up from 0
+              },
               idle: {
                 x: 0,
                 y: [-100, -80, -100], // moved up from [0, 20, 0],
@@ -147,6 +153,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 },
               },
               preconnect: {
+                x: 0,
                 y: 25, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
                 scale: 0.75,
                 transition: {
@@ -218,7 +225,10 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
             }}
             variants={{
               processing: {
-                rotate: 360,
+                // from 0 every time, so a spin cut short last time doesn't
+                // leave this one repeating a partial arc
+                rotate: [0, 360],
+                x: 0,
                 y: -98, // moved up from 0
                 scale: 1,
                 transition: {
@@ -253,6 +263,7 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 },
               },
               preconnect: {
+                x: 0,
                 y: 112, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
                 scale: 0.75,
                 transition: {
@@ -346,18 +357,23 @@ export const Circles = forwardRef<HTMLDivElement, CirclesProps>(
                 },
               },
               processing: {
-                rotate: -360,
+                rotate: [0, -360],
+                // x, not left: the other states reset x, so the offset
+                // doesn't stick after thinking
+                x: -20,
                 y: -100, // moved up from 0
-                left: -20,
+                scale: 1,
                 transition: {
                   rotate: {
                     repeat: Infinity,
                     duration: 1.5,
                     ease: "linear",
                   },
+                  scale: { duration: 0.3, ease: "easeInOut" },
                 },
               },
               preconnect: {
+                x: 0,
                 y: -215, // preconnect y has to match the connected y. we use preconnect to get the ball into place for connect from idle.
                 scale: 0.75,
                 transition: {

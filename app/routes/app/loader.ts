@@ -6,7 +6,13 @@ import { getPromo, setUserPromo } from "~/server/promo.manager.server";
 import { upsertUserProfile } from "~/server/user.last-seen.server";
 import { getSessionId, sessionStorage } from "~/sessions.server";
 import type { AccessRecord, UserProfile, UserProfileInsert } from "~/types";
-import { resolveAgentId } from "~/utils/elevenlabs/agents.server";
+import { getPlaceLanguage } from "~/server/guide/venue.language.server";
+import { hasBeenGreeted } from "~/server/greeting.server";
+import {
+  resolveAgentId,
+  startLanguageFor,
+} from "~/utils/elevenlabs/agents.server";
+import { MIT_PLACE, normalizePlace } from "~/utils/places";
 import { getSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -23,15 +29,20 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const locale = getLocale(context);
 
   const url = new URL(request.url);
-  const place = url.searchParams.get("place");
+  // old ids (`mit`) map to the current one, for the URL and for sessions
+  // saved before the rename
+  const place = normalizePlace(url.searchParams.get("place"));
   const promo = url.searchParams.get("promo");
-
-  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save place before any redirects
   if (place) {
     session.set("place", place);
+  } else if (typeof session.get("place") === "string") {
+    session.set("place", normalizePlace(session.get("place")));
   }
+
+  // after saving place: the place can pick the agent (PLACE_AGENTS)
+  const agentId = resolveAgentId(url.searchParams.get("agent"), session);
 
   // save promo before any redirect
   if (promo) {
@@ -47,7 +58,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   if (authUser) {
     user = authUser;
-    signOutGuest(authUser.id, session);
   }
 
   // if there's no user, check if the promo allows guest access before redirecting
@@ -87,11 +97,22 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   };
 
   // corner case for mit. hele doesn't want MIT guests to go through FTUE
-  if (place && place === "mit" && user.is_anonymous) {
+  if (place === MIT_PLACE && user.is_anonymous) {
     profileUpsert.has_onboarded = true;
   }
 
   const { data: profile, error } = await upsertUserProfile(profileUpsert);
+
+  // A real account signed in after being a guest in this browser: move the
+  // guest's history and access over, then delete the guest. Never for a guest
+  // (it would try to delete itself). Runs here, after the profile upsert,
+  // because `access` references `profiles`: on the first load after sign-in
+  // the new user's profile didn't exist yet and the access move failed. And
+  // before the access check, so the guest's access counts for the new user.
+  // Awaited so session.unset("guest_id") is saved with this response.
+  if (!user.is_anonymous) {
+    await signOutGuest(user.id, session);
+  }
 
   // set the promo for the user
   const { data: promoRecord, error: promoError } = await setUserPromo(
@@ -135,6 +156,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     console.log("sb error: ", error);
   }
 
+  // the conversation starts in the venue's content language (e.g. Spanish at
+  // Parque); the agent's language detection takes over once the visitor speaks
+  const [placeLanguage, greeted] = await Promise.all([
+    getPlaceLanguage(session.get("place")),
+    hasBeenGreeted(user.id, session.get("place")),
+  ]);
+  const startLanguage = startLanguageFor(agentId, placeLanguage);
+
   return data(
     {
       access: access as AccessRecord | null,
@@ -145,6 +174,9 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       n8nEndpoint:
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: agentId,
+      startLanguage,
+      // greeted per place (Redis), so a new venue greets the visitor again
+      shouldPlayGreeting: !greeted,
       place: session.get("place"),
       agentContext: {
         elevenLabsId: agentId,

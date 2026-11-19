@@ -1,9 +1,10 @@
 import React from "react";
 
 import { Button as ReactAriaButton } from "react-aria-components";
+import { useTranslation } from "react-i18next";
 
 import { MainButtonStyles } from "./MainButton.styles";
-import { MainButtonModes, MainButtonProps } from "./MainButton.types";
+import { MainButtonProps } from "./MainButton.types";
 
 import { LoaderCircle } from "lucide-react";
 
@@ -14,18 +15,12 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
       mode,
       userAccess,
       expiration,
-      label = "Talk",
+      label = "Start",
       children,
       ...rest
     } = props;
 
-    // used to set the text under the button
-    const stateText: Record<MainButtonModes, string | null> = {
-      disconnected: `Press to ${label.toLowerCase()}`,
-      listening: "Ask away",
-      speaking: "Stop response",
-      connecting: "Just a moment",
-    };
+    const { t } = useTranslation();
 
     function getTimeRemainingLabel(expiration: string) {
       const end = new Date(expiration);
@@ -36,35 +31,32 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
 
       const minutes = Math.floor(diffMs / 60_000);
       if (minutes < 60) {
-        return `${minutes} minute${minutes === 1 ? "" : "s"} remaining`;
+        return t("main_button.minutes_remaining", { count: minutes });
       }
 
       const hours = Math.floor(minutes / 60);
       if (hours < 24) {
-        return `${hours} hour${hours === 1 ? "" : "s"} remaining`;
+        return t("main_button.hours_remaining", { count: hours });
       }
 
       const days = Math.floor(hours / 24);
       if (days < 7) {
-        return `${days} day${days === 1 ? "" : "s"} remaining`;
+        return t("main_button.days_remaining", { count: days });
       }
 
       if (days < 30) {
         const weeks = Math.floor(days / 7);
-        return `${weeks} week${weeks === 1 ? "" : "s"} remaining`;
+        return t("main_button.weeks_remaining", { count: weeks });
       }
 
       const months = Math.floor(days / 30);
-      return `${months} month${months === 1 ? "" : "s"} remaining`;
+      return t("main_button.months_remaining", { count: months });
     }
 
     return (
       <>
-        {userAccess !== "unused" && (
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-36 z-20 text-center">
-            {stateText[mode]}
-          </span>
-        )}
+        {/* the agent-state text ("Press to talk", "Ask away", …) lives in
+            app/routes/app/view.tsx */}
         <ReactAriaButton
           ref={ref}
           className={MainButtonStyles({ mode, className })}
@@ -75,7 +67,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
               <LoaderCircle className="animate-spin" size={24} />
             )}
             {mode === "listening" && (
-              <img className="size-[36px]" src="/icons/EQ.svg" />
+              <img src="/icons/Stop.svg" className="size-[26px]" />
             )}
 
             {mode === "speaking" && (

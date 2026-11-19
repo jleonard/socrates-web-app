@@ -1,6 +1,6 @@
 {
   "global": {
-    "talk_btn": "Hablar",
+    "talk_btn": "Iniciar",
     "start_btn": "Iniciar",
     "sign_out": "Cerrar Sesión",
     "sign_in": "Iniciar Sesión",
@@ -9,6 +9,27 @@
     "close": "Cerrar",
     "continue_with": "Continuar con {{provider}}",
     "auth_tagline": "Museos. Monumentos. Cultura."
+  },
+  "main_button": {
+    "tap_talk": "Toca {{label}} para empezar",
+    "tap_start": "Toca {{label}} para comenzar",
+    "listening": "Escuchando",
+    "thinking": "Pensando",
+    "speaking": "Hablando",
+    "connecting": "Conectando...",
+    "minutes_remaining_one": "Queda {{count}} minuto",
+    "minutes_remaining_other": "Quedan {{count}} minutos",
+    "hours_remaining_one": "Queda {{count}} hora",
+    "hours_remaining_other": "Quedan {{count}} horas",
+    "days_remaining_one": "Queda {{count}} día",
+    "days_remaining_other": "Quedan {{count}} días",
+    "weeks_remaining_one": "Queda {{count}} semana",
+    "weeks_remaining_other": "Quedan {{count}} semanas",
+    "months_remaining_one": "Queda {{count}} mes",
+    "months_remaining_other": "Quedan {{count}} meses"
+  },
+  "exhibition": {
+    "start_experience": "Iniciar experiencia"
   },
   "nav": {
     "privacy": "Política de Privacidad",
