@@ -21,6 +21,7 @@ import {
   INGEST_INDEXES,
 } from "~/utils/pinecone";
 import { describeImage, ocrImage } from "~/utils/ragIngest/vision.server";
+import { isIgnoredPath } from "~/utils/ragIngest/ignored.path";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
@@ -247,6 +248,10 @@ async function processFile(
 
   const folder = row.dropbox_folder;
   if (!folder) return "skipped";
+
+  // Staging/review folders (any "_" segment) are filtered out at ingest;
+  // this only guards rows recorded before that rule existed.
+  if (isIgnoredPath(row.dropbox_path)) return "ignore";
 
   // Get the metadata for this file's folder
   let metadata = metadataCache.get(folder);

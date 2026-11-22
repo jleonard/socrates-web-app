@@ -1,0 +1,158 @@
+{
+  "manifest_version": 1,
+  "status": "draft",
+  "prepared": "2026-11-22",
+  "updated": "2026-11-23",
+  "place": {
+    "name": "The Frick Collection",
+    "city": "New York",
+    "address": "1 East 70th Street, New York, NY",
+    "place_id": "frick-nyc",
+    "content_language": "en",
+    "staging_folder": "/wonderway rag/places/_frick",
+    "live_folder": "/wonderway rag/places/frick",
+    "notes": "place_id confirmed. Strapi entries are made at go-live, not during staging (see the go-live checklist)."
+  },
+  "go_live": {
+    "strapi_note": "Strapi is the only writer of location_relationships, which maps each room to its place. Saving an entry also writes its Strapi content into Pinecone through the webhook, so create these at go-live, not while the venue is staged.",
+    "steps": [
+      "Confirm every source decision in this manifest and the room list against the current hang.",
+      "Create the Strapi Place and one Exhibition per room (table below). Each exhibition_id must exactly match the exhibition_id in that room's Dropbox metadata.json.",
+      "Add mispronunciations to the Place (list below).",
+      "Rename /wonderway rag/places/_frick to frick, and /wonderway rag/_library to library (or only the libraries this venue uses).",
+      "Wait for the next Dropbox sync (n8n, every 20 minutes) and push-changes runs, then check the guide in each room with ?place=frick-nyc and a room id."
+    ],
+    "mispronunciations": ["Fragonard", "Vermeer", "Boucher", "Velázquez", "Holbein", "Gainsborough", "Ingres", "Haussonville", "Cimabue", "Piero della Francesca", "Veronese", "Hobbema", "Cuyp", "Whistler", "Montesquiou", "Du Paquier", "Sèvres", "Frick"]
+  },
+  "stats": [
+    { "value": "209", "label": "Frick objects on Wikidata (CC0), 197 of them paintings" },
+    { "value": "43", "label": "with an English Wikipedia article" },
+    { "value": "16", "label": "proposed rooms; objects staged unassigned" },
+    { "value": "~20", "label": "proposed shared libraries" },
+    { "value": "0", "label": "Frick texts usable without a deal" }
+  ],
+  "findings": [
+    {
+      "title": "The Frick's own text needs a deal.",
+      "body": "frick.org says its content is for personal, educational, non-commercial use only. The Frick also publishes no open collection data (no CC0 dataset or API). Room texts, object essays, the audio guide and curator videos are all outreach. That makes the Frick target #1."
+    },
+    {
+      "title": "Catalog facts come from Wikidata instead.",
+      "body": "Wikidata lists 209 Frick objects with accession numbers, artists and dates (CC0). That covers the paintings well but almost none of the decorative arts: porcelain, enamels, clocks, furniture and medals."
+    },
+    {
+      "title": "Wikipedia covers the famous paintings.",
+      "body": "43 objects have English articles, including the three Vermeers, both Holbeins, The Polish Rider, Bellini's Saint Francis and the Ingres. The rest of the paintings need library context plus Wikidata facts."
+    },
+    {
+      "title": "There is useful public-domain material about Frick himself.",
+      "body": "The 1908 catalogue of Henry C. Frick's paintings (digitized by the Frick's own library) and George Harvey's 1928 biography are public domain. Both are period sources: the catalogue predates the museum, and the biography is admiring. The 1892 Homestead Strike needs balanced framing from Wikipedia."
+    },
+    {
+      "title": "Most of the work is shared libraries.",
+      "body": "The Frick's strength is European painting and decorative arts by school. About 20 topic libraries (Dutch Golden Age, Venetian painting, French Rococo, British portraiture and others) would cover the rooms. The Met's European Paintings and decorative arts departments can reuse them."
+    }
+  ],
+  "exhibitions": [
+    { "id": "frick-west-gallery", "name": "West Gallery", "floor": "First floor", "folder": "exhibitions/west-gallery", "libraries": ["lib-dutch-golden-age-painting", "lib-venetian-painting", "lib-spanish-painting", "lib-british-landscape-painting"], "notes": "Rembrandt, Vermeer, Velázquez, Veronese, Turner. Hang to confirm." },
+    { "id": "frick-east-gallery", "name": "East Gallery", "floor": "First floor", "folder": "exhibitions/east-gallery", "libraries": ["lib-spanish-painting", "lib-flemish-baroque-painting", "lib-french-19th-century-painting"], "notes": "Goya, Van Dyck, Whistler. Hang to confirm." },
+    { "id": "frick-living-hall", "name": "Living Hall", "floor": "First floor", "folder": "exhibitions/living-hall", "libraries": ["lib-northern-renaissance-painting", "lib-venetian-painting", "lib-spanish-painting"], "notes": "Holbein's More and Cromwell, Bellini's Saint Francis, Titian, El Greco." },
+    { "id": "frick-library-room", "name": "Library", "floor": "First floor", "folder": "exhibitions/library", "libraries": ["lib-british-portraiture"], "notes": "The room in the house, not the Frick Art Research Library." },
+    { "id": "frick-dining-room", "name": "Dining Room", "floor": "First floor", "folder": "exhibitions/dining-room", "libraries": ["lib-british-portraiture", "lib-european-porcelain"], "notes": "British portraits." },
+    { "id": "frick-fragonard-room", "name": "Fragonard Room", "floor": "First floor", "folder": "exhibitions/fragonard-room", "libraries": ["lib-french-rococo", "lib-french-18th-century-furniture", "lib-european-porcelain"], "notes": "The Progress of Love panels." },
+    { "id": "frick-oval-room", "name": "Oval Room", "floor": "First floor", "folder": "exhibitions/oval-room", "libraries": ["lib-british-portraiture", "lib-flemish-baroque-painting"], "notes": "Full-length portraits. Hang to confirm." },
+    { "id": "frick-garden-court", "name": "Garden Court", "floor": "First floor", "folder": "exhibitions/garden-court", "libraries": ["lib-renaissance-sculpture"], "notes": "Not named in the 2025 press releases. Confirm it is a gallery stop." },
+    { "id": "frick-cabinet-gallery", "name": "Cabinet Gallery", "floor": "First floor", "folder": "exhibitions/cabinet-gallery", "libraries": [], "notes": "Rotating works on paper. Content changes with each display, so it gets no fixed libraries." },
+    { "id": "frick-lauder-galleries", "name": "Ronald S. Lauder Exhibition Galleries", "floor": "First floor", "folder": "exhibitions/lauder-galleries", "libraries": [], "notes": "Special exhibitions. Venue-supplied content per show." },
+    { "id": "frick-breakfast-room", "name": "Breakfast Room", "floor": "Second floor", "folder": "exhibitions/breakfast-room", "libraries": ["lib-barbizon-school"], "notes": "Corot, Rousseau, Daubigny (2024 plan)." },
+    { "id": "frick-boucher-room", "name": "Boucher Room", "floor": "Second floor", "folder": "exhibitions/boucher-room", "libraries": ["lib-french-rococo", "lib-european-porcelain", "lib-french-18th-century-furniture"], "notes": "Boucher's Arts and Sciences panels, in Adelaide Frick's former boudoir." },
+    { "id": "frick-walnut-room", "name": "Walnut Room", "floor": "Second floor", "folder": "exhibitions/walnut-room", "libraries": ["lib-british-portraiture", "lib-french-19th-century-painting"], "notes": "Henry Clay Frick's bedroom. Portraits including Romney's Lady Hamilton and Ingres's Comtesse d'Haussonville." },
+    { "id": "frick-helen-frick-bedroom", "name": "Helen Clay Frick's Bedroom", "floor": "Second floor", "folder": "exhibitions/helen-frick-bedroom", "libraries": ["lib-early-italian-painting"], "notes": "Gold-ground panels: Cimabue, Piero della Francesca, Paolo Veneziano. Room name to confirm." },
+    { "id": "frick-impressionist-gallery", "name": "Impressionist gallery", "floor": "Second floor", "folder": "exhibitions/impressionist-gallery", "libraries": ["lib-french-19th-century-painting"], "notes": "Not named in the press releases. Room name to confirm." },
+    { "id": "frick-decorative-arts", "name": "Decorative arts displays", "floor": "Second floor", "folder": "exhibitions/decorative-arts", "libraries": ["lib-european-porcelain", "lib-portrait-medals", "lib-clocks-and-watches"], "notes": "French faience, Du Paquier porcelain, portrait medals, clocks and watches. Might be several small rooms." }
+  ],
+  "place_libraries": ["lib-gilded-age-new-york"],
+  "libraries": [
+    { "id": "lib-dutch-golden-age-painting", "name": "Dutch Golden Age painting", "covers": "Vermeer, Rembrandt, Hals, Cuyp, Hobbema, Ruisdael", "sources": ["wikipedia-en", "hofstede-de-groot", "getty-vocab", "aic"], "reuse": "Met European Paintings" },
+    { "id": "lib-early-italian-painting", "name": "Early Italian painting", "covers": "Cimabue, Duccio, Paolo Veneziano, Piero della Francesca, gold-ground panels", "sources": ["wikipedia-en", "vasari", "getty-vocab"], "reuse": "Met European Paintings, Robert Lehman Collection" },
+    { "id": "lib-venetian-painting", "name": "Venetian painting", "covers": "Bellini, Titian, Veronese, Tiepolo, Guardi", "sources": ["wikipedia-en", "vasari", "aic"], "reuse": "Met European Paintings" },
+    { "id": "lib-northern-renaissance-painting", "name": "Northern Renaissance painting", "covers": "Van Eyck, Memling, Holbein, Bruegel", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Paintings, The Cloisters" },
+    { "id": "lib-spanish-painting", "name": "Spanish painting", "covers": "El Greco, Velázquez, Murillo, Goya", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Paintings" },
+    { "id": "lib-flemish-baroque-painting", "name": "Flemish Baroque painting", "covers": "Van Dyck, Rubens", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Paintings" },
+    { "id": "lib-french-rococo", "name": "French Rococo", "covers": "Boucher, Fragonard, Watteau, Lajoue, Pater, Greuze", "sources": ["wikipedia-en", "aic", "getty-vocab"], "reuse": "Met European Paintings and Decorative Arts" },
+    { "id": "lib-british-portraiture", "name": "British portraiture", "covers": "Gainsborough, Reynolds, Romney, Lawrence, Raeburn, Hogarth", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Paintings" },
+    { "id": "lib-british-landscape-painting", "name": "British landscape painting", "covers": "Turner, Constable", "sources": ["wikipedia-en"], "reuse": "Met European Paintings" },
+    { "id": "lib-barbizon-school", "name": "Barbizon school", "covers": "Corot, Rousseau, Daubigny, Millet", "sources": ["wikipedia-en", "aic"], "reuse": "Met European Paintings" },
+    { "id": "lib-french-19th-century-painting", "name": "French 19th-century painting", "covers": "David, Ingres, Manet, Degas, Renoir, Monet", "sources": ["wikipedia-en", "aic"], "reuse": "Met European Paintings" },
+    { "id": "lib-renaissance-sculpture", "name": "Renaissance sculpture and bronzes", "covers": "Verrocchio, Laurana, Pollaiuolo, small bronzes", "sources": ["wikipedia-en", "vasari", "getty-vocab"], "reuse": "Met European Sculpture" },
+    { "id": "lib-portrait-medals", "name": "Portrait medals", "covers": "Renaissance medals, Pisanello", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Sculpture" },
+    { "id": "lib-european-porcelain", "name": "European porcelain and faience", "covers": "Sèvres, Meissen, Du Paquier, French faience", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Decorative Arts" },
+    { "id": "lib-chinese-porcelain", "name": "Chinese porcelain", "covers": "Kangxi famille noire and famille verte", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met Asian Art" },
+    { "id": "lib-limoges-enamels", "name": "Limoges painted enamels", "covers": "16th-century painted enamels", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met Medieval and European Decorative Arts. Confirm the Frick still shows them." },
+    { "id": "lib-clocks-and-watches", "name": "Clocks and watches", "covers": "European horology, 16th–19th centuries", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Decorative Arts" },
+    { "id": "lib-french-18th-century-furniture", "name": "French 18th-century furniture", "covers": "Riesener, Gouthière, marquetry, gilt bronze", "sources": ["wikipedia-en", "getty-vocab"], "reuse": "Met European Decorative Arts" },
+    { "id": "lib-gilded-age-new-york", "name": "Gilded Age New York", "covers": "Fifth Avenue mansions, industrialist collectors, Carrère and Hastings", "sources": ["wikipedia-en", "loc"], "reuse": "Any NYC venue: the Morgan, Cooper Hewitt (Carnegie Mansion), the Met" }
+  ],
+  "venue_content": [
+    { "folder": "about/frick-history", "scope": "venue", "what": "Henry Clay Frick, including the Homestead Strike and the Johnstown Flood, stated plainly; Helen Clay Frick; the house (1913–14, opened as a museum in 1935); the 2025 renovation", "sources": ["wikipedia-en", "harvey-1928"] },
+    { "folder": "about/frick-1908-catalogue", "scope": "venue", "what": "Frick's paintings as he catalogued them in 1908, before the museum (historical)", "sources": ["frick-1908-catalogue"] },
+    { "folder": "about/collection-overview", "scope": "venue", "what": "One overview doc we write ourselves: rooms, collection areas, standout works", "sources": ["wikidata"] },
+    { "folder": "_unassigned-objects", "scope": "object", "what": "Object records (Wikidata facts plus Wikipedia where one exists) waiting for room assignment", "sources": ["wikidata", "wikipedia-en"] }
+  ],
+  "sources": [
+    { "id": "wikidata", "name": "Wikidata", "status": "ingest", "license": "CC0", "scope": "object, venue", "gives": "209 Frick objects: accession numbers, artists, dates, materials, links to Wikipedia. Little decorative arts.", "access": "SPARQL endpoint", "volume": "209 records", "checked": "2026-11-22", "decision": null },
+    { "id": "frick-1908-catalogue", "name": "Catalogue of the Henry C. Frick Collection of Paintings (1908)", "status": "ingest", "license": "Public domain (US)", "scope": "venue", "gives": "Frick's own catalogue of his paintings before the museum. A companion 1908 exhibition catalogue also exists.", "access": "Internet Archive (frick-31072001184441, frick-31072002253625)", "volume": "2 volumes", "checked": "2026-11-22", "decision": null },
+    { "id": "harvey-1928", "name": "George Harvey, Henry Clay Frick: The Man (1928)", "status": "ingest", "license": "Public domain (US)", "scope": "venue", "gives": "Period biography. Admiring in tone, so tag it historical and pair it with Wikipedia on Homestead.", "access": "Internet Archive (henryclayfrickma00harv)", "volume": "1 book", "checked": "2026-11-22", "decision": null },
+    { "id": "vasari", "name": "Vasari, Lives of the Artists (de Vere translation, 1912–15)", "status": "ingest", "license": "Public domain (US)", "scope": "universal", "gives": "Period lives of Bellini, Piero, Titian, Verrocchio, Pollaiuolo, Cimabue, Filippo Lippi, Gentile da Fabriano.", "access": "Project Gutenberg / Internet Archive", "volume": "10 volumes, relevant chapters only", "checked": "2026-11-22", "decision": null },
+    { "id": "hofstede-de-groot", "name": "Hofstede de Groot, Catalogue Raisonné of Dutch Painters (1908–1927)", "status": "ingest", "license": "Public domain (US)", "scope": "universal, object", "gives": "Period scholarship on Vermeer, Hals, Cuyp, Hobbema, Ruisdael. Entries may name Frick's paintings and their earlier owners.", "access": "Internet Archive", "volume": "Relevant volumes only", "checked": "2026-11-22", "decision": null },
+    { "id": "wikipedia-en", "name": "Wikipedia (English)", "status": "attrib", "license": "CC BY-SA 4.0", "scope": "object, venue, universal", "gives": "43 Frick objects, Frick history articles, and every library topic.", "access": "Action/REST API, by revision", "volume": "~43 object + ~120 topic articles", "checked": "Prior knowledge", "decision": null },
+    { "id": "wikipedia-es", "name": "Wikipedia (Spanish)", "status": "attrib", "license": "CC BY-SA 4.0", "scope": "object", "gives": "20 Frick objects. Optional: the guide answers in the visitor's language from English sources.", "access": "Action/REST API", "volume": "20 articles", "checked": "Prior knowledge", "decision": "rejected" },
+    { "id": "getty-vocab", "name": "Getty vocabularies (AAT, ULAN)", "status": "attrib", "license": "ODC-By 1.0", "scope": "universal", "gives": "Short artist bios (ULAN) and definitions for decorative-arts terms: famille noire, faience, marquetry, gilt bronze.", "access": "Bulk download", "volume": "~150 terms and artists", "checked": "2026-11-21", "decision": null },
+    { "id": "aic", "name": "Art Institute of Chicago API", "status": "attrib", "license": "Data CC0; descriptions CC BY 4.0", "scope": "universal", "gives": "Curatorial descriptions of comparable works (Rococo, Barbizon, Impressionism, Dutch) for library context.", "access": "REST API, no key", "volume": "~100 descriptions", "checked": "2026-11-21", "decision": null },
+    { "id": "frick-site", "name": "The Frick Collection: website, collection online, audio guide, videos", "status": "outreach", "license": "© Frick; personal, educational, non-commercial use only", "scope": "object, venue", "gives": "Room texts, object essays, the audio guide and curator videos. The best content for this venue.", "access": "Not collected", "volume": "—", "checked": "2026-11-22", "decision": null },
+    { "id": "smarthistory", "name": "Smarthistory", "status": "outreach", "license": "CC BY-NC-SA 4.0", "scope": "object, universal", "gives": "Essays on several Frick works (Bellini, Holbein, Vermeer, Fragonard) and on most library topics.", "access": "Not collected", "volume": "—", "checked": "2026-11-21", "decision": null },
+    { "id": "essential-vermeer", "name": "Essential Vermeer", "status": "outreach", "license": "©", "scope": "object", "gives": "Deep coverage of each Vermeer, including the Frick's three.", "access": "Not collected", "volume": "—", "checked": "Prior knowledge", "decision": null },
+    { "id": "wga", "name": "Web Gallery of Art", "status": "outreach", "license": "© (educational use)", "scope": "object", "gives": "Short commentaries on many Frick paintings.", "access": "Not collected", "volume": "—", "checked": "Prior knowledge", "decision": null },
+    { "id": "frick-digital-collections", "name": "Frick Digital Collections (library)", "status": "verify", "license": "Per item: In Copyright / No U.S. Copyright / Not evaluated", "scope": "venue", "gives": "Digitized archival material and books. Items marked No U.S. Copyright may be usable.", "access": "digitalcollections.frick.org", "volume": "Unknown", "checked": "2026-11-22", "decision": null },
+    { "id": "rkd", "name": "RKD (Netherlands Institute for Art History)", "status": "verify", "license": "To confirm", "scope": "object", "gives": "Authoritative records for the Dutch and Flemish paintings.", "access": "RKD API", "volume": "~30 records", "checked": "Not checked", "decision": null },
+    { "id": "loc", "name": "Library of Congress", "status": "verify", "license": "Mostly public domain, per item", "scope": "universal", "gives": "Period photographs and texts for Gilded Age New York.", "access": "loc.gov API", "volume": "Small", "checked": "Prior knowledge", "decision": null }
+  ],
+  "outreach": [
+    { "source": "frick-site", "name": "The Frick Collection", "why": "The only source for room texts, decorative arts and the current hang. Also a natural venue partner.", "ask": "Licence site and audio-guide text for the guide, or a venue partnership where the Frick supplies content.", "contact": "imagerights@frick.org (image rights; ask them to route text licensing)" },
+    { "source": "smarthistory", "name": "Smarthistory", "why": "Covers several Frick works and nearly every library topic. The same deal would serve the Met.", "ask": "Commercial licence for text in a paid audio guide, with attribution.", "contact": "smarthistory.org/contact-us" },
+    { "source": "essential-vermeer", "name": "Essential Vermeer", "why": "The Vermeers are the Frick's best-known works.", "ask": "Permission to use the Frick Vermeer entries.", "contact": "essentialvermeer.com" },
+    { "source": "wga", "name": "Web Gallery of Art", "why": "Low priority: Wikipedia already covers the best-known paintings.", "ask": "Only if painting answers come out thin.", "contact": "wga.hu" }
+  ],
+  "objects_sample": [
+    { "id": "1919.1.126", "title": "Mistress and Maid", "artist": "Johannes Vermeer", "room": "West Gallery (to confirm)", "sources": "Wikidata; Wikipedia (en, es); Hofstede de Groot", "gap": "Frick text (outreach)" },
+    { "id": "1911.1.127", "title": "Officer and Laughing Girl", "artist": "Johannes Vermeer", "room": "to confirm", "sources": "Wikidata; Wikipedia (en, es); Hofstede de Groot", "gap": "Frick text (outreach)" },
+    { "id": "1912.1.77", "title": "Portrait of Sir Thomas More", "artist": "Hans Holbein the Younger", "room": "Living Hall", "sources": "Wikidata; Wikipedia (en, es)", "gap": "None significant" },
+    { "id": "1915.1.03", "title": "Saint Francis in the Desert", "artist": "Giovanni Bellini", "room": "Living Hall", "sources": "Wikidata; Wikipedia (en, es); Vasari on Bellini", "gap": "None significant" },
+    { "id": "1910.1.98", "title": "The Polish Rider", "artist": "Rembrandt", "room": "West Gallery (to confirm)", "sources": "Wikidata; Wikipedia (en, es)", "gap": "None significant" },
+    { "id": "1927.1.81", "title": "Comtesse d'Haussonville", "artist": "Jean-Auguste-Dominique Ingres", "room": "Walnut Room", "sources": "Wikidata; Wikipedia (en, es)", "gap": "None significant" },
+    { "id": "1915.1.46", "title": "The Progress of Love: The Meeting", "artist": "Jean-Honoré Fragonard", "room": "Fragonard Room", "sources": "Wikidata; French Rococo library", "gap": "No Wikipedia article for the panels" },
+    { "id": "1950.1.159", "title": "The Flagellation of Christ", "artist": "Cimabue", "room": "Helen Clay Frick's Bedroom", "sources": "Wikidata; Wikipedia (en); Vasari on Cimabue", "gap": "None significant" },
+    { "id": "—", "title": "Du Paquier porcelain, medals, clocks", "artist": "various", "room": "Decorative arts displays", "sources": "Libraries only", "gap": "No object records: needs Frick data or a deal" }
+  ],
+  "rate_limits": [
+    { "host": "Wikipedia (Action and REST APIs)", "policy": "One request at a time, at most 1 per second. Action API calls send maxlag=5. On 429 or 503, wait for Retry-After, otherwise back off exponentially (2s, 4s, 8s… up to 5 minutes). First check up to 50 titles' current revision IDs per call, then fetch only pages whose revision changed. User-Agent: ResearchBot/0.1 (leonardalonsostudio@gmail.com)." },
+    { "host": "Wikidata SPARQL", "policy": "One query at a time, at least 2 seconds apart. Keep each query small (one per venue), because the service limits total query time per minute. Cache results." },
+    { "host": "Internet Archive", "policy": "At most 1 request per second. Download each book's full text once (the _djvu.txt file) and cache it. Never re-download unchanged items." },
+    { "host": "Art Institute of Chicago API", "policy": "Stay under its published anonymous limit (60 requests per minute): 1 request per second." },
+    { "host": "Getty vocabularies", "policy": "Use the bulk downloads, not per-term requests." },
+    { "host": "Project Gutenberg", "policy": "Download from a mirror once and cache. Never crawl gutenberg.org pages." },
+    { "host": "All sources", "policy": "Raw responses go into a local cache (gitignored .tmp/source-cache/, keyed by URL and revision), so re-running the puller repeats no network calls. Runs are resumable: a rate-limited run stops cleanly and the next run continues from the cache." }
+  ],
+  "staging_layout": "/wonderway rag/places/_frick/\n  _review/manifest.json, manifest.html   ← this report\n  metadata.json                          {\"place_id\":\"frick-nyc\",\"place_name\":\"The Frick Collection\"}\n  libraries.json                         {\"libraries\":[\"lib-gilded-age-new-york\"]}\n  about/\n    frick-history/   frick-1908-catalogue/   collection-overview/\n  exhibitions/\n    west-gallery/    metadata.json  libraries.json  <objects>/\n    living-hall/ …   boucher-room/ …\n  _unassigned-objects/                   ← objects until their room is confirmed\n/wonderway rag/_library/\n  dutch-golden-age-painting/ wikipedia/ hofstede-de-groot/ …\n  french-rococo/ …\n\nTo go live: rename _frick → frick and _library → library.",
+  "decisions": [
+    { "date": "2026-11-23", "topic": "place_id", "decision": "frick-nyc." },
+    { "date": "2026-11-23", "topic": "Strapi entries", "decision": "You create them at go-live from the checklist. Strapi stays the only writer of location_relationships." },
+    { "date": "2026-11-23", "topic": "Room assignment", "decision": "All objects are staged in _unassigned-objects/. They move into room folders once the current hang is confirmed." },
+    { "date": "2026-11-23", "topic": "Wikipedia User-Agent", "decision": "ResearchBot/0.1 (leonardalonsostudio@gmail.com)." },
+    { "date": "2026-11-23", "topic": "Henry Clay Frick's labor history", "decision": "Be transparent. Whenever the guide talks about Frick's life or fortune, it includes the 1892 Homestead Strike and the South Fork club / Johnstown Flood, stated factually from sourced text, not left out or softened. Harvey's 1928 biography is tagged historical and framed as a period view." },
+    { "date": "2026-11-23", "topic": "Spanish Wikipedia", "decision": "Skipped. English sources only. The guide answers in the visitor's language." }
+  ],
+  "open_questions": [
+    "Room list and hang: confirm on a visit or from the Frick's current floor plan before objects move out of _unassigned-objects/."
+  ]
+}

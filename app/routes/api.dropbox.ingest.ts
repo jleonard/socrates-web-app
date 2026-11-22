@@ -6,6 +6,7 @@ import type { DropboxAssetRow } from "~/types";
 import type { Json } from "~/types/supabase";
 import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { deleteFromIngestIndexes } from "~/utils/pinecone";
+import { isIgnoredPath } from "~/utils/ragIngest/ignored.path";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 /**
@@ -85,6 +86,11 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       if (entry[".tag"] === "deleted" && !entry.name.includes(".")) {
+        return false;
+      }
+
+      // Staging and review folders: never recorded, never ingested.
+      if (isIgnoredPath(entry.path_lower)) {
         return false;
       }
 
