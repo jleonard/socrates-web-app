@@ -88,11 +88,16 @@ async function ensureIndex() {
   indexReady = true;
 }
 
-/** Combined version: guide code version + this location's content versions. */
+/**
+ * Combined version: guide code version + this location's content versions,
+ * including each shared library it uses (a library edit retires cached
+ * answers only where that library is subscribed).
+ */
 async function currentVersion(location: LocationContext) {
   const content = await getContentVersion([
     location.exhibitionId,
     location.placeId,
+    ...(location.libraryIds ?? []),
   ]);
   return `g${GUIDE_CACHE_VERSION}c${content}`;
 }

@@ -7,6 +7,12 @@ export type LocationContext = {
   placeId: string;
   /** Set when locationId is an exhibition, e.g. "amnh-hall-of-advanced-mammals". */
   exhibitionId?: string;
+  /**
+   * Shared libraries searchable here (library.server.ts), sorted. Set by
+   * the webhook after resolving the location; empty or unset = no library
+   * pool.
+   */
+  libraryIds?: string[];
 };
 
 /**

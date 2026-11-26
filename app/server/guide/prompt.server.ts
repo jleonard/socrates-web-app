@@ -246,13 +246,21 @@ export function buildAnswerPrompt(opts: {
       continue;
     }
 
-    const section = sectionFor(md, location);
+    // shared-library chunks are always general reference, whatever their tags
+    const section =
+      chunk.pool === "library" ? "background" : sectionFor(md, location);
     sections[section].push(chunk.id);
 
     if (section === "exhibition") {
       exhibitionTexts.push(text);
     } else if (section === "background") {
-      backgroundTexts.push(withTitle(md, text));
+      // name the publisher (e.g. "[Wikipedia]") so reference text is never
+      // mistaken for something the venue itself says
+      const publisher =
+        typeof md.source_publisher === "string" ? md.source_publisher : null;
+      backgroundTexts.push(
+        (publisher ? `[${publisher}] ` : "") + withTitle(md, text),
+      );
     } else {
       const key = String(md.object_id ?? chunk.id);
       const group = objectGroups.get(key) ?? {

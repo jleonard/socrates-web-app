@@ -22,6 +22,11 @@ import {
 } from "~/utils/pinecone";
 import { describeImage, ocrImage } from "~/utils/ragIngest/vision.server";
 import { isIgnoredPath } from "~/utils/ragIngest/ignored.path";
+import {
+  enforceLibraryRules,
+  LIBRARIES_FILE,
+  splitFrontMatter,
+} from "~/utils/ragIngest/library";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
@@ -253,6 +258,10 @@ async function processFile(
   // this only guards rows recorded before that rule existed.
   if (isIgnoredPath(row.dropbox_path)) return "ignore";
 
+  // Config files are read by the ingest route, never embedded. Only rows
+  // recorded before that rule existed reach here.
+  if (row.name === LIBRARIES_FILE) return "ignore";
+
   // Get the metadata for this file's folder
   let metadata = metadataCache.get(folder);
   if (metadata === undefined) {
@@ -260,11 +269,6 @@ async function processFile(
     metadataCache.set(folder, metadata);
   }
   if (metadata === null) return "skipped";
-
-  for (const key of ["place_id", "exhibition_id"]) {
-    const id = metadata[key];
-    if (typeof id === "string" && id) ctx.touchedLocations.add(id);
-  }
 
   const file: ProcessingFile = {
     ...row,
@@ -274,6 +278,15 @@ async function processFile(
     extension: fileExtension(row.name),
     doc_source: "dropbox",
   };
+
+  // Library files need a library_id and no venue ids; venue files no
+  // library_id. Throws, so the file is marked "error".
+  enforceLibraryRules(row.dropbox_path ?? folder, file.metadata);
+
+  for (const key of ["place_id", "exhibition_id", "library_id"]) {
+    const id = file.metadata[key];
+    if (typeof id === "string" && id) ctx.touchedLocations.add(id);
+  }
 
   if (TEXT_EXTENSIONS.has(file.extension)) {
     // Text files need the binary
@@ -335,7 +348,15 @@ async function updateProcessingStatus(
 
 async function processTextFile(file: any, supabase: SupabaseClient) {
   const text = await getTextFromFile(file);
-  return await pushTextToPinecone(file, text, supabase);
+  // Per-file source details (title, url, license…) from optional front
+  // matter, merged over the folder metadata. Stripped before chunking, so
+  // its `---` lines are never read as chunk separators.
+  const { body, data } =
+    file.extension === "docx"
+      ? { body: text, data: {} }
+      : splitFrontMatter(text, file.dropbox_path);
+  Object.assign(file.metadata, data);
+  return await pushTextToPinecone(file, body, supabase);
 }
 
 async function processLocationImage(

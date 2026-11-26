@@ -15,23 +15,27 @@ import type { LocationContext } from "./location.server";
 //                 questions ("the big skeleton with curved tusks") always
 //                 reach the reranker
 //               - elsewhere: other exhibitions at the same place
+//               - library:   shared topic libraries this location uses
 //   2. RERANK:  every candidate scored against the search query together
 //   3. GATE:    keep chunks that clear RERANK_MIN; up to FINAL_N from
-//               "here" and up to ELSEWHERE_N from "elsewhere", each pool
-//               with its own slots so one can't crowd out the other
+//               "here", ELSEWHERE_N from "elsewhere" and LIBRARY_N from
+//               "library", each pool with its own slots so one can't crowd
+//               out another
 //
 // Pools:
 // - here: this exhibition, plus place-level content that isn't tied to any
 //   exhibition (e.g. place:amnh-nyc:identity).
 // - elsewhere: other exhibitions in the same place (other AMNH halls), only
 //   content shareable within the venue. The prompt always names their hall.
-// Other venues are excluded. Later pools (background, elsewhere outside)
-// will be added the same way.
+// - library: venue-neutral topic content stored once and shared by venues
+//   (library.server.ts decides which libraries apply). Library chunks have
+//   no place_id, so they never match "here" or "elsewhere".
+// Other venues' own content is excluded.
 
 type Match = ScoredPineconeRecord<RecordMetadata>;
 
-export type RetrievalPool = "here" | "elsewhere";
-export type RetrievalSearch = "general" | "visual" | "elsewhere";
+export type RetrievalPool = "here" | "elsewhere" | "library";
+export type RetrievalSearch = "general" | "visual" | "elsewhere" | "library";
 
 export type RetrievedChunk = {
   id: string;
@@ -55,10 +59,13 @@ export type RetrievalResult = {
   filter: Record<string, any>;
   /** null when the visitor isn't in an exhibition (no "elsewhere" pool). */
   elsewhereFilter: Record<string, any> | null;
+  /** null when the location uses no shared libraries. */
+  libraryFilter: Record<string, unknown> | null;
   counts: {
     general_raw: number;
     visual_raw: number;
     elsewhere_raw: number;
+    library_raw: number;
     candidates: number;
     final: number;
   };
@@ -103,11 +110,17 @@ const VISUAL_TOP_K = 4;
 /** Candidates per namespace for the elsewhere-in-this-venue search. */
 const ELSEWHERE_TOP_K = 4;
 
+/** Candidates per namespace for the shared-library search. */
+const LIBRARY_TOP_K = 4;
+
 /** Max "here" chunks passed to the answering model. */
 const FINAL_N = 5;
 
 /** Max "elsewhere" chunks passed to the answering model, on top of FINAL_N. */
 const ELSEWHERE_N = 2;
+
+/** Max "library" chunks passed to the answering model, on top of the others. */
+const LIBRARY_N = 3;
 
 /** Dense floor used ONLY when the reranker fails (stricter than DENSE_FLOOR). */
 const FALLBACK_DENSE_FLOOR = 0.5;
@@ -176,6 +189,18 @@ export function buildElsewhereFilter(
 }
 
 /**
+ * "Library" pool: the shared libraries this location uses. Null when it
+ * uses none.
+ */
+export function buildLibraryFilter(
+  location: LocationContext,
+): Record<string, unknown> | null {
+  const ids = location.libraryIds ?? [];
+  if (ids.length === 0) return null;
+  return { library_id: { $in: ids } };
+}
+
+/**
  * Throws if embedding or the Pinecone searches fail: without retrieval the
  * answer would silently drop to general knowledge for venue questions.
  * A reranker failure does NOT throw; it falls back to dense scores.
@@ -187,6 +212,7 @@ export async function retrieveChunks(opts: {
   const index = pc.index(INDEX);
   const filter = buildHereFilter(opts.location);
   const elsewhereFilter = buildElsewhereFilter(opts.location);
+  const libraryFilter = buildLibraryFilter(opts.location);
   const visualFilter = {
     $and: [filter, { chunk_type: { $eq: "visual_description" } }],
   };
@@ -204,7 +230,7 @@ export async function retrieveChunks(opts: {
       .query({ vector, topK, includeMetadata: true, filter: f })
       .then((res) => res.matches.map((m) => ({ ns, m })));
 
-  const [general, visual, elsewhere] = await Promise.all([
+  const [general, visual, elsewhere, library] = await Promise.all([
     Promise.all(NAMESPACES.map((ns) => query(ns, GENERAL_TOP_K, filter))).then(
       (r) => r.flat(),
     ),
@@ -214,6 +240,11 @@ export async function retrieveChunks(opts: {
     elsewhereFilter
       ? Promise.all(
           NAMESPACES.map((ns) => query(ns, ELSEWHERE_TOP_K, elsewhereFilter)),
+        ).then((r) => r.flat())
+      : Promise.resolve([]),
+    libraryFilter
+      ? Promise.all(
+          NAMESPACES.map((ns) => query(ns, LIBRARY_TOP_K, libraryFilter)),
         ).then((r) => r.flat())
       : Promise.resolve([]),
   ]);
@@ -247,6 +278,7 @@ export async function retrieveChunks(opts: {
   visual.forEach(({ ns, m }) => add("visual", ns, m));
   // the filters are disjoint, so an elsewhere chunk is never also "here"
   elsewhere.forEach(({ ns, m }) => add("elsewhere", ns, m, "elsewhere"));
+  library.forEach(({ ns, m }) => add("library", ns, m, "library"));
 
   const candidates = [...byId.values()].filter(
     (c) => c.dense >= DENSE_FLOOR && typeof c.metadata.text === "string",
@@ -256,6 +288,7 @@ export async function retrieveChunks(opts: {
     general_raw: general.length,
     visual_raw: visual.length,
     elsewhere_raw: elsewhere.length,
+    library_raw: library.length,
     candidates: candidates.length,
     final: 0,
   };
@@ -266,6 +299,7 @@ export async function retrieveChunks(opts: {
       candidates,
       filter,
       elsewhereFilter,
+      libraryFilter,
       counts,
       rerankFailed: false,
       rerankError: null,
@@ -299,6 +333,7 @@ export async function retrieveChunks(opts: {
       candidates,
       filter,
       elsewhereFilter,
+      libraryFilter,
       counts: { ...counts, final: chunks.length },
       rerankFailed: false,
       rerankError: null,
@@ -317,6 +352,7 @@ export async function retrieveChunks(opts: {
       candidates,
       filter,
       elsewhereFilter,
+      libraryFilter,
       counts: { ...counts, final: chunks.length },
       rerankFailed: true,
       rerankError: err instanceof Error ? err.message : String(err),
@@ -335,6 +371,10 @@ function selectPools(sorted: RetrievedChunk[]): RetrievedChunk[] {
     ...selectChunks(
       sorted.filter((c) => c.pool === "elsewhere"),
       ELSEWHERE_N,
+    ),
+    ...selectChunks(
+      sorted.filter((c) => c.pool === "library"),
+      LIBRARY_N,
     ),
   ]);
   return sorted.filter((c) => picked.has(c));

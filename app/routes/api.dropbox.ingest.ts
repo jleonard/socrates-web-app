@@ -7,6 +7,7 @@ import type { Json } from "~/types/supabase";
 import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { deleteFromIngestIndexes } from "~/utils/pinecone";
 import { isIgnoredPath } from "~/utils/ragIngest/ignored.path";
+import { LIBRARIES_FILE, parseLibrariesFile } from "~/utils/ragIngest/library";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 /**
@@ -256,16 +257,119 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // ---------------------------------------------------------------------
+    // LIBRARY SUBSCRIPTIONS
+    // ---------------------------------------------------------------------
+
+    /*
+     * libraries.json lists the shared libraries a place or exhibition uses:
+     *   {"libraries": ["lib-ancient-egypt", …]}
+     *
+     * Unlike metadata.json it is not inherited and re-queues nothing (no
+     * content changes), so editing a list never re-embeds the venue. Its
+     * place and exhibition come from the metadata.json files above it, read
+     * now (after this sync's metadata was stored) and saved on the row, so
+     * the guide finds a place's lists with one query. Moving the file to
+     * another folder re-resolves it; changing an ancestor's ids does not,
+     * so re-save the file in that case.
+     */
+    const librariesFiles = filesToAdd.filter(
+      (file): file is typeof file & { path_lower: string } =>
+        file.name === LIBRARIES_FILE && !!file.path_lower,
+    );
+    const librariesRecords: DropboxAssetRow[] = [];
+    const subscriptionLocations: string[] = [];
+
+    await forEachConcurrently(
+      librariesFiles,
+      METADATA_CONCURRENCY,
+      async (file) => {
+        try {
+          const response = await dbx.filesDownload({ path: file.path_lower });
+          const text = (
+            response.result as unknown as { fileBinary: Buffer }
+          ).fileBinary.toString("utf-8");
+
+          // Content problems are reported and skipped, like metadata.json:
+          // retrying can't fix them and the cursor must keep moving.
+          let libraries: string[];
+          try {
+            libraries = parseLibrariesFile(
+              text.trim() ? JSON.parse(text) : { libraries: [] },
+              file.path_lower,
+            );
+          } catch (error) {
+            const message = `Invalid libraries.json skipped: ${file.path_lower}`;
+            console.error(message, error);
+            Sentry.captureMessage(message, "warning");
+            return;
+          }
+
+          const inherited = await mergedMetadataForFolder(
+            file.dropbox_folder,
+            supabaseServiceRole,
+          );
+          const placeId = stringOrNull(inherited.place_id);
+          const exhibitionId = stringOrNull(inherited.exhibition_id);
+          if (!placeId) {
+            const message = `libraries.json outside a place skipped: ${file.path_lower}`;
+            console.error(message);
+            Sentry.captureMessage(message, "warning");
+            return;
+          }
+
+          librariesRecords.push({
+            name: file.name,
+            modified_time: new Date().toISOString(),
+            dropbox_path: file.path_lower,
+            dropbox_folder: file.dropbox_folder,
+            metadata: {
+              libraries,
+              place_id: placeId,
+              ...(exhibitionId ? { exhibition_id: exhibitionId } : {}),
+            },
+            dropbox_file_id: file.id,
+            // config, not content: never queued for push-changes
+            status: "ignore",
+          } as DropboxAssetRow);
+          subscriptionLocations.push(exhibitionId ?? placeId);
+        } catch (error) {
+          processingErrors.push(
+            `libraries file ${file.path_lower}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+      },
+    );
+
+    if (librariesRecords.length > 0) {
+      const { error } = await supabaseServiceRole
+        .from("dropbox_assets")
+        .upsert(librariesRecords, { onConflict: "dropbox_file_id" });
+
+      if (error) {
+        processingErrors.push(
+          `Failed to upsert libraries.json: ${error.message}`,
+        );
+      } else {
+        // What the guide can answer there changed: retire cached answers.
+        await bumpContentVersions(subscriptionLocations);
+      }
+    }
+
+    // ---------------------------------------------------------------------
     // ADDED / MODIFIED FILES
     // ---------------------------------------------------------------------
 
     /*
-     * metadata.json is stored separately above because its contents need
-     * to be parsed and saved to the metadata column.
+     * metadata.json and libraries.json are stored separately above because
+     * their contents need to be parsed and saved to the metadata column.
      *
      * Every other file is simply marked for processing.
      */
-    const files = filesToAdd.filter((file) => file.name !== "metadata.json");
+    const files = filesToAdd.filter(
+      (file) => file.name !== "metadata.json" && file.name !== LIBRARIES_FILE,
+    );
 
     /*
      * Build all records in memory first.
@@ -473,7 +577,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return data({
       success: true,
-      processed: files.length + metadata.length,
+      processed: files.length + metadata.length + librariesFiles.length,
       deleted: deletedPaths.length,
     });
   } catch (error) {
@@ -647,8 +751,8 @@ async function markFoldersForReprocessing(
       .from("dropbox_assets")
       .update({ status: "process" })
       .or(filters.join(","))
-      // the metadata.json files themselves stay "ignore"
-      .neq("name", "metadata.json");
+      // config files (metadata.json, libraries.json) stay "ignore"
+      .not("name", "in", `("metadata.json","${LIBRARIES_FILE}")`);
 
     if (error) {
       throw new Error(
@@ -697,10 +801,46 @@ async function locationIdsForFolders(
   const ids = new Set<string>();
   for (const row of rows) {
     const metadata = (row.metadata ?? {}) as Record<string, unknown>;
-    for (const key of ["place_id", "exhibition_id"]) {
+    for (const key of ["place_id", "exhibition_id", "library_id"]) {
       const id = metadata[key];
       if (typeof id === "string" && id) ids.add(id);
     }
   }
   return [...ids];
+}
+
+/**
+ * Metadata a file in `folder` inherits: every metadata.json from the root
+ * down to the folder, merged root → leaf (same as push-changes). Throws on
+ * a database error.
+ */
+async function mergedMetadataForFolder(
+  folder: string,
+  supabaseServiceRole: SupabaseClient,
+): Promise<Record<string, unknown>> {
+  const parts = folder.split("/").filter(Boolean);
+  const hierarchy = parts.map((_, i) => "/" + parts.slice(0, i + 1).join("/"));
+  if (hierarchy.length === 0) return {};
+
+  const { data, error } = await supabaseServiceRole
+    .from("dropbox_assets")
+    .select("dropbox_folder, metadata")
+    .eq("name", "metadata.json")
+    .in("dropbox_folder", hierarchy);
+
+  if (error) {
+    throw new Error(`metadata lookup for ${folder}: ${describeError(error)}`);
+  }
+
+  const merged: Record<string, unknown> = {};
+  for (const row of (data ?? []).sort(
+    (a, b) => (a.dropbox_folder?.length ?? 0) - (b.dropbox_folder?.length ?? 0),
+  )) {
+    Object.assign(merged, (row.metadata ?? {}) as Record<string, unknown>);
+  }
+  return merged;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value ? value : null;
 }

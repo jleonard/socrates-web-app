@@ -10,6 +10,7 @@ import {
 import { endsWithQuestion, followUpAllowed } from "./guide/followup.server";
 import { saveTurn } from "./guide/save.turn.server";
 import { getChatHistory } from "./guide/chat.history.server";
+import { getLocationLibraries } from "./guide/library.server";
 import { resolveLocation } from "./guide/location.server";
 import { buildAnswerPrompt, type AnswerPrompt } from "./guide/prompt.server";
 import { GENERAL_PLACE } from "~/utils/places";
@@ -116,6 +117,12 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
       loggingDetails.timing,
       "location_ms",
       () => resolveLocation(place),
+    );
+    // shared libraries this place/exhibition subscribes to (libraries.json)
+    locationContext.libraryIds = await timed(
+      loggingDetails.timing,
+      "libraries_ms",
+      () => getLocationLibraries(locationContext),
     );
     loggingDetails.location = {
       ...loggingDetails.location,
@@ -296,6 +303,7 @@ export const handleGuideWebhook: ActionFunction = async (args) => {
     loggingDetails.retrieval = {
       filter: retrieval.filter,
       elsewhere_filter: retrieval.elsewhereFilter,
+      library_filter: retrieval.libraryFilter,
       counts: retrieval.counts,
       rerank_failed: retrieval.rerankFailed,
       rerank_error: retrieval.rerankError,
