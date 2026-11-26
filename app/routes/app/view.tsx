@@ -17,6 +17,7 @@ import {
   useRevalidator,
   useSubmit,
 } from "react-router";
+import { pickFirstMessage } from "~/utils/elevenlabs/firstMessages";
 import { logAppEventFromClient } from "~/utils/events/appEvents.client";
 import { DEFAULT_LOCALE } from "~/utils/i18n/config";
 import {
@@ -78,6 +79,7 @@ const ParentComponent: React.FC = () => {
     access,
     elevenLabsId,
     startLanguage,
+    firstMessageAllowed,
     shouldPlayGreeting,
     sessionId,
     user,
@@ -377,11 +379,18 @@ const ParentComponent: React.FC = () => {
       // here, MicHelp says what to do
       if (!(await requestMicAccess())) return;
 
+      // spoken right after connecting, so visitors hear it's listening; in
+      // the language the session starts in (the agent's default is English)
+      const firstMessage = firstMessageAllowed
+        ? pickFirstMessage(startLanguage)
+        : undefined;
+
       // Start the conversation with your agent
       step("conversation connecting", {
         agent: elevenLabsId,
         place: activePlace,
         start_language: startLanguage ?? null,
+        first_message: firstMessage ?? null,
       });
       // returns right away; connection, failure and the rest arrive through
       // the callbacks above (onConnect / onError / onDisconnect)
@@ -398,8 +407,13 @@ const ParentComponent: React.FC = () => {
         },
         // venue's language (from the loader) as the first guess; the agent
         // switches to whatever language the visitor actually speaks
-        ...(startLanguage && {
-          overrides: { agent: { language: startLanguage } },
+        ...((startLanguage || firstMessage) && {
+          overrides: {
+            agent: {
+              ...(startLanguage && { language: startLanguage }),
+              ...(firstMessage && { firstMessage }),
+            },
+          },
         }),
       });
     } catch (error) {
@@ -420,7 +434,15 @@ const ParentComponent: React.FC = () => {
       playError();
       setError(t("errors.start_failed"));
     }
-  }, [conversation, user, coords, elevenLabsId, startLanguage, playError]);
+  }, [
+    conversation,
+    user,
+    coords,
+    elevenLabsId,
+    startLanguage,
+    firstMessageAllowed,
+    playError,
+  ]);
 
   const stopConversation = useCallback(() => {
     logAppEventFromClient({

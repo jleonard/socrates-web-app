@@ -52,6 +52,22 @@ export function startLanguageFor(
   return START_LANGUAGES[agentId]?.find((l) => l === language);
 }
 
+/**
+ * Agents whose security settings allow overriding the first message
+ * (`overrides.agent.firstMessage`). Like the language override, sending it to
+ * an agent that doesn't allow it fails the session, so only agents listed
+ * here get the app's spoken "I'm listening" lines (firstMessages.ts).
+ */
+const FIRST_MESSAGE_AGENTS: ReadonlySet<string> = new Set([
+  // wonderway - prod b: needs Security > Overrides > First message turned on
+  "agent_0201m4yd6fh9f02t9r3dhmmwgq85",
+]);
+
+/** Whether the app may send this agent a first message on start. */
+export function allowsFirstMessage(agentId: string): boolean {
+  return FIRST_MESSAGE_AGENTS.has(agentId);
+}
+
 /** Session key holding the chosen agent name. */
 const SESSION_KEY = "agent";
 

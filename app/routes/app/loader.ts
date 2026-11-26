@@ -10,6 +10,7 @@ import { getPlaceLanguage } from "~/server/guide/venue.language.server";
 import { hasBeenGreeted } from "~/server/greeting.server";
 import {
   resolveAgentId,
+  allowsFirstMessage,
   startLanguageFor,
 } from "~/utils/elevenlabs/agents.server";
 import { MIT_PLACE, normalizePlace } from "~/utils/places";
@@ -175,6 +176,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
         "https://leonardalonso.app.n8n.cloud/webhook-test/aa41599c-3236-45a5-8c17-a9702d3a56f7o",
       elevenLabsId: agentId,
       startLanguage,
+      firstMessageAllowed: allowsFirstMessage(agentId),
       // greeted per place (Redis), so a new venue greets the visitor again
       shouldPlayGreeting: !greeted,
       place: session.get("place"),
