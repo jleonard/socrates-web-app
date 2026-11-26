@@ -72,6 +72,19 @@ type PullPlan = {
   artists_library?: string;
   /** Write greeting.txt in each room (an mp3 per language at go-live). */
   room_greetings?: boolean;
+  /**
+   * More depth for chosen artists (by Wikidata id): extra Wikipedia
+   * articles and public-domain books, written to artists/<artist>/_more/
+   * so they stay out of the live library until reviewed and renamed.
+   */
+  artist_deep?: Record<
+    string,
+    {
+      name: string;
+      wikipedia?: string[];
+      archive?: { id: string; title: string; author: string; source_year: number }[];
+    }
+  >;
 };
 
 const manifest = JSON.parse(
@@ -463,11 +476,15 @@ async function main() {
   const useWikipedia = !rejected.has("wikipedia-en");
   const objectTitles = useWikipedia ? objects.map((o) => o.enwiki).filter((t): t is string => !!t) : [];
   const artistTitles = useWikipedia ? artists.map((a) => a.enwiki).filter((t): t is string => !!t) : [];
+  const deepTitles = useWikipedia
+    ? Object.values(plan.artist_deep ?? {}).flatMap((a) => a.wikipedia ?? [])
+    : [];
   await loadArticles([
     ...plan.about.history_articles,
     ...libraryTitles,
     ...objectTitles,
     ...artistTitles,
+    ...deepTitles,
   ]);
   console.log(`[pull] wikipedia: ${[...articleCache.values()].filter(Boolean).length} articles`);
 
@@ -753,6 +770,61 @@ async function writeArtists(
   }
   console.log(`[pull] artists: ${JSON.stringify(counts)}`);
   Object.assign(report, { artists: counts });
+
+  // deeper material for chosen artists, staged in _more/ for review
+  const deep = { artists: 0, articles: 0, books: 0, chunks: 0 };
+  const chunksBefore = report.chunks;
+  for (const [qid, extra] of Object.entries(plan.artist_deep ?? {})) {
+    const a = artists.find((x) => x.qid === qid);
+    if (!a) {
+      report.errors.push(`artist_deep ${qid} (${extra.name}): not an artist in this collection`);
+      continue;
+    }
+    const more = `${dir}/${slugify(a.label)}-${a.qid.toLowerCase()}/_more`;
+    deep.artists++;
+    if (extra.wikipedia?.length) {
+      write(`${more}/wikipedia/metadata.json`, json(WIKIPEDIA_FOLDER_META));
+      for (const t of extra.wikipedia) {
+        const article = articleCache.get(t);
+        if (article) {
+          writeArticle(`${more}/wikipedia`, article);
+          deep.articles++;
+        }
+      }
+    }
+    for (const book of extra.archive ?? []) {
+      try {
+        const doc = await fetchArchiveText(book.id);
+        const folder = `${more}/books/${book.id}`;
+        write(`${folder}/metadata.json`, json({
+          source_publisher: "Internet Archive (public domain)",
+          license: "Public domain (US)",
+          source_type: "historical",
+          source_year: book.source_year,
+        }));
+        const head = `${book.title} (${book.author}, ${book.source_year})`;
+        const chunks = chunkParagraphs(doc.text, CHUNK_CHARS).map((c) => `${head}\n\n${c}`);
+        for (let i = 0; i < chunks.length; i += CHUNKS_PER_FILE) {
+          const part = String(i / CHUNKS_PER_FILE + 1).padStart(2, "0");
+          writeText(`${folder}/part-${part}.md`, {
+            title: book.title,
+            source_title: `${book.title}, ${book.author} (${book.source_year})`,
+            source_url: doc.url,
+            attribution: `${book.author}, ${book.title} (${book.source_year}), public domain, via Internet Archive`,
+            retrieved_at: TODAY,
+          }, chunks.slice(i, i + CHUNKS_PER_FILE));
+        }
+        deep.books++;
+      } catch (err) {
+        report.errors.push(`artist_deep book ${book.id}: ${String(err)}`);
+      }
+    }
+  }
+  deep.chunks = report.chunks - chunksBefore;
+  if (deep.artists) {
+    console.log(`[pull] artist depth: ${JSON.stringify(deep)}`);
+    Object.assign(report, { artist_deep: deep });
+  }
 }
 
 main().catch((err) => {

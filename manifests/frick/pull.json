@@ -163,5 +163,255 @@
       "Beaux-Arts architecture"
     ]
   },
-  "artists_library": "lib-artists"
+  "artists_library": "lib-artists",
+  "artist_deep": {
+    "Q5598": {
+      "name": "Rembrandt",
+      "wikipedia": [
+        "Self-portraits by Rembrandt",
+        "Rembrandt Research Project",
+        "The Night Watch"
+      ],
+      "archive": [
+        {
+          "id": "rembrandthislife00mich",
+          "title": "Rembrandt: His Life, His Work, and His Time",
+          "author": "Émile Michel",
+          "source_year": 1903
+        }
+      ]
+    },
+    "Q41264": {
+      "name": "Johannes Vermeer",
+      "wikipedia": [
+        "Delft School (painting)",
+        "The Milkmaid (Vermeer)",
+        "Girl with a Pearl Earring"
+      ],
+      "archive": [
+        {
+          "id": "janvermeerofdelf00hale",
+          "title": "Jan Vermeer of Delft",
+          "author": "Philip L. Hale",
+          "source_year": 1913
+        }
+      ]
+    },
+    "Q48319": {
+      "name": "Hans Holbein the Younger",
+      "wikipedia": [
+        "The Ambassadors (Holbein)",
+        "Portrait of Henry VIII"
+      ],
+      "archive": [
+        {
+          "id": "hansholbeinyoung01cham",
+          "title": "Hans Holbein the Younger, volume 1",
+          "author": "Arthur B. Chamberlain",
+          "source_year": 1913
+        },
+        {
+          "id": "hansholbeinyoung02cham",
+          "title": "Hans Holbein the Younger, volume 2",
+          "author": "Arthur B. Chamberlain",
+          "source_year": 1913
+        }
+      ]
+    },
+    "Q301": {
+      "name": "El Greco",
+      "wikipedia": [
+        "The Burial of the Count of Orgaz",
+        "View of Toledo",
+        "The Disrobing of Christ"
+      ],
+      "archive": [
+        {
+          "id": "elgrecoaccountof00calv",
+          "title": "El Greco: An Account of His Life and Works",
+          "author": "Albert F. Calvert and C. Gasquoine Hartley",
+          "source_year": 1909
+        }
+      ]
+    },
+    "Q5432": {
+      "name": "Francisco Goya",
+      "wikipedia": [
+        "Black Paintings",
+        "Los Caprichos",
+        "The Disasters of War",
+        "The Third of May 1808"
+      ],
+      "archive": [
+        {
+          "id": "franciscogoyastu00stokuoft",
+          "title": "Francisco Goya: A Study of the Work and Personality of the Eighteenth Century Spanish Painter and Satirist",
+          "author": "Hugh Stokes",
+          "source_year": 1914
+        },
+        {
+          "id": "goyaaccountofhis00calv",
+          "title": "Goya: An Account of His Life and Works",
+          "author": "Albert F. Calvert",
+          "source_year": 1908
+        }
+      ]
+    },
+    "Q297": {
+      "name": "Diego Velázquez",
+      "wikipedia": [
+        "Las Meninas",
+        "Portrait of Innocent X",
+        "The Surrender of Breda"
+      ],
+      "archive": [
+        {
+          "id": "artofvelasquez00stev",
+          "title": "The Art of Velasquez",
+          "author": "R. A. M. Stevenson",
+          "source_year": 1895
+        }
+      ]
+    },
+    "Q47551": {
+      "name": "Titian",
+      "wikipedia": [
+        "Venus of Urbino",
+        "Assumption of the Virgin (Titian)",
+        "Bacchus and Ariadne (Titian)"
+      ],
+      "archive": [
+        {
+          "id": "titian00gron",
+          "title": "Titian",
+          "author": "Georg Gronau",
+          "source_year": 1904
+        }
+      ]
+    },
+    "Q17169": {
+      "name": "Giovanni Bellini",
+      "wikipedia": [
+        "San Zaccaria Altarpiece",
+        "The Feast of the Gods",
+        "Portrait of Doge Leonardo Loredan"
+      ],
+      "archive": [
+        {
+          "id": "giovannibellini00fryruoft",
+          "title": "Giovanni Bellini",
+          "author": "Roger Fry",
+          "source_year": 1899
+        }
+      ]
+    },
+    "Q150679": {
+      "name": "Anthony van Dyck",
+      "wikipedia": [
+        "Charles I in Three Positions",
+        "Charles I at the Hunt",
+        "Equestrian Portrait of Charles I"
+      ],
+      "archive": [
+        {
+          "id": "vandyckg00custiala",
+          "title": "Van Dyck",
+          "author": "Lionel Cust",
+          "source_year": 1906
+        }
+      ]
+    },
+    "Q167654": {
+      "name": "Frans Hals",
+      "wikipedia": [
+        "The Laughing Cavalier",
+        "The Banquet of the Officers of the St George Militia Company in 1616"
+      ],
+      "archive": [
+        {
+          "id": "franshals00daviuoft",
+          "title": "Frans Hals",
+          "author": "Gerald S. Davies",
+          "source_year": 1902
+        }
+      ]
+    },
+    "Q159758": {
+      "name": "J. M. W. Turner",
+      "wikipedia": [
+        "The Fighting Temeraire",
+        "Rain, Steam and Speed – The Great Western Railway",
+        "Turner Bequest"
+      ],
+      "archive": [
+        {
+          "id": "cu31924008748620",
+          "title": "The Life of J. M. W. Turner, R.A.",
+          "author": "Philip Gilbert Hamerton",
+          "source_year": 1879
+        }
+      ]
+    },
+    "Q192720": {
+      "name": "Thomas Gainsborough",
+      "wikipedia": [
+        "The Blue Boy",
+        "Mr and Mrs Andrews"
+      ],
+      "archive": [
+        {
+          "id": "thomasgainsborou00whitrich",
+          "title": "Thomas Gainsborough",
+          "author": "William T. Whitley",
+          "source_year": 1915
+        }
+      ]
+    },
+    "Q127171": {
+      "name": "Jean-Honoré Fragonard",
+      "wikipedia": [
+        "The Swing (Fragonard)",
+        "A Young Girl Reading"
+      ],
+      "archive": [
+        {
+          "id": "fragonard00macfuoft",
+          "title": "Fragonard",
+          "author": "Haldane Macfall",
+          "source_year": 1909
+        }
+      ]
+    },
+    "Q180932": {
+      "name": "François Boucher",
+      "wikipedia": [
+        "Portrait of Madame de Pompadour",
+        "The Blonde Odalisque"
+      ],
+      "archive": [
+        {
+          "id": "bouchermanhistim00macfuoft",
+          "title": "Boucher: The Man, His Times, His Art, and His Significance",
+          "author": "Haldane Macfall",
+          "source_year": 1908
+        }
+      ]
+    },
+    "Q203643": {
+      "name": "James McNeill Whistler",
+      "wikipedia": [
+        "Whistler's Mother",
+        "Whistler v. Ruskin",
+        "The Peacock Room"
+      ],
+      "archive": [
+        {
+          "id": "cu31924008742714",
+          "title": "The Life of James McNeill Whistler",
+          "author": "Elizabeth Robins Pennell and Joseph Pennell",
+          "source_year": 1911
+        }
+      ]
+    }
+  }
 }

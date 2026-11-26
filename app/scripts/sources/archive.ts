@@ -39,7 +39,8 @@ function cleanOcr(raw: string): string {
   return clean(
     raw
       .replace(/\r/g, "")
-      .replace(/(\w)-\n(\w)/g, "$1$2")
+      // "propor-\n tion" and "propor- \ntion": rejoin words split at line ends
+      .replace(/(\w)-[ \t]*\n[ \t]*(\w)/g, "$1$2")
       .replace(/([^\n])\n(?!\n)/g, "$1 ")
       .replace(/ {2,}/g, " "),
   );
