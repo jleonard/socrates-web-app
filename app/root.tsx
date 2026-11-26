@@ -88,7 +88,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang={i18n.language} dir={i18n.dir(i18n.language)}>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* cover: the page reaches under the phone's navigation bar (some
+            Android browsers draw there anyway), and the layout keeps clear of
+            it with env(safe-area-inset-bottom): padding on the root below,
+            and the same inset added to the bottom offset of anything fixed
+            to the bottom. Without a bar the inset is 0. */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <Meta />
         <Links />
         {GA_TRACKING_ID && (
@@ -115,13 +123,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* px-8 max-w-[1024px] border border-red-600 w-screen h-screen mx-auto my-0 relative overflow-hidden overflow-x-clip z-0 ${useBackgroundClass()}` */}
       <body className={`m-0 ${backgroundClass}`}>
         <NavOverlayProvider>
-          <div className="flex flex-col h-svh w-screen relative overflow-hidden z-0">
+          <div className="flex flex-col h-svh w-screen pb-[env(safe-area-inset-bottom)] relative overflow-hidden z-0">
             <OverlayNav />
 
             <Nav />
 
             <main
-              className={`flex-1 min-h-0 pb-safe relative ${
+              className={`flex-1 min-h-0 relative ${
                 scrollable
                   ? "overflow-y-auto"
                   : "overflow-hidden overflow-x-clip overflow-y-clip"

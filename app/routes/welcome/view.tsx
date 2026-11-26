@@ -69,7 +69,7 @@ const Welcome: React.FC = () => {
 
       <div
         ref={overlayRef}
-        className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-col w-[366px] pointer-events-none">
+        className="fixed bottom-[calc(3rem_+_env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 flex flex-col w-[366px] pointer-events-none">
         <h2
           className={`text-[32px] leading-10 font-semibold ${lightText ? "text-white" : "text-black"} text-center mb-5 w-3/4 mx-auto`}
         >

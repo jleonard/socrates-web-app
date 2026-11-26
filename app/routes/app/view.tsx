@@ -675,7 +675,7 @@ const ParentComponent: React.FC = () => {
       {/* in flow at the start of <main>, so it sits right under the nav;
           above the full-screen circles layer (z-30) */}
       {showStateText && (
-        <p className="relative z-40 w-full pt-2 text-center pointer-events-none font-bold">
+        <p className="relative z-40 w-full px-6 pt-2 text-center text-balance pointer-events-none font-bold">
           {currentStateText}
         </p>
       )}
@@ -716,7 +716,7 @@ const ParentComponent: React.FC = () => {
       </div>
 
       {error && (
-        <div className="mt-3">
+        <div className="mt-3 mx-4">
           <EBMMessage key={error.id} variant="error" message={error.text} />
         </div>
       )}
@@ -759,7 +759,7 @@ const ParentComponent: React.FC = () => {
       {access?.category !== "expired" ? (
         <>
           <MainButton
-            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-30"
+            className="fixed left-1/2 -translate-x-1/2 bottom-[calc(4rem_+_env(safe-area-inset-bottom))] z-30"
             onPress={handleMainButtonPress}
             mode={buttonMode}
             userAccess={access?.category ?? "none"}
@@ -770,7 +770,7 @@ const ParentComponent: React.FC = () => {
       ) : (
         <>
           <PurchaseButton
-            className="fixed left-1/2 -translate-x-1/2 bottom-16 z-10"
+            className="fixed left-1/2 -translate-x-1/2 bottom-[calc(4rem_+_env(safe-area-inset-bottom))] z-10"
             onClick={() => navigate("/purchase")}
             cta={
               <>
@@ -783,7 +783,7 @@ const ParentComponent: React.FC = () => {
           >
             <span className="font-bold">Unlock</span>
           </PurchaseButton>
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-2 z-10 text-center text-sm">
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-[calc(0.5rem_+_env(safe-area-inset-bottom))] z-10 text-center text-sm">
             <span className="font-bold">$5</span> Day Pass{"  "}
             <br />
             <span className="font-bold">$15</span> Week Pass <br /> No

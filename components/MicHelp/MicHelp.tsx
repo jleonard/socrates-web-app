@@ -41,7 +41,7 @@ export function MicHelp({ problem, browser, link, onClose }: MicHelpProps) {
   return (
     <div
       role="alert"
-      className="fixed left-1/2 -translate-x-1/2 bottom-40 z-40 w-[calc(100vw-32px)] max-w-sm rounded-lg bg-white p-4 text-gray-900 shadow-lg"
+      className="fixed left-1/2 -translate-x-1/2 bottom-[calc(10rem_+_env(safe-area-inset-bottom))] z-40 w-[calc(100vw-32px)] max-w-sm rounded-lg bg-white p-4 text-gray-900 shadow-lg"
     >
       <button
         type="button"

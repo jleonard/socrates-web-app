@@ -82,7 +82,7 @@ export const MainButton = React.forwardRef<HTMLButtonElement, MainButtonProps>(
           </>
         </ReactAriaButton>
         {userAccess !== "unused" && (
-          <span className="fixed left-1/2 -translate-x-1/2 bottom-8 z-20 text-center">
+          <span className="fixed left-1/2 -translate-x-1/2 bottom-[calc(2rem_+_env(safe-area-inset-bottom))] z-20 text-center">
             {getTimeRemainingLabel(expiration)}
           </span>
         )}
