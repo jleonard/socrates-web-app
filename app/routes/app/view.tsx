@@ -37,6 +37,7 @@ import { CircleMode } from "components/Circles/Circles.types";
 import { EBMMessage } from "components/EBMMessage/EBMMessage";
 import { GreetingButton } from "components/GreetingButton/GreetingButton";
 import LocationModal from "components/LocationModal/LocationModal";
+import { MicHelp } from "components/MicHelp/MicHelp";
 import { OfflineDialog } from "components/OfflineDialog/OfflineDialog";
 import { useNetworkStatus } from "~/hooks/useNetworkStatus";
 import { useSoundEffects } from "~/hooks/useSoundEffects";
@@ -54,6 +55,15 @@ import {
   requestInitialLocation,
   resolvePendingPermission,
 } from "~/utils/location.client";
+import {
+  classifyMicError,
+  detectMicBrowser,
+  getMicPermission,
+  micGrantedBefore,
+  rememberMicGranted,
+  type MicBrowser,
+  type MicProblem,
+} from "~/utils/mic.client";
 
 /**
  * How long the agent must stay quiet before the UI goes from "speaking" back
@@ -85,11 +95,26 @@ const ParentComponent: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // used for errors that should be presented to the user
-  const [error, setError] = useState<string | null>(null);
+  // used for errors that should be presented to the user. The id remounts
+  // the message, so a repeat of the same error shows again (it hides itself
+  // after 7s and used to stay hidden)
+  const [error, setErrorState] = useState<{ text: string; id: number } | null>(
+    null,
+  );
+  const setError = useCallback(
+    (text: string) => setErrorState({ text, id: Date.now() }),
+    [],
+  );
 
   // mic access
   const [, setMicAllowed] = useState<boolean | null>(null);
+  // why the mic couldn't be used, with steps for this browser (MicHelp)
+  const [micHelp, setMicHelp] = useState<{
+    problem: MicProblem;
+    browser: MicBrowser;
+  } | null>(null);
+  // the heads-up before the browser's own mic prompt
+  const [micPriming, setMicPriming] = useState(false);
 
   // user coordinates
   const [coords, setCoords] = useState<{ lat: number; long: number } | null>(
@@ -325,7 +350,7 @@ const ParentComponent: React.FC = () => {
         step("conversation start failed", { error }, "error");
         Sentry.captureMessage(`app view : start failed: ${error}`, "error");
         playError();
-        setError("Couldn't start the conversation");
+        setError(t("errors.start_failed"));
         return;
       }
       Sentry.captureMessage(error, "error");
@@ -348,9 +373,9 @@ const ParentComponent: React.FC = () => {
       .slice(0, 2)
       .join("-");
     try {
-      // Request microphone permission
-      await requestMicAccess();
-      //await navigator.mediaDevices.getUserMedia({ audio: true });
+      // without the mic the SDK would only ask again and fail again: stop
+      // here, MicHelp says what to do
+      if (!(await requestMicAccess())) return;
 
       // Start the conversation with your agent
       step("conversation connecting", {
@@ -393,7 +418,7 @@ const ParentComponent: React.FC = () => {
         );
       }
       playError();
-      setError("Couldn't start the conversation");
+      setError(t("errors.start_failed"));
     }
   }, [conversation, user, coords, elevenLabsId, startLanguage, playError]);
 
@@ -413,6 +438,8 @@ const ParentComponent: React.FC = () => {
       stopGreeting();
       // unlock audio inside the tap (required on iOS) and load the files
       sounds.prepare();
+      // a new try: the mic help comes back if the mic is still refused
+      setMicHelp(null);
 
       connectStartRef.current = Date.now();
       step("start pressed", { greeting_started: greetingStarted });
@@ -455,18 +482,37 @@ const ParentComponent: React.FC = () => {
     }
   };
 
-  const requestMicAccess = async () => {
+  // the mic-blocked error sound plays once per page load, not on every tap
+  const micErrorPlayedRef = useRef(false);
+
+  /** true when the mic can be used; otherwise shows MicHelp */
+  const requestMicAccess = async (): Promise<boolean> => {
+    const before = await getMicPermission();
+    if (before === "granted") rememberMicGranted();
+    // heads-up while the browser's own prompt is up: visitors who tap
+    // "Don't Allow" by reflex stay blocked (iOS Safari: until a reload)
+    setMicPriming(before !== "granted" && !micGrantedBefore());
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicAllowed(true);
+      rememberMicGranted();
       step("mic allowed");
       //stream.getTracks().forEach((track) => track.stop());
+      return true;
     } catch (err) {
+      const permission = await getMicPermission();
+      const browser = detectMicBrowser();
+      const problem = classifyMicError(err, permission);
       step(
         "mic denied",
         {
           error:
             err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+          problem,
+          browser,
+          permission_before: before,
+          permission,
+          user_agent: navigator.userAgent,
         },
         "warning",
       );
@@ -478,6 +524,14 @@ const ParentComponent: React.FC = () => {
         );
       }
       setMicAllowed(false);
+      setMicHelp({ problem, browser });
+      if (!micErrorPlayedRef.current) {
+        micErrorPlayedRef.current = true;
+        playError();
+      }
+      return false;
+    } finally {
+      setMicPriming(false);
     }
   };
 
@@ -584,10 +638,13 @@ const ParentComponent: React.FC = () => {
   };
   // thinking (in step with the circles and the processing sound) shows over
   // the listening text, between the visitor's question and the reply
-  const currentStateText =
-    sounds.thinking && buttonMode === "listening"
-      ? t("main_button.thinking")
-      : stateText[buttonMode];
+  const currentStateText = micPriming
+    ? t("mic.priming")
+    : micHelp && buttonMode === "disconnected"
+      ? t(micHelp.problem === "blocked" ? "mic.blocked_state" : "mic.needed_state")
+      : sounds.thinking && buttonMode === "listening"
+        ? t("main_button.thinking")
+        : stateText[buttonMode];
   const showStateText =
     access?.category !== "unused" && access?.category !== "expired";
 
@@ -638,8 +695,21 @@ const ParentComponent: React.FC = () => {
 
       {error && (
         <div className="mt-3">
-          <EBMMessage variant="error" message={error} />
+          <EBMMessage key={error.id} variant="error" message={error.text} />
         </div>
+      )}
+
+      {micHelp && buttonMode === "disconnected" && (
+        <MicHelp
+          problem={micHelp.problem}
+          browser={micHelp.browser}
+          // with the place, so the other browser opens the same venue (it
+          // doesn't share this browser's session cookie)
+          link={`${window.location.origin}/app${
+            activePlace ? `?place=${encodeURIComponent(activePlace)}` : ""
+          }`}
+          onClose={() => setMicHelp(null)}
+        />
       )}
 
       {!hasInternet && <OfflineDialog />}

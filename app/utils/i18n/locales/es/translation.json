@@ -28,6 +28,34 @@
     "months_remaining_one": "Queda {{count}} mes",
     "months_remaining_other": "Quedan {{count}} meses"
   },
+  "mic": {
+    "priming": "Tu teléfono pedirá usar el micrófono. Toca Permitir para que la guía te escuche",
+    "blocked_state": "Micrófono bloqueado",
+    "needed_state": "Se necesita el micrófono",
+    "title_blocked": "Wonderway no te escucha",
+    "title_dismissed": "Permite el micrófono",
+    "title_unavailable": "Micrófono no disponible",
+    "dismissed": "Toca Iniciar de nuevo y elige Permitir cuando tu teléfono lo pida.",
+    "unavailable": "Tu micrófono está en uso o no se encuentra. Cierra otras apps que lo usen (como una llamada) y toca Iniciar de nuevo.",
+    "reload": "Recargar página",
+    "copy_link": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "steps": {
+      "ios-safari": "Toca Recargar página, luego Iniciar, y elige Permitir. Si Safari no lo pide: toca aA en la barra de direcciones → Configuración del sitio web → Micrófono → Permitir, y recarga. ¿Sigue bloqueado? Revisa Ajustes → Apps → Safari → Micrófono.",
+      "ios-chrome": "Toca Recargar página, luego Iniciar, y elige Permitir. Si Chrome no lo pide: abre Ajustes del iPhone → Apps → Chrome, activa Micrófono y recarga.",
+      "ios-firefox": "Toca Recargar página, luego Iniciar, y elige Permitir. Si Firefox no lo pide: abre Ajustes del iPhone → Apps → Firefox, activa Micrófono y recarga.",
+      "android-chrome": "El micrófono está bloqueado para esta página. Toca el icono a la izquierda de la dirección, luego Permisos → Micrófono → Permitir, y recarga.",
+      "android-firefox": "El micrófono está bloqueado para esta página. Toca el candado a la izquierda de la dirección → Micrófono → Permitir, y recarga. ¿No aparece? Ajustes de Android → Apps → Firefox → Permisos → Micrófono → Permitir.",
+      "desktop-chrome": "El micrófono está bloqueado para esta página. Haz clic en el icono a la izquierda de la dirección, activa Micrófono y recarga.",
+      "desktop-safari": "Haz clic en Recargar página, luego Iniciar, y elige Permitir. Si Safari no lo pide: elige Safari → Ajustes de este sitio web… → Micrófono → Permitir, y recarga.",
+      "desktop-firefox": "El micrófono está bloqueado para esta página. Haz clic en el micrófono tachado de la barra de direcciones, quita el bloqueo y recarga.",
+      "in-app": "El navegador integrado de esta app no puede usar el micrófono. Copia el enlace y ábrelo en Safari o Chrome.",
+      "other": "El micrófono está bloqueado para esta página. Permítelo para este sitio en los ajustes de tu navegador y recarga."
+    }
+  },
+  "errors": {
+    "start_failed": "No se pudo iniciar la conversación"
+  },
   "exhibition": {
     "start_experience": "Iniciar experiencia"
   },

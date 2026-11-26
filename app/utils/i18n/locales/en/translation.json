@@ -28,6 +28,34 @@
     "months_remaining_one": "{{count}} month remaining",
     "months_remaining_other": "{{count}} months remaining"
   },
+  "mic": {
+    "priming": "Your phone will ask to use the microphone. Tap Allow so the guide can hear you",
+    "blocked_state": "Microphone blocked",
+    "needed_state": "Microphone needed",
+    "title_blocked": "Wonderway can't hear you",
+    "title_dismissed": "Allow the microphone",
+    "title_unavailable": "Microphone not available",
+    "dismissed": "Tap Start again, then choose Allow when your phone asks.",
+    "unavailable": "Your microphone is in use or missing. Close other apps using it (like a call), then tap Start again.",
+    "reload": "Reload page",
+    "copy_link": "Copy link",
+    "copied": "Link copied",
+    "steps": {
+      "ios-safari": "Tap Reload page, then Start, and choose Allow. If Safari doesn't ask: tap aA in the address bar → Website Settings → Microphone → Allow, and reload. Still blocked? Check Settings → Apps → Safari → Microphone.",
+      "ios-chrome": "Tap Reload page, then Start, and choose Allow. If Chrome doesn't ask: open your iPhone's Settings → Apps → Chrome, turn Microphone on, and reload.",
+      "ios-firefox": "Tap Reload page, then Start, and choose Allow. If Firefox doesn't ask: open your iPhone's Settings → Apps → Firefox, turn Microphone on, and reload.",
+      "android-chrome": "The microphone is blocked for this page. Tap the icon left of the address, then Permissions → Microphone → Allow, and reload.",
+      "android-firefox": "The microphone is blocked for this page. Tap the lock icon left of the address → Microphone → Allow, and reload. Not there? Android Settings → Apps → Firefox → Permissions → Microphone → Allow.",
+      "desktop-chrome": "The microphone is blocked for this page. Click the icon left of the address, turn Microphone on, and reload.",
+      "desktop-safari": "Click Reload page, then Start, and choose Allow. If Safari doesn't ask: choose Safari → Settings for This Website… → Microphone → Allow, and reload.",
+      "desktop-firefox": "The microphone is blocked for this page. Click the crossed-out microphone in the address bar, clear the block, and reload.",
+      "in-app": "This app's built-in browser can't use the microphone. Copy the link and open it in Safari or Chrome.",
+      "other": "The microphone is blocked for this page. Allow it for this site in your browser's settings, then reload."
+    }
+  },
+  "errors": {
+    "start_failed": "Couldn't start the conversation"
+  },
   "exhibition": {
     "start_experience": "Start experience"
   },
