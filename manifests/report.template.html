@@ -73,6 +73,14 @@ td.id{font-family:var(--mono);font-size:12px;white-space:nowrap;color:var(--mute
 .card dt{color:var(--muted)}
 .card dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .priority{font-family:var(--mono);font-size:12px;color:var(--out)}
+.copy-entry{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:0 0 8px}
+.copy-entry>summary{cursor:pointer;padding:10px 14px;font-weight:600;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.copy-entry>summary .id{font-weight:400}
+.copy-field{padding:0 14px 12px}
+.copy-field h4{margin:8px 0 6px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.copy-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:12px;font-size:14px;line-height:1.55}
+.copy-btn{font:inherit;font-size:12px;padding:3px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--fg);cursor:pointer}
+.copy-btn:hover{border-color:var(--accent)}
 pre.layout{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6}
 ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;max-width:76ch}
 .rl{display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:4px 16px;padding:12px 0;border-top:1px solid var(--line)}
@@ -189,6 +197,10 @@ ${M.go_live?`<section aria-labelledby="h-live"><div class="section-head"><h2 id=
     <tbody><tr><td>Place</td><td class="id">place_id: ${esc(M.place.place_id)}</td><td><strong>${esc(M.place.name)}</strong></td><td class="small">—</td></tr>
     ${(M.exhibitions||[]).map(e=>`<tr><td>Exhibition</td><td class="id">exhibition_id: ${esc(e.id)}</td><td><strong>${esc(e.name)}</strong><div class="small">${esc(e.floor)}</div></td><td class="id">${esc(M.place.place_id)}</td></tr>`).join("")}</tbody>
   </table></div>
+  ${M.strapi_copy?`<h3>Prompt and greeting for each entry</h3><p class="small">${esc(M.strapi_copy.note)}</p>
+  ${[{label:"Place",id:"place_id: "+M.strapi_copy.place.place_id,name:M.strapi_copy.place.name,c:M.strapi_copy.place},...(M.exhibitions||[]).filter(e=>M.strapi_copy.exhibitions[e.id]).map(e=>({label:e.room?"Room "+e.room:"Exhibition",id:"exhibition_id: "+e.id,name:e.name,c:M.strapi_copy.exhibitions[e.id]}))].map(x=>`<details class="copy-entry"><summary><span class="small">${esc(x.label)}</span>${esc(x.name)}<span class="id">${esc(x.id)}</span></summary>
+    <div class="copy-field"><h4>Prompt <button type="button" class="copy-btn">Copy</button></h4><p class="copy-text">${esc(x.c.prompt)}</p></div>
+    <div class="copy-field"><h4>Greeting <button type="button" class="copy-btn">Copy</button></h4><p class="copy-text">${esc(x.c.greeting)}</p></div></details>`).join("")}`:""}
   ${(M.go_live.mispronunciations||[]).length?`<h3>Mispronunciations to add to the Place</h3><p class="small">Names speech-to-text is likely to mishear. Add each with its common mishearings after testing.</p>${tags(M.go_live.mispronunciations)}`:""}
 </section>`:""}
 
@@ -211,4 +223,5 @@ function renderSources(){
 }
 chips.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;cur=b.dataset.k;try{localStorage.setItem("srcFilter",cur)}catch(_){}renderSources()});
 renderSources();
+document.addEventListener("click",ev=>{const b=ev.target.closest(".copy-btn");if(!b)return;const t=b.closest(".copy-field").querySelector(".copy-text").textContent;const done=()=>{b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1500)};try{navigator.clipboard.writeText(t).then(done,()=>{})}catch(e){}});
 </script>

@@ -1,0 +1,943 @@
+{
+ "source": "collections.frick.org on-view listings (rooms) and object pages (accession numbers)",
+ "checked": "2026-11-23",
+ "note": "exhibition_id \"place\" = an on-view space that is not an exhibition (café, vestibules, library); the object goes to the place-level objects/ folder. Objects not listed stay in _unassigned-objects/.",
+ "objects": {
+  "frick-1896.1.32": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "accession",
+   "frick_title": "The Washerwomen"
+  },
+  "frick-1897.1.36": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "The River"
+  },
+  "frick-1898.1.27": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "Ville-d'Avray"
+  },
+  "frick-1899.1.117": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "A Pasture in Normandy"
+  },
+  "frick-1899.1.26": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "The Pond"
+  },
+  "frick-1899.1.90": {
+   "exhibition_id": "frick-ceramics-room",
+   "frick_room": "Second Floor, Room 27, Ceramics Room",
+   "evidence": "title",
+   "frick_title": "Elizabeth, Countess of Warwick"
+  },
+  "frick-1899.1.96": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "Portrait of a Young Artist"
+  },
+  "frick-1901.1.118": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Antwerp: Van Goyen Looking Out for a Subject"
+  },
+  "frick-1901.1.125": {
+   "exhibition_id": "frick-south-hall",
+   "frick_room": "First Floor, Room 19, South Hall",
+   "evidence": "title",
+   "frick_title": "Girl Interrupted at Her Music"
+  },
+  "frick-1901.1.136": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "The Cavalry Camp"
+  },
+  "frick-1902.1.108": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "The Village of Becquigny"
+  },
+  "frick-1903.1.113": {
+   "exhibition_id": "frick-north-hall",
+   "frick_room": "First Floor, Room 18, North Hall",
+   "evidence": "title",
+   "frick_title": "Portrait of a Young Lady"
+  },
+  "frick-1903.1.24": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "The Boatman of Mortefontaine"
+  },
+  "frick-1903.1.60": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "title",
+   "frick_title": "Mrs. Charles Hatchett"
+  },
+  "frick-1904.1.103": {
+   "exhibition_id": "frick-walnut-room",
+   "frick_room": "Second Floor, Room 25, Walnut Room",
+   "evidence": "accession",
+   "frick_title": "Emma Hart, Later Lady Hamilton, as \"Nature\""
+  },
+  "frick-1904.1.120": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "Fishing Boats Entering Calais Harbor"
+  },
+  "frick-1904.1.31": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "accession",
+   "frick_title": "Dieppe"
+  },
+  "frick-1904.1.83": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "Julia, Lady Peel"
+  },
+  "frick-1905.1.115": {
+   "exhibition_id": "frick-living-hall",
+   "frick_room": "First Floor, Room 10, Living Hall",
+   "evidence": "title",
+   "frick_title": "Pietro Aretino"
+  },
+  "frick-1905.1.67": {
+   "exhibition_id": "frick-living-hall",
+   "frick_room": "First Floor, Room 10, Living Hall",
+   "evidence": "accession",
+   "frick_title": "St. Jerome"
+  },
+  "frick-1905.1.95": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "title",
+   "frick_title": "Mrs. James Cruikshank"
+  },
+  "frick-1906.1.102": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "Selina, Lady Skipwith"
+  },
+  "frick-1906.1.25": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "The Lake"
+  },
+  "frick-1906.1.89": {
+   "exhibition_id": "frick-breakfast-room",
+   "frick_room": "Second Floor, Room 34, Breakfast Room",
+   "evidence": "title",
+   "frick_title": "Woman Sewing by Lamplight"
+  },
+  "frick-1906.1.97": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "Self-Portrait"
+  },
+  "frick-1908.1.107": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "accession",
+   "frick_title": "Henrietta, Countess of Warwick, and Her Children"
+  },
+  "frick-1908.1.23": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "Salisbury Cathedral from the Bishop's Grounds"
+  },
+  "frick-1909.1.121": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "title",
+   "frick_title": "Mortlake Terrace: Early Summer Morning"
+  },
+  "frick-1909.1.30": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "River Scene"
+  },
+  "frick-1909.1.39": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Frans Snyders"
+  },
+  "frick-1909.1.42": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Margareta de Vos"
+  },
+  "frick-1909.1.66": {
+   "exhibition_id": "frick-anteroom",
+   "frick_room": "First Floor, Room 5, Anteroom",
+   "evidence": "accession",
+   "frick_title": "Purification of the Temple"
+  },
+  "frick-1910.1.101": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "Elizabeth, Lady Taylor"
+  },
+  "frick-1910.1.110": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "Quay at Amsterdam"
+  },
+  "frick-1910.1.69": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "Portrait of an Elderly Man"
+  },
+  "frick-1910.1.72": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Portrait of a Woman"
+  },
+  "frick-1910.1.98": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "The Polish Rider"
+  },
+  "frick-1911.1.123": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "King Philip IV of Spain"
+  },
+  "frick-1911.1.127": {
+   "exhibition_id": "frick-anteroom",
+   "frick_room": "First Floor, Room 5, Anteroom",
+   "evidence": "title",
+   "frick_title": "Officer and Laughing Girl"
+  },
+  "frick-1911.1.61": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "title",
+   "frick_title": "The Hon. Frances Duncombe"
+  },
+  "frick-1911.1.74": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Village with Water Mill among Trees"
+  },
+  "frick-1911.1.94": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "James Cruikshank"
+  },
+  "frick-1912.1.128": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Wisdom and Strength"
+  },
+  "frick-1912.1.129": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "The Choice Between Virtue and Vice"
+  },
+  "frick-1912.1.77": {
+   "exhibition_id": "frick-living-hall",
+   "frick_room": "First Floor, Room 10, Living Hall",
+   "evidence": "title",
+   "frick_title": "Sir Thomas More"
+  },
+  "frick-1913.1.40": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "James Stanley, Lord Strange, Later Seventh Earl of Derby, with His Wife, Charlotte, and Their Daughter"
+  },
+  "frick-1913.1.68": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "Vincenzo Anastagi"
+  },
+  "frick-1914.1.119": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Cologne, the Arrival of a Packet-Boat: Evening"
+  },
+  "frick-1914.1.122": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Harbor of Dieppe: Changement de Domicile"
+  },
+  "frick-1914.1.131": {
+   "exhibition_id": "frick-oval-room",
+   "frick_room": "First Floor, Room 15, Oval Room",
+   "evidence": "title",
+   "frick_title": "Arrangement in Black and Gold: Comte Robert de Montesquiou-Fezensac"
+  },
+  "frick-1914.1.134": {
+   "exhibition_id": "frick-oval-room",
+   "frick_room": "First Floor, Room 15, Oval Room",
+   "evidence": "title",
+   "frick_title": "Arrangement in Brown and Black: Portrait of Miss Rosa Corder"
+  },
+  "frick-1914.1.135": {
+   "exhibition_id": "frick-grand-stair-hall",
+   "frick_room": "Second Floor, Room 21, Grand Stair Hall",
+   "evidence": "title",
+   "frick_title": "Symphony in Grey and Green: The Ocean"
+  },
+  "frick-1914.1.34": {
+   "exhibition_id": "frick-impressionist-room",
+   "frick_room": "Second Floor, Room 32, Impressionist Room",
+   "evidence": "title",
+   "frick_title": "The Rehearsal"
+  },
+  "frick-1914.1.43": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "title",
+   "frick_title": "Genoese Noblewoman"
+  },
+  "frick-1914.1.58": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "accession",
+   "frick_title": "Sarah Hodges, Later Lady Innes"
+  },
+  "frick-1914.1.63": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "Portrait of a Lady (María Martínez de Puga?)"
+  },
+  "frick-1914.1.64": {
+   "exhibition_id": "frick-walnut-room",
+   "frick_room": "Second Floor, Room 25, Walnut Room",
+   "evidence": "title",
+   "frick_title": "An Officer (Conde de Teba?)"
+  },
+  "frick-1914.1.65": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "The Forge"
+  },
+  "frick-1914.1.75": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "title",
+   "frick_title": "Miss Mary Edwards"
+  },
+  "frick-1914.1.86": {
+   "exhibition_id": "frick-impressionist-room",
+   "frick_room": "Second Floor, Room 32, Impressionist Room",
+   "evidence": "title",
+   "frick_title": "The Bullfight"
+  },
+  "frick-1915.1.03": {
+   "exhibition_id": "frick-living-hall",
+   "frick_room": "First Floor, Room 10, Living Hall",
+   "evidence": "title",
+   "frick_title": "St. Francis in the Desert"
+  },
+  "frick-1915.1.116": {
+   "exhibition_id": "frick-living-hall",
+   "frick_room": "First Floor, Room 10, Living Hall",
+   "evidence": "accession",
+   "frick_title": "Portrait of a Man in a Red Hat"
+  },
+  "frick-1915.1.19": {
+   "exhibition_id": "frick-south-hall",
+   "frick_room": "First Floor, Room 19, South Hall",
+   "evidence": "title",
+   "frick_title": "Lodovico Capponi"
+  },
+  "frick-1915.1.33": {
+   "exhibition_id": "frick-sitting-room",
+   "frick_room": "Second Floor, Room 24, Sitting Room",
+   "evidence": "title",
+   "frick_title": "The Deposition"
+  },
+  "frick-1915.1.45": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: The Pursuit"
+  },
+  "frick-1915.1.46": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: The Meeting"
+  },
+  "frick-1915.1.47": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Love Letters"
+  },
+  "frick-1915.1.48": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "accession",
+   "frick_title": "The Progress of Love: The Lover Crowned"
+  },
+  "frick-1915.1.49": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Reverie"
+  },
+  "frick-1915.1.50": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Love Triumphant"
+  },
+  "frick-1915.1.51": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Love the Avenger"
+  },
+  "frick-1915.1.52": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Love Pursuing a Dove"
+  },
+  "frick-1915.1.53": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Love the Jester"
+  },
+  "frick-1915.1.54": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Love the Sentinel"
+  },
+  "frick-1915.1.55.A": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Hollyhocks"
+  },
+  "frick-1915.1.55.B": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Hollyhocks"
+  },
+  "frick-1915.1.55.C": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Hollyhocks"
+  },
+  "frick-1915.1.55.D": {
+   "exhibition_id": "frick-fragonard-room",
+   "frick_room": "First Floor, Room 9, Fragonard Room",
+   "evidence": "title",
+   "frick_title": "The Progress of Love: Hollyhocks"
+  },
+  "frick-1915.1.76": {
+   "exhibition_id": "frick-living-hall",
+   "frick_room": "First Floor, Room 10, Living Hall",
+   "evidence": "title",
+   "frick_title": "Thomas Cromwell"
+  },
+  "frick-1915.1.80": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "accession",
+   "frick_title": "The Ladies Sarah and Catherine Bligh"
+  },
+  "frick-1916.1.04": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Poetry and Music"
+  },
+  "frick-1916.1.05": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Astronomy and Hydraulics"
+  },
+  "frick-1916.1.06": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Comedy and Tragedy"
+  },
+  "frick-1916.1.07": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Architecture and Chemistry"
+  },
+  "frick-1916.1.08": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Fishing and Hunting"
+  },
+  "frick-1916.1.09": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Fowling and Horticulture"
+  },
+  "frick-1916.1.10": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Painting and Sculpture"
+  },
+  "frick-1916.1.11": {
+   "exhibition_id": "frick-boucher-room",
+   "frick_room": "Second Floor, Room 29, Boucher Room",
+   "evidence": "title",
+   "frick_title": "The Arts and Sciences: Singing and Dancing"
+  },
+  "frick-1916.1.12": {
+   "exhibition_id": "frick-west-vestibule",
+   "frick_room": "First Floor, Room 8, West Vestibule",
+   "evidence": "accession",
+   "frick_title": "The Four Seasons: Spring"
+  },
+  "frick-1916.1.13": {
+   "exhibition_id": "frick-west-vestibule",
+   "frick_room": "First Floor, Room 8, West Vestibule",
+   "evidence": "title",
+   "frick_title": "The Four Seasons: Summer"
+  },
+  "frick-1916.1.14": {
+   "exhibition_id": "frick-west-vestibule",
+   "frick_room": "First Floor, Room 8, West Vestibule",
+   "evidence": "title",
+   "frick_title": "The Four Seasons: Autumn"
+  },
+  "frick-1916.1.15": {
+   "exhibition_id": "frick-west-vestibule",
+   "frick_room": "First Floor, Room 8, West Vestibule",
+   "evidence": "title",
+   "frick_title": "The Four Seasons: Winter"
+  },
+  "frick-1916.1.21": {
+   "exhibition_id": "frick-small-hallway",
+   "frick_room": "Second Floor, Room 31, Small Hallway",
+   "evidence": "title",
+   "frick_title": "Motherhood"
+  },
+  "frick-1916.1.62": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "accession",
+   "frick_title": "The Mall in St. James's Park"
+  },
+  "frick-1916.1.82.A": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: Mother Nursing Her Child"
+  },
+  "frick-1916.1.82.B": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: Shepherdess"
+  },
+  "frick-1916.1.82.C": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: Shepherdess Asleep"
+  },
+  "frick-1916.1.82.D": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: Youth with a Spade"
+  },
+  "frick-1916.1.82.E": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: Girl with a Spear"
+  },
+  "frick-1916.1.82.F": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: The Shepherd's Song"
+  },
+  "frick-1916.1.82.G": {
+   "exhibition_id": "frick-lajoue-passage",
+   "frick_room": "Second Floor, Room 35, Lajoue Passage",
+   "evidence": "accession",
+   "frick_title": "Decorative Panel: Girl with Cupid"
+  },
+  "frick-1916.2.01": {
+   "exhibition_id": "frick-octagon-room",
+   "frick_room": "First Floor, Room 4, Octagon Room",
+   "evidence": "accession",
+   "frick_title": "Bust of a Woman"
+  },
+  "frick-1916.4.19": {
+   "exhibition_id": "frick-enamels-room",
+   "frick_room": "First Floor, Room 14, Enamels Room",
+   "evidence": "title",
+   "frick_title": "Odet de Coligny, Cardinal de Chatillon (1515–1571)"
+  },
+  "frick-1917.1.133": {
+   "exhibition_id": "frick-oval-room",
+   "frick_room": "First Floor, Room 15, Oval Room",
+   "evidence": "title",
+   "frick_title": "Symphony in Flesh Colour and Pink: Portrait of Mrs. Frances Leyland"
+  },
+  "frick-1917.1.37": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "Lady Anne Carey, Later Viscountess Claneboye and Countess of Clanbrassil"
+  },
+  "frick-1917.1.59": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "title",
+   "frick_title": "Mrs. Peter William Baker"
+  },
+  "frick-1917.1.70": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Portrait of a Man"
+  },
+  "frick-1918.1.112": {
+   "exhibition_id": "frick-oval-room",
+   "frick_room": "First Floor, Room 15, Oval Room",
+   "evidence": "title",
+   "frick_title": "George Washington"
+  },
+  "frick-1918.1.114": {
+   "exhibition_id": "frick-east-vestibule",
+   "frick_room": "First Floor, Room 3, East Vestibule",
+   "evidence": "title",
+   "frick_title": "Perseus and Andromeda"
+  },
+  "frick-1918.1.132": {
+   "exhibition_id": "frick-oval-room",
+   "frick_room": "First Floor, Room 15, Oval Room",
+   "evidence": "title",
+   "frick_title": "Harmony in Pink and Grey: Portrait of Lady Meux"
+  },
+  "frick-1918.1.44": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "Sir John Suckling"
+  },
+  "frick-1918.1.92": {
+   "exhibition_id": "frick-walnut-room",
+   "frick_room": "Second Floor, Room 25, Walnut Room",
+   "evidence": "accession",
+   "frick_title": "Procession of Italian Comedians"
+  },
+  "frick-1918.1.93": {
+   "exhibition_id": "frick-walnut-room",
+   "frick_room": "Second Floor, Room 25, Walnut Room",
+   "evidence": "title",
+   "frick_title": "The Village Orchestra"
+  },
+  "frick-1919.1.126": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "Mistress and Maid"
+  },
+  "frick-1924.1.85": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "The Annunciation"
+  },
+  "frick-1926.1.02": {
+   "exhibition_id": "frick-medals-room",
+   "frick_room": "Second Floor, Room 23, Medals Room",
+   "evidence": "title",
+   "frick_title": "Doge Giovanni Mocenigo"
+  },
+  "frick-1926.1.22": {
+   "exhibition_id": "frick-boucher-anteroom",
+   "frick_room": "Second Floor, Room 28, Boucher Anteroom",
+   "evidence": "title",
+   "frick_title": "Lady with a Bird-Organ"
+  },
+  "frick-1927.1.35": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "The Temptation of Christ on the Mountain"
+  },
+  "frick-1927.1.81": {
+   "exhibition_id": "frick-walnut-room",
+   "frick_room": "Second Floor, Room 25, Walnut Room",
+   "evidence": "accession",
+   "frick_title": "Louise, Princesse de Broglie, Later the Comtesse d'Haussonville"
+  },
+  "frick-1930.1.124": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "accession",
+   "frick_title": "The Coronation of the Virgin"
+  },
+  "frick-1935.1.130": {
+   "exhibition_id": "frick-east-vestibule",
+   "frick_room": "First Floor, Room 3, East Vestibule",
+   "evidence": "title",
+   "frick_title": "Adoration of the Magi"
+  },
+  "frick-1936.1.138": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "St. John the Evangelist"
+  },
+  "frick-1937.1.139": {
+   "exhibition_id": "frick-boucher-anteroom",
+   "frick_room": "Second Floor, Room 28, Boucher Anteroom",
+   "evidence": "title",
+   "frick_title": "A Lady on Her Day Bed"
+  },
+  "frick-1937.1.140": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "accession",
+   "frick_title": "Alexandrine-Thérèse Nardot, Comtesse Daru"
+  },
+  "frick-1938.1.142": {
+   "exhibition_id": "frick-foot-of-stairs-and-landing",
+   "frick_room": "First Floor, Room 20, Foot of Stairs and Landing",
+   "evidence": "title",
+   "frick_title": "Portrait of a Venetian Procurator"
+  },
+  "frick-1939.1.143": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "The Resurrection"
+  },
+  "frick-1942.1.146": {
+   "exhibition_id": "frick-impressionist-room",
+   "frick_room": "Second Floor, Room 32, Impressionist Room",
+   "evidence": "title",
+   "frick_title": "Vétheuil in Winter"
+  },
+  "frick-1943.1.147": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "title",
+   "frick_title": "The White Horse"
+  },
+  "frick-1943.1.148": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "title",
+   "frick_title": "The Wool Winder"
+  },
+  "frick-1943.1.149": {
+   "exhibition_id": "frick-east-gallery",
+   "frick_room": "First Floor, Room 16, East Gallery",
+   "evidence": "title",
+   "frick_title": "General John Burgoyne"
+  },
+  "frick-1943.1.150": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Nicolaes Ruts"
+  },
+  "frick-1943.1.151": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Don Pedro, Duque de Osuna"
+  },
+  "frick-1943.1.165": {
+   "exhibition_id": "frick-library-room",
+   "frick_room": "First Floor, Room 11, Library",
+   "evidence": "title",
+   "frick_title": "Henry Clay Frick"
+  },
+  "frick-1945.1.152": {
+   "exhibition_id": "frick-boucher-anteroom",
+   "frick_room": "Second Floor, Room 28, Boucher Anteroom",
+   "evidence": "title",
+   "frick_title": "Still Life with Plums"
+  },
+  "frick-1946.1.153": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "title",
+   "frick_title": "Grace Dalrymple Elliott"
+  },
+  "frick-1946.1.154": {
+   "exhibition_id": "frick-dining-room",
+   "frick_room": "First Floor, Room 7, Dining Room",
+   "evidence": "title",
+   "frick_title": "Richard Paul Jodrell"
+  },
+  "frick-1949.1.156": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "accession",
+   "frick_title": "Landscape with a Footbridge"
+  },
+  "frick-1950.1.158": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "accession",
+   "frick_title": "An Augustinian Nun (St. Monica)"
+  },
+  "frick-1950.1.159": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "The Flagellation of Christ"
+  },
+  "frick-1952.1.160": {
+   "exhibition_id": "frick-north-hall",
+   "frick_room": "First Floor, Room 18, North Hall",
+   "evidence": "title",
+   "frick_title": "Antonio Bartolomeo Bruni"
+  },
+  "frick-1954.1.161": {
+   "exhibition_id": "frick-sitting-room",
+   "frick_room": "Second Floor, Room 24, Sitting Room",
+   "evidence": "accession",
+   "frick_title": "The Virgin and Child with St. Barbara, St. Elizabeth, and Jan Vos"
+  },
+  "frick-1960.1.162": {
+   "exhibition_id": "frick-west-gallery",
+   "frick_room": "First Floor, Room 13, West Gallery",
+   "evidence": "title",
+   "frick_title": "The Sermon on the Mount"
+  },
+  "frick-1961.1.168": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "The Crucifixion"
+  },
+  "frick-1961.2.86": {
+   "exhibition_id": "frick-enamels-room",
+   "frick_room": "First Floor, Room 14, Enamels Room",
+   "evidence": "title",
+   "frick_title": "Beatrice of Aragon"
+  },
+  "frick-1961.2.87": {
+   "exhibition_id": "frick-enamels-room",
+   "frick_room": "First Floor, Room 14, Enamels Room",
+   "evidence": "accession",
+   "frick_title": "Bust of a Woman"
+  },
+  "frick-1966.1.164": {
+   "exhibition_id": "frick-south-hall",
+   "frick_room": "First Floor, Room 19, South Hall",
+   "evidence": "title",
+   "frick_title": "The Comte and Chevalier de Choiseul as Savoyards"
+  },
+  "frick-1966.1.167": {
+   "exhibition_id": "frick-gold-grounds-room",
+   "frick_room": "Second Floor, Room 26, Gold-Grounds Room",
+   "evidence": "title",
+   "frick_title": "Virgin and Child, with Saints Lawrence and Julian"
+  },
+  "frick-1981.1.172": {
+   "exhibition_id": "frick-sitting-room",
+   "frick_room": "Second Floor, Room 24, Sitting Room",
+   "evidence": "title",
+   "frick_title": "Pietà"
+  },
+  "frick-1984.1.178": {
+   "exhibition_id": "frick-north-hall",
+   "frick_room": "First Floor, Room 18, North Hall",
+   "evidence": "title",
+   "frick_title": "Regatta in Venice"
+  },
+  "frick-1984.1.179": {
+   "exhibition_id": "frick-north-hall",
+   "frick_room": "First Floor, Room 18, North Hall",
+   "evidence": "title",
+   "frick_title": "View of the Cannaregio Canal in Venice"
+  },
+  "frick-1984.1.180": {
+   "exhibition_id": "place",
+   "frick_room": "Third Floor, Frick Art Research Library, Reading Room",
+   "evidence": "title",
+   "frick_title": "Madonna and Child with Saint Francis and Saint John"
+  },
+  "frick-1991.1.173": {
+   "exhibition_id": "frick-small-hallway",
+   "frick_room": "Second Floor, Room 31, Small Hallway",
+   "evidence": "title",
+   "frick_title": "The Portal of Valenciennes"
+  },
+  "frick-1994.1.175": {
+   "exhibition_id": "frick-impressionist-room",
+   "frick_room": "Second Floor, Room 32, Impressionist Room",
+   "evidence": "title",
+   "frick_title": "The Arch of Constantine and the Forum, Rome"
+  },
+  "frick-1997.1.182": {
+   "exhibition_id": "frick-boucher-anteroom",
+   "frick_room": "Second Floor, Room 28, Boucher Anteroom",
+   "evidence": "accession",
+   "frick_title": "Trompe l'Oeil"
+  },
+  "frick-2008.1.01": {
+   "exhibition_id": "frick-boucher-anteroom",
+   "frick_room": "Second Floor, Room 28, Boucher Anteroom",
+   "evidence": "accession",
+   "frick_title": "The Private Academy"
+  },
+  "frick-2012.1.01": {
+   "exhibition_id": "frick-clocks-and-watches-room",
+   "frick_room": "Second Floor, Room 33, Clocks and Watches Room",
+   "evidence": "title",
+   "frick_title": "Grapes with Insects on a Marble Top"
+  }
+ }
+}

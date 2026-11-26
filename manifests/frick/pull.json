@@ -1,0 +1,167 @@
+{
+  "venue": "frick",
+  "wikidata_collection": "Q682827",
+  "object_id_prefix": "frick-",
+  "about": {
+    "history_articles": [
+      "Frick Collection",
+      "Henry Clay Frick",
+      "Helen Clay Frick",
+      "Henry Clay Frick House",
+      "Frick Art Reference Library",
+      "Homestead strike",
+      "Johnstown Flood",
+      "South Fork Fishing and Hunting Club"
+    ],
+    "archive_items": [
+      {
+        "id": "frick-31072001184441",
+        "folder": "frick-1908-catalogue",
+        "title": "Catalogue of the Henry C. Frick Collection of Paintings (1908)",
+        "source_year": 1908
+      },
+      {
+        "id": "henryclayfrickma00harv",
+        "folder": "harvey-1928",
+        "title": "George Harvey, Henry Clay Frick: The Man (1928)",
+        "source_year": 1928
+      }
+    ]
+  },
+  "libraries": {
+    "lib-dutch-golden-age-painting": [
+      "Dutch Golden Age painting",
+      "Johannes Vermeer",
+      "Rembrandt",
+      "Frans Hals",
+      "Aelbert Cuyp",
+      "Meindert Hobbema",
+      "Jacob van Ruisdael",
+      "Genre painting"
+    ],
+    "lib-early-italian-painting": [
+      "Cimabue",
+      "Duccio",
+      "Paolo Veneziano",
+      "Piero della Francesca",
+      "Gentile da Fabriano",
+      "Filippo Lippi",
+      "Gold ground",
+      "Tempera"
+    ],
+    "lib-venetian-painting": [
+      "Venetian painting",
+      "Giovanni Bellini",
+      "Titian",
+      "Paolo Veronese",
+      "Giovanni Battista Tiepolo",
+      "Francesco Guardi",
+      "Veduta"
+    ],
+    "lib-northern-renaissance-painting": [
+      "Northern Renaissance",
+      "Early Netherlandish painting",
+      "Jan van Eyck",
+      "Hans Memling",
+      "Hans Holbein the Younger",
+      "Pieter Bruegel the Elder"
+    ],
+    "lib-spanish-painting": [
+      "Spanish Golden Age",
+      "El Greco",
+      "Diego Velázquez",
+      "Bartolomé Esteban Murillo",
+      "Francisco Goya"
+    ],
+    "lib-flemish-baroque-painting": [
+      "Flemish Baroque painting",
+      "Anthony van Dyck",
+      "Peter Paul Rubens"
+    ],
+    "lib-french-rococo": [
+      "Rococo",
+      "François Boucher",
+      "Jean-Honoré Fragonard",
+      "Antoine Watteau",
+      "Fête galante",
+      "Jean-Baptiste Greuze",
+      "Jean-Baptiste Pater"
+    ],
+    "lib-british-portraiture": [
+      "Thomas Gainsborough",
+      "Joshua Reynolds",
+      "George Romney (painter)",
+      "Thomas Lawrence",
+      "Henry Raeburn",
+      "William Hogarth"
+    ],
+    "lib-british-landscape-painting": [
+      "J. M. W. Turner",
+      "John Constable"
+    ],
+    "lib-barbizon-school": [
+      "Barbizon school",
+      "Jean-Baptiste-Camille Corot",
+      "Théodore Rousseau",
+      "Charles-François Daubigny",
+      "Jean-François Millet"
+    ],
+    "lib-french-19th-century-painting": [
+      "Neoclassicism",
+      "Jacques-Louis David",
+      "Jean-Auguste-Dominique Ingres",
+      "Édouard Manet",
+      "Edgar Degas",
+      "Pierre-Auguste Renoir",
+      "Claude Monet",
+      "Impressionism",
+      "James McNeill Whistler"
+    ],
+    "lib-renaissance-sculpture": [
+      "Italian Renaissance sculpture",
+      "Andrea del Verrocchio",
+      "Francesco Laurana",
+      "Antonio del Pollaiuolo",
+      "Andrea Riccio"
+    ],
+    "lib-portrait-medals": [
+      "Portrait medal",
+      "Pisanello"
+    ],
+    "lib-european-porcelain": [
+      "Sèvres porcelain",
+      "Meissen porcelain",
+      "Du Paquier porcelain",
+      "Faience",
+      "Hard-paste porcelain"
+    ],
+    "lib-chinese-porcelain": [
+      "Chinese porcelain",
+      "Famille verte",
+      "Famille noire"
+    ],
+    "lib-limoges-enamels": [
+      "Limoges enamel"
+    ],
+    "lib-clocks-and-watches": [
+      "History of timekeeping devices",
+      "Horology",
+      "Watch"
+    ],
+    "lib-french-18th-century-furniture": [
+      "Jean-Henri Riesener",
+      "Pierre Gouthière",
+      "Marquetry",
+      "Ormolu",
+      "Louis XVI style"
+    ],
+    "lib-gilded-age-new-york": [
+      "Gilded Age",
+      "Fifth Avenue",
+      "Millionaires' Row",
+      "Carrère and Hastings",
+      "Beaux-Arts architecture"
+    ]
+  },
+  "artists_library": "lib-artists"
+}

@@ -9,7 +9,7 @@
  * (no fetch), so the same file works as a published artifact and as the
  * copy kept in the venue's Dropbox `_review/` folder.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,6 +43,10 @@ const unknownLibs = [
 if (unknownLibs.length) {
   throw new Error(`Unknown library ids: ${[...new Set(unknownLibs)].join(", ")}`);
 }
+
+// Optional draft copy for the Strapi entries (prompt + greeting per entry)
+const copyPath = join(root, venue, "strapi-copy.json");
+if (existsSync(copyPath)) manifest.strapi_copy = JSON.parse(readFileSync(copyPath, "utf8"));
 
 const template = readFileSync(join(root, "report.template.html"), "utf8");
 // "<" escaped so text in the manifest can never close the <script> tag

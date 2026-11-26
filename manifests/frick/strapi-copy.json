@@ -1,0 +1,221 @@
+{
+ "note": "Draft copy for Strapi. prompt = venue context the guide reads as a source (place prompt + room prompt both apply in a room). greeting = spoken by TTS when the visitor opens that place or room; written in English, other languages are LLM-translated. Facts come from staged Wikipedia/Wikidata text and the Frick on-view room list (Nov 2026). Hours and tickets are left out on purpose: they change.",
+ "place": {
+  "place_id": "frick-nyc",
+  "name": "The Frick Collection",
+  "prompt": "The visitor is at The Frick Collection, in Henry Clay Frick's former house at 1 East 70th Street, on Fifth Avenue between 70th and 71st Streets in New York City. Thomas Hastings of Carrère and Hastings designed the house, completed in 1914, as Frick's home, and Frick intended it to become a public museum for his art collection. Frick died in the house on December 2, 1919. After his wife Adelaide died in 1931, John Russell Pope converted the house into a museum, which opened on December 16, 1935. The house closed for renovation from 2020 to 2025 (the collection was shown at Frick Madison, 945 Madison Avenue, from 2021 to 2024) and reopened on April 17, 2025, with an addition designed by Annabelle Selldorf.\n\nThe collection is best known for European paintings from the Renaissance to the 19th century, including works by Vermeer, Rembrandt, Holbein, Bellini, Titian, El Greco, Velázquez, Goya, Fragonard, Gainsborough and Turner, shown in the rooms of the house alongside sculpture, furniture, porcelain, enamels, portrait medals, and clocks and watches.\n\nThe first floor held the family's shared rooms and the second floor their bedrooms and private rooms; both are now galleries. First floor: Entrance Hall (Room 1), East Vestibule (3), Octagon Room (4), Anteroom (5), Cabinet (6), Dining Room (7), West Vestibule (8), Fragonard Room (9), Living Hall (10), Library (11), Portico Gallery (12), West Gallery (13), Enamels Room (14), Oval Room (15), East Gallery (16), Garden Court (17), North Hall (18), South Hall (19), Foot of Stairs and Landing (20), and the Ronald S. Lauder Exhibition Galleries for special exhibitions. Second floor: Grand Stair Hall (21), Long Hall (22), Medals Room (23), Sitting Room (24), Walnut Room (25), Gold-Grounds Room (26), Ceramics Room (27), Boucher Anteroom (28), Boucher Room (29), Du Paquier Passage (30), Small Hallway (31), Impressionist Room (32), Clocks and Watches Room (33), Breakfast Room (34) and Lajoue Passage (35). The Frick Art Research Library, founded by Helen Clay Frick in 1920, is part of the institution.\n\nHenry Clay Frick (1849–1919) made his fortune in coke and steel. His career includes the violent 1892 Homestead Strike at Carnegie Steel, and he was a founding member of the South Fork Fishing and Hunting Club, whose dam failed in 1889, causing the Johnstown Flood.",
+  "greeting": "Hi, I'm Wonder! Welcome to the Frick Collection. I can tell you about any painting or room in Henry Clay Frick's house, from Vermeer and Rembrandt downstairs to the porcelain and clocks upstairs. Try it in your own language, and press talk whenever you're ready."
+ },
+ "exhibitions": {
+  "frick-entrance-hall": {
+   "name": "Entrance Hall",
+   "room": 1,
+   "prompt": "The visitor is in the Entrance Hall (Room 1) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. One object is on view in this room.",
+   "greeting": "Welcome to the Entrance Hall! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-east-vestibule": {
+   "name": "East Vestibule",
+   "room": 3,
+   "prompt": "The visitor is in the East Vestibule (Room 3) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Adoration of the Magi by Lazzaro Bastiani; Perseus and Andromeda by Giovanni Battista Tiepolo. About 4 objects are on view in this room. Topics for this room: Chinese porcelain, Venetian painting.",
+   "greeting": "Welcome to the East Vestibule! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-octagon-room": {
+   "name": "Octagon Room",
+   "room": 4,
+   "prompt": "The visitor is in the Octagon Room (Room 4) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Bust of a Lady by Francesco Laurana. About 2 objects are on view in this room. Topics for this room: Renaissance sculpture and bronzes.",
+   "greeting": "Welcome to the Octagon Room! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-anteroom": {
+   "name": "Anteroom",
+   "room": 5,
+   "prompt": "The visitor is in the Anteroom (Room 5) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Christ Driving the Money Changers from the Temple by El Greco; Officer and Laughing Girl by Johannes Vermeer. About 9 objects are on view in this room. Topics for this room: Spanish painting, Dutch Golden Age painting.",
+   "greeting": "Welcome to the Anteroom! I'm Wonder. Ask me about anything you see here, like Vermeer's Officer and Laughing Girl. Press talk when you're ready."
+  },
+  "frick-cabinet": {
+   "name": "Cabinet",
+   "room": 6,
+   "prompt": "The visitor is in the Cabinet (Room 6) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The Cabinet holds rotating displays; ask about the current one. About 6 objects are on view in this room.",
+   "greeting": "Welcome to the Cabinet! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-dining-room": {
+   "name": "Dining Room",
+   "room": 7,
+   "prompt": "The visitor is in the Dining Room (Room 7) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include The Mall in St. James's Park by Thomas Gainsborough; Grace Dalrymple Elliott by Thomas Gainsborough; Henrietta, Countess of Warwick, and Her Children by George Romney; Mrs. Peter William Baker by Thomas Gainsborough; Richard Paul Jodrell by Thomas Gainsborough; The Hon. Frances Duncombe by Thomas Gainsborough; The Ladies Sarah and Catherine Bligh by John Hoppner. About 19 objects are on view in this room. Topics for this room: British portraiture, European porcelain and faience.",
+   "greeting": "Welcome to the Dining Room! I'm Wonder. Ask me about anything you see here, like Gainsborough's The Mall in St. James's Park. Press talk when you're ready."
+  },
+  "frick-west-vestibule": {
+   "name": "West Vestibule",
+   "room": 8,
+   "prompt": "The visitor is in the West Vestibule (Room 8) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include The Four Seasons: Autumn by François Boucher; The Four Seasons: Spring by François Boucher; The Four Seasons: Summer by François Boucher; The Four Seasons: Winter by François Boucher. About 8 objects are on view in this room. Topics for this room: French Rococo, French 18th-century furniture, Chinese porcelain.",
+   "greeting": "Welcome to the West Vestibule! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-fragonard-room": {
+   "name": "Fragonard Room",
+   "room": 9,
+   "prompt": "The visitor is in the Fragonard Room (Room 9) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The room is named for Jean-Honoré Fragonard's series The Progress of Love, panels originally painted for Madame du Barry; Frick had the room finished in 1916 to show them. Works on view here include The Lover Crowned by Jean-Honoré Fragonard; The Progress of Love: Love Letters by Jean-Honoré Fragonard; The Progress of Love: Reverie by Jean-Honoré Fragonard; The Progress of Love: The Meeting by Jean-Honoré Fragonard; The Progress of Love: The Pursuit by Jean-Honoré Fragonard; The Progress of Love: Hollyhocks by Jean-Honoré Fragonard; The Progress of Love: Hollyhocks by Jean-Honoré Fragonard; The Progress of Love: Hollyhocks by Jean-Honoré Fragonard; The Progress of Love: Hollyhocks by Jean-Honoré Fragonard; The Progress of Love: Love Pursuing a Dove by Jean-Honoré Fragonard; The Progress of Love: Love Triumphant by Jean-Honoré Fragonard; The Progress of Love: Love the Avenger by Jean-Honoré Fragonard; The Progress of Love: Love the Jester by Jean-Honoré Fragonard; The Progress of Love: Love the Sentinel by Jean-Honoré Fragonard. About 39 objects are on view in this room. Topics for this room: French Rococo, French 18th-century furniture, European porcelain and faience.",
+   "greeting": "Welcome to the Fragonard Room! I'm Wonder. Ask me about anything you see here, like Fragonard's Progress of Love panels. Press talk when you're ready."
+  },
+  "frick-living-hall": {
+   "name": "Living Hall",
+   "room": 10,
+   "prompt": "The visitor is in the Living Hall (Room 10) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Portrait of Sir Thomas More by Hans Holbein the Younger; Portrait of a Man in a Red Cap by Titian; Saint Francis in the Desert by Giovanni Bellini; Thomas Cromwell by Hans Holbein the Younger; Portrait of Pietro Aretino by Titian; St. Jerome by El Greco. About 44 objects are on view in this room. Topics for this room: Northern Renaissance painting, Venetian painting, Spanish painting, Renaissance sculpture and bronzes, Chinese porcelain.",
+   "greeting": "Welcome to the Living Hall! I'm Wonder. Ask me about anything you see here, like Holbein's portrait of Sir Thomas More. Press talk when you're ready."
+  },
+  "frick-library-room": {
+   "name": "Library",
+   "room": 11,
+   "prompt": "The visitor is in the Library (Room 11) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. This is the library room of the house, not the Frick Art Research Library. Works on view here include Julia, Lady Peel by Thomas Lawrence; Mortlake Terrace: Early Summer Morning by J. M. W. Turner; Fishing Boats Entering Calais Harbor by J. M. W. Turner; Elizabeth, Lady Taylor by Joshua Reynolds; Mrs. Charles Hatchett by Thomas Gainsborough; Salisbury Cathedral from the Bishop's Garden by John Constable; Sarah, Lady Innes by Thomas Gainsborough; Selina, Lady Skipwith by Joshua Reynolds; Henry Clay Frick by John Christen Johansen; James Cruikshank by Henry Raeburn; Mrs. James Cruikshank by Henry Raeburn. About 41 objects are on view in this room. Topics for this room: British portraiture.",
+   "greeting": "Welcome to the Library! I'm Wonder. Ask me about anything you see here, like Turner's Mortlake Terrace. Press talk when you're ready."
+  },
+  "frick-portico-gallery": {
+   "name": "Portico Gallery",
+   "room": 12,
+   "prompt": "The visitor is in the Portico Gallery (Room 12) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Most of the objects here are Meissen porcelain. About 92 objects are on view in this room. Topics for this room: European porcelain and faience.",
+   "greeting": "Welcome to the Portico Gallery! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-west-gallery": {
+   "name": "West Gallery",
+   "room": 13,
+   "prompt": "The visitor is in the West Gallery (Room 13) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Allegory of Virtue and Vice by Paolo Veronese; Allegory of Wisdom and Strength by Paolo Veronese; Antwerp: Van Goyen Looking Out for a Subject by J. M. W. Turner; Cologne: The Arrival of a Packet-Boat: Evening by J. M. W. Turner; Mistress and Maid by Johannes Vermeer; Portrait of Nicolaes Ruts by Rembrandt; Portrait of Philip IV in Fraga by Diego Velázquez; Portrait of Vincenzo Anastagi by El Greco; Portrait of a man by Frans Hals; Portrait of a woman said to be Hylck Boner by Frans Hals; Self Portrait by Rembrandt; The Forge by Francisco Goya; The Harbor of Dieppe by J. M. W. Turner; The Polish Rider by Rembrandt; Don Pedro, Duque de Osuna by Francisco Goya; Frans Snyders by Anthony van Dyck; Landscape with a Footbridge by Jacob van Ruisdael; Margareta Snyders by Anthony van Dyck; Portrait of a Young Artist by Rembrandt; Portrait of an elderly man by Frans Hals; The Lake by Jean-Baptiste Camille Corot; The Sermon on the Mount by Claude Lorrain; Village with Water Mill among Trees by Meindert Hobbema; The Cavalry Camp by Philips Wouwerman. About 60 objects are on view in this room. Topics for this room: Dutch Golden Age painting, Venetian painting, Spanish painting, British landscape painting, Flemish Baroque painting.",
+   "greeting": "Welcome to the West Gallery! I'm Wonder. Ask me about anything you see here, like Rembrandt's Polish Rider. Press talk when you're ready."
+  },
+  "frick-enamels-room": {
+   "name": "Enamels Room",
+   "room": 14,
+   "prompt": "The visitor is in the Enamels Room (Room 14) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Displays here include painted enamels and Renaissance bronzes. Works on view here include Beatrice of Aragon by Francesco Laurana; Bust of a Young Woman by Andrea del Verrocchio; Odet de Coligny, cardinal of Châtillon by Léonard Limousin. About 70 objects are on view in this room. Topics for this room: Limoges painted enamels, Renaissance sculpture and bronzes.",
+   "greeting": "Welcome to the Enamels Room! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-oval-room": {
+   "name": "Oval Room",
+   "room": 15,
+   "prompt": "The visitor is in the Oval Room (Room 15) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The Oval Room was built in 1935, when the house became a museum. Works on view here include Arrangement in Black and Gold: Comte Robert de Montesquiou-Fezensac by James McNeill Whistler; Arrangement in Brown and Black: Portrait of Miss Rosa Corder by James McNeill Whistler; George Washington by Gilbert Stuart; Harmony in Pink and Grey: Portrait of Lady Meux by James McNeill Whistler; Symphony in Flesh Colour and Pink: Portrait of Mrs Frances Leyland by James McNeill Whistler. About 15 objects are on view in this room. Topics for this room: British portraiture, Flemish Baroque painting.",
+   "greeting": "Welcome to the Oval Room! I'm Wonder. Ask me about anything you see here, like Whistler's portraits. Press talk when you're ready."
+  },
+  "frick-east-gallery": {
+   "name": "East Gallery",
+   "room": 16,
+   "prompt": "The visitor is in the East Gallery (Room 16) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The East Gallery was built in 1935, when the house became a museum. Works on view here include General John Burgoyne by Joshua Reynolds; Quay at Amsterdam by Jacob van Ruisdael; The Comtesse Daru by Jacques-Louis David; The White Horse by John Constable; Anne, Countess of Clanbrassil by Anthony van Dyck; James, Seventh Earl of Derby, His Lady and Child by Anthony van Dyck; Miss Mary Edwards by William Hogarth; Portrait of María Martínez de Puga by Francisco Goya; Portrait of a Genoese Noblewoman by Anthony van Dyck; River Scene by Aelbert Cuyp; Sir John Suckling by Anthony van Dyck; The Wool Winder by Jean-Baptiste Greuze. About 24 objects are on view in this room. Topics for this room: Spanish painting, Flemish Baroque painting, French 19th-century painting.",
+   "greeting": "Welcome to the East Gallery! I'm Wonder. Ask me about anything you see here, like David's portrait of the Comtesse Daru. Press talk when you're ready."
+  },
+  "frick-garden-court": {
+   "name": "Garden Court",
+   "room": 17,
+   "prompt": "The visitor is in the Garden Court (Room 17) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The Garden Court was built in 1935, when the house became a museum. About 11 objects are on view in this room. Topics for this room: Renaissance sculpture and bronzes.",
+   "greeting": "Welcome to the Garden Court! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-north-hall": {
+   "name": "North Hall",
+   "room": 18,
+   "prompt": "The visitor is in the North Hall (Room 18) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Regatta in Venice by Francesco Guardi; View of the Cannaregio Canal in Venice by Francesco Guardi; Antonio Bartolomeo Bruni by Césarine Davin-Mirvault; Portrait of a Young Lady by Gerard ter Borch. About 10 objects are on view in this room. Topics for this room: French 18th-century furniture, Chinese porcelain, Venetian painting, Dutch Golden Age painting.",
+   "greeting": "Welcome to the North Hall! I'm Wonder. Ask me about anything you see here, like Guardi's views of Venice. Press talk when you're ready."
+  },
+  "frick-south-hall": {
+   "name": "South Hall",
+   "room": 19,
+   "prompt": "The visitor is in the South Hall (Room 19) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Girl Interrupted at her Music by Johannes Vermeer; The Comte and Chevalier de Choiseul as Savoyards by François-Hubert Drouais; Lodovico Capponi by Bronzino. About 17 objects are on view in this room. Topics for this room: Dutch Golden Age painting, French 18th-century furniture, Chinese porcelain.",
+   "greeting": "Welcome to the South Hall! I'm Wonder. Ask me about anything you see here, like Vermeer's Girl Interrupted at Her Music. Press talk when you're ready."
+  },
+  "frick-foot-of-stairs-and-landing": {
+   "name": "Foot of Stairs and Landing",
+   "room": 20,
+   "prompt": "The visitor is in the Foot of Stairs and Landing (Room 20) on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. Works on view here include Portrait of a Venetian Procurator by Jacopo Tintoretto. About 7 objects are on view in this room. Topics for this room: French 18th-century furniture, Clocks and watches, Chinese porcelain.",
+   "greeting": "Welcome to the Foot of Stairs and Landing! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-grand-stair-hall": {
+   "name": "Grand Stair Hall",
+   "room": 21,
+   "prompt": "The visitor is in the Grand Stair Hall (Room 21) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works on view here include Symphony in Grey and Green The Ocean by James McNeill Whistler. About 3 objects are on view in this room. Topics for this room: Chinese porcelain.",
+   "greeting": "Welcome to the Grand Stair Hall! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-long-hall": {
+   "name": "Long Hall",
+   "room": 22,
+   "prompt": "The visitor is in the Long Hall (Room 22) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works here are mostly by James McNeill Whistler. About 7 objects are on view in this room.",
+   "greeting": "Welcome to the Long Hall! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-medals-room": {
+   "name": "Medals Room",
+   "room": 23,
+   "prompt": "The visitor is in the Medals Room (Room 23) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. This room displays the collection's portrait medals. Works on view here include Doge Giovanni Mocenigo by Gentile Bellini. About 127 objects are on view in this room. Topics for this room: Portrait medals.",
+   "greeting": "Welcome to the Medals Room! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-sitting-room": {
+   "name": "Sitting Room",
+   "room": 24,
+   "prompt": "The visitor is in the Sitting Room (Room 24) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. The Sitting Room was decorated by Charles Allom. Works on view here include Virgin and Child, with Saints and Donor by Jan van Eyck; Pietà by Konrad Witz; The Deposition by Gerard David. About 7 objects are on view in this room. Topics for this room: Northern Renaissance painting, Renaissance sculpture and bronzes.",
+   "greeting": "Welcome to the Sitting Room! I'm Wonder. Ask me about anything you see here, like Jan van Eyck's Virgin and Child. Press talk when you're ready."
+  },
+  "frick-walnut-room": {
+   "name": "Walnut Room",
+   "room": 25,
+   "prompt": "The visitor is in the Walnut Room (Room 25) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. The room is named for its walnut wood paneling. Works on view here include Comtesse d'Haussonville by Jean-Auguste-Dominique Ingres; An Officer (probably the Count of Teba) by Francisco Goya; Lady Hamilton as 'Nature' by George Romney; Procession of Italian Comedians by Jean-Baptiste Pater; The Village Orchestra by Jean-Baptiste Pater. About 8 objects are on view in this room. Topics for this room: British portraiture, French 19th-century painting.",
+   "greeting": "Welcome to the Walnut Room! I'm Wonder. Ask me about anything you see here, like Ingres's Comtesse d'Haussonville. Press talk when you're ready."
+  },
+  "frick-gold-grounds-room": {
+   "name": "Gold-Grounds Room",
+   "room": 26,
+   "prompt": "The visitor is in the Gold-Grounds Room (Room 26) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works on view here include Madonna and Child, with Saints Lawrence and Julian by Gentile da Fabriano; The Flagellation of Christ by Cimabue; An Augustinian Nun (Saint Monica) by Piero della Francesca; St. John the Evangelist by Piero della Francesca; The Annunciation by Filippo Lippi; The Coronation of the Virgin by Paolo Veneziano; The Crucifixion by Piero della Francesca; The Temptation of Christ on the Mountain by Duccio di Buoninsegna; The Resurrection by Francesco Botticini. About 12 objects are on view in this room. Topics for this room: Early Italian painting.",
+   "greeting": "Welcome to the Gold-Grounds Room! I'm Wonder. Ask me about anything you see here, like Cimabue's Flagellation of Christ. Press talk when you're ready."
+  },
+  "frick-ceramics-room": {
+   "name": "Ceramics Room",
+   "room": 27,
+   "prompt": "The visitor is in the Ceramics Room (Room 27) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Most of the objects here are French faience from Nevers, Rouen, Moustiers and Marseille. Works on view here include Elizabeth, Countess of Warwick by Jean-Marc Nattier. About 54 objects are on view in this room. Topics for this room: European porcelain and faience.",
+   "greeting": "Welcome to the Ceramics Room! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-boucher-anteroom": {
+   "name": "Boucher Anteroom",
+   "room": 28,
+   "prompt": "The visitor is in the Boucher Anteroom (Room 28) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works on view here include A Lady on Her Day Bed by François Boucher; Lady with a Bird-Organ by Jean-Baptiste-Siméon Chardin; Still Life with Plums by Jean-Baptiste-Siméon Chardin; Trompe l'Oeil by Jean-Étienne Liotard; The Private Academy by Gabriel de Saint-Aubin. About 15 objects are on view in this room. Topics for this room: French Rococo.",
+   "greeting": "Welcome to the Boucher Anteroom! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-boucher-room": {
+   "name": "Boucher Room",
+   "room": 29,
+   "prompt": "The visitor is in the Boucher Room (Room 29) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. This was Adelaide Frick's boudoir; in 1916 Frick raised its ceiling to fit François Boucher's panels. Works on view here include The Arts and Sciences: Architecture and Chemistry by François Boucher; The Arts and Sciences: Astronomy and Hydraulics by François Boucher; The Arts and Sciences: Comedy and Tragedy by François Boucher; The Arts and Sciences: Fishing and Hunting by François Boucher; The Arts and Sciences: Fowling and Horticulture by François Boucher; The Arts and Sciences: Painting and Sculpture by François Boucher; The Arts and Sciences: Poetry and Music by François Boucher; The Arts and Sciences: Singing and Dancing by François Boucher. About 51 objects are on view in this room. Topics for this room: French Rococo, European porcelain and faience, French 18th-century furniture.",
+   "greeting": "Welcome to the Boucher Room! I'm Wonder. Ask me about anything you see here, like Boucher's painted panels of the arts and sciences. Press talk when you're ready."
+  },
+  "frick-du-paquier-passage": {
+   "name": "Du Paquier Passage",
+   "room": 30,
+   "prompt": "The visitor is in the Du Paquier Passage (Room 30) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Most of the objects here are Du Paquier porcelain from Vienna. About 14 objects are on view in this room. Topics for this room: European porcelain and faience.",
+   "greeting": "Welcome to the Du Paquier Passage! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-small-hallway": {
+   "name": "Small Hallway",
+   "room": 31,
+   "prompt": "The visitor is in the Small Hallway (Room 31) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works on view here include The Portal of Valenciennes by Jean-Antoine Watteau; Motherhood by Eugène Carrière. About 5 objects are on view in this room. Topics for this room: British landscape painting, French Rococo.",
+   "greeting": "Welcome to the Small Hallway! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-impressionist-room": {
+   "name": "Impressionist Room",
+   "room": 32,
+   "prompt": "The visitor is in the Impressionist Room (Room 32) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works on view here include The Bullfight by Édouard Manet; The Arch of Constantine and the Forum by Jean-Baptiste Camille Corot; The Rehearsal by Edgar Degas; Vétheuil in Winter by Claude Monet. About 6 objects are on view in this room. Topics for this room: French 19th-century painting.",
+   "greeting": "Welcome to the Impressionist Room! I'm Wonder. Ask me about anything you see here, like Manet's The Bullfight. Press talk when you're ready."
+  },
+  "frick-clocks-and-watches-room": {
+   "name": "Clocks and Watches Room",
+   "room": 33,
+   "prompt": "The visitor is in the Clocks and Watches Room (Room 33) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. This room displays clocks and watches. Works on view here include Grapes with Insects on a Marble Top by Gerard van Spaendonck. About 28 objects are on view in this room. Topics for this room: Clocks and watches.",
+   "greeting": "Welcome to the Clocks and Watches Room! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-breakfast-room": {
+   "name": "Breakfast Room",
+   "room": 34,
+   "prompt": "The visitor is in the Breakfast Room (Room 34) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. The Breakfast Room was decorated by Charles Allom. Works on view here include Dieppe by Charles-François Daubigny; The Boatman of Mortefontaine by Jean-Baptiste Camille Corot; The Pond by Jean-Baptiste Camille Corot; The River by Jules Dupré; The Washerwomen by Charles-François Daubigny; Ville-d'Avray by Jean-Baptiste Camille Corot; Woman Sewing by Lamplight by Jean-François Millet; A Pasture in Normandy by Constant Troyon; The Village of Becquigny by Théodore Rousseau. About 16 objects are on view in this room. Topics for this room: Barbizon school.",
+   "greeting": "Welcome to the Breakfast Room! I'm Wonder. Ask me about anything you see here. Press talk when you're ready."
+  },
+  "frick-lajoue-passage": {
+   "name": "Lajoue Passage",
+   "room": 35,
+   "prompt": "The visitor is in the Lajoue Passage (Room 35) on the second floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. The second floor held the Frick family's bedrooms and private rooms. Works on view here include Seven Decorative Panels Mounted in a Screen: Girl with Cupid by Jacques de Lajoue; Seven Decorative Panels Mounted in a Screen: Girl with a Spear by Jacques de Lajoue; Seven Decorative Panels Mounted in a Screen: Mother Nursing Her Child by Jacques de Lajoue; Seven Decorative Panels Mounted in a Screen: Shepherdess by Jacques de Lajoue; Seven Decorative Panels Mounted in a Screen: Shepherdess Asleep by Jacques de Lajoue; Seven Decorative Panels Mounted in a Screen: The Shepherd's Song by Jacques de Lajoue; Seven Decorative Panels Mounted in a Screen: Youth with a Spade by Jacques de Lajoue. About 7 objects are on view in this room. Topics for this room: French Rococo.",
+   "greeting": "Welcome to the Lajoue Passage! I'm Wonder. Ask me about anything you see here, like Lajoue's painted panels. Press talk when you're ready."
+  },
+  "frick-lauder-galleries": {
+   "name": "Ronald S. Lauder Exhibition Galleries",
+   "room": null,
+   "prompt": "The visitor is in the Ronald S. Lauder Exhibition Galleries on the first floor of The Frick Collection, Henry Clay Frick's former house on Fifth Avenue in New York City. These galleries show the Frick's special exhibitions, which change. The current exhibition is not described here.",
+   "greeting": "Welcome to the Ronald S. Lauder Exhibition Galleries! I'm Wonder. Tell me what you're looking at, and press talk when you're ready."
+  }
+ }
+}
