@@ -333,6 +333,7 @@ export type Database = {
           name: string | null
           parent_id: string | null
           parent_type: string | null
+          source: string
           thumbnail: string | null
         }
         Insert: {
@@ -345,6 +346,7 @@ export type Database = {
           name?: string | null
           parent_id?: string | null
           parent_type?: string | null
+          source?: string
           thumbnail?: string | null
         }
         Update: {
@@ -357,6 +359,7 @@ export type Database = {
           name?: string | null
           parent_id?: string | null
           parent_type?: string | null
+          source?: string
           thumbnail?: string | null
         }
         Relationships: []

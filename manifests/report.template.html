@@ -191,16 +191,17 @@ ${(M.decisions||[]).length?`<section aria-labelledby="h-dec"><div class="section
 
 ${M.go_live?`<section aria-labelledby="h-live"><div class="section-head"><h2 id="h-live">Go-live checklist</h2><p class="small">${esc(M.go_live.strapi_note)}</p></div>
   <ol class="findings">${(M.go_live.steps||[]).map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
-  <h3>Strapi entries to create</h3>
+  <h3>${M.go_live.rooms_in_dropbox?"Place entry (Strapi) and rooms (Dropbox)":"Strapi entries to create"}</h3>
   <div class="tablebox"><table>
     <thead><tr><th>Type</th><th>ID field</th><th>Name</th><th>Place</th></tr></thead>
     <tbody><tr><td>Place</td><td class="id">place_id: ${esc(M.place.place_id)}</td><td><strong>${esc(M.place.name)}</strong></td><td class="small">—</td></tr>
-    ${(M.exhibitions||[]).map(e=>`<tr><td>Exhibition</td><td class="id">exhibition_id: ${esc(e.id)}</td><td><strong>${esc(e.name)}</strong><div class="small">${esc(e.floor)}</div></td><td class="id">${esc(M.place.place_id)}</td></tr>`).join("")}</tbody>
+    ${(M.exhibitions||[]).map(e=>`<tr><td>${M.go_live.rooms_in_dropbox?"Room (Dropbox)":"Exhibition"}</td><td class="id">exhibition_id: ${esc(e.id)}</td><td><strong>${esc(e.name)}</strong><div class="small">${esc(e.floor)}</div></td><td class="id">${esc(M.place.place_id)}</td></tr>`).join("")}</tbody>
   </table></div>
   ${M.strapi_copy?`<h3>Prompt and greeting for each entry</h3><p class="small">${esc(M.strapi_copy.note)}</p>
   ${[{label:"Place",id:"place_id: "+M.strapi_copy.place.place_id,name:M.strapi_copy.place.name,c:M.strapi_copy.place},...(M.exhibitions||[]).filter(e=>M.strapi_copy.exhibitions[e.id]).map(e=>({label:e.room?"Room "+e.room:"Exhibition",id:"exhibition_id: "+e.id,name:e.name,c:M.strapi_copy.exhibitions[e.id]}))].map(x=>`<details class="copy-entry"><summary><span class="small">${esc(x.label)}</span>${esc(x.name)}<span class="id">${esc(x.id)}</span></summary>
     <div class="copy-field"><h4>Prompt <button type="button" class="copy-btn">Copy</button></h4><p class="copy-text">${esc(x.c.prompt)}</p></div>
-    <div class="copy-field"><h4>Greeting <button type="button" class="copy-btn">Copy</button></h4><p class="copy-text">${esc(x.c.greeting)}</p></div></details>`).join("")}`:""}
+    <div class="copy-field"><h4>Greeting <button type="button" class="copy-btn">Copy</button></h4><p class="copy-text">${esc(x.c.greeting)}</p></div>${x.c.card?`
+    <div class="copy-field"><h4>Card blurb <button type="button" class="copy-btn">Copy</button></h4><p class="copy-text">${esc(x.c.card.blurb)}</p><p class="small">${x.c.card.image_title?`Card image: ${esc(x.c.card.image_title)} (card.jpg in the room folder)`:"No card image: no public-domain image of a work in this room."}</p></div>`:""}</details>`).join("")}`:""}
   ${(M.go_live.mispronunciations||[]).length?`<h3>Mispronunciations to add to the Place</h3><p class="small">Names speech-to-text is likely to mishear. Add each with its common mishearings after testing.</p>${tags(M.go_live.mispronunciations)}`:""}
 </section>`:""}
 

@@ -262,6 +262,10 @@ async function processFile(
   // recorded before that rule existed reach here.
   if (row.name === LIBRARIES_FILE) return "ignore";
 
+  // Room settings files (prompt.md, greeting.txt, card.jpg… in a room
+  // folder) are applied by the ingest route, never embedded.
+  if ((row.metadata as { room_file?: unknown } | null)?.room_file) return "ignore";
+
   // Get the metadata for this file's folder
   let metadata = metadataCache.get(folder);
   if (metadata === undefined) {

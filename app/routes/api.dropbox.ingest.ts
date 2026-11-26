@@ -8,6 +8,20 @@ import { bumpContentVersions } from "~/utils/cache/content.version.server";
 import { deleteFromIngestIndexes } from "~/utils/pinecone";
 import { isIgnoredPath } from "~/utils/ragIngest/ignored.path";
 import { LIBRARIES_FILE, parseLibrariesFile } from "~/utils/ragIngest/library";
+import {
+  InvalidRoomFile,
+  type RoomFileKind,
+  roomFileKind,
+  roomIdFromMetadata,
+} from "~/utils/ragIngest/room";
+import {
+  type RoomDefinition,
+  applyRoomFile,
+  clearRoomFile,
+  dropboxOwned,
+  removeRooms,
+  syncRooms,
+} from "~/utils/ragIngest/room.server";
 import { getSupabaseServiceRoleClient } from "~/utils/supabase.server";
 
 /**
@@ -244,6 +258,29 @@ export async function action({ request }: ActionFunctionArgs) {
     /*
      * One Supabase request instead of one request per metadata file.
      */
+    /*
+     * The room each changed metadata.json defined before this sync, so a
+     * room whose exhibition_id was removed or changed can be retired.
+     */
+    const previousRoomIds = new Map<string, string>();
+    for (const batch of batches(
+      metadataRecords.map((r) => r.dropbox_file_id).filter((id): id is string => !!id),
+      PATH_BATCH,
+    )) {
+      const { data: previous, error } = await supabaseServiceRole
+        .from("dropbox_assets")
+        .select("dropbox_file_id, metadata")
+        .in("dropbox_file_id", batch);
+      if (error) {
+        processingErrors.push(`Failed to read previous metadata: ${describeError(error)}`);
+        break;
+      }
+      for (const row of previous ?? []) {
+        const id = roomIdFromMetadata(row.metadata);
+        if (id && row.dropbox_file_id) previousRoomIds.set(row.dropbox_file_id, id);
+      }
+    }
+
     if (metadataRecords.length > 0) {
       const { error } = await supabaseServiceRole
         .from("dropbox_assets")
@@ -358,6 +395,203 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // ---------------------------------------------------------------------
+    // ROOMS (Dropbox-defined exhibitions, see utils/ragIngest/room.ts)
+    // ---------------------------------------------------------------------
+
+    /*
+     * A folder whose own metadata.json sets exhibition_id is a room: its
+     * location_relationships row comes from here, and its reserved settings
+     * files (prompt.md, greeting.txt, mispronunciations.json, card.txt,
+     * card.jpg) are applied instead of embedded. Rooms Strapi defines are
+     * left to Strapi.
+     */
+    const roomFilePaths = new Set<string>();
+    // rooms this sync defines (they survive a delete of an old path below)
+    const definedRoomIds = new Set<string>();
+    // `${exhibitionId}:${kind}` applied in this sync
+    const appliedRoomFiles = new Set<string>();
+
+    try {
+      const roomDefs: (RoomDefinition & { folder: string })[] = [];
+      const retired: string[] = [];
+
+      for (const record of metadataRecords) {
+        const id = roomIdFromMetadata(record.metadata);
+        const previous = record.dropbox_file_id
+          ? previousRoomIds.get(record.dropbox_file_id)
+          : undefined;
+        if (previous && previous !== id) retired.push(previous);
+        if (!id || !record.dropbox_folder) continue;
+
+        const inherited = await mergedMetadataForFolder(
+          record.dropbox_folder,
+          supabaseServiceRole,
+        );
+        const placeId = stringOrNull(inherited.place_id);
+        if (!placeId) {
+          const message = `Room outside a place skipped: ${record.dropbox_path}`;
+          console.error(message);
+          Sentry.captureMessage(message, "warning");
+          continue;
+        }
+        definedRoomIds.add(id);
+        roomDefs.push({
+          exhibitionId: id,
+          placeId,
+          name: stringOrNull(
+            (record.metadata as Record<string, unknown> | null)?.exhibition_name,
+          ),
+          folder: record.dropbox_folder,
+        });
+      }
+
+      const removed = await removeRooms(
+        supabaseServiceRole,
+        retired.filter((id) => !definedRoomIds.has(id)),
+      );
+      const synced = await syncRooms(supabaseServiceRole, roomDefs);
+      if (synced.strapi.length) {
+        console.log(`[ingest] rooms managed in Strapi, left alone: ${synced.strapi.join(", ")}`);
+      }
+
+      // Settings files to apply: this sync's, in room folders...
+      type RoomFile = {
+        kind: RoomFileKind;
+        path: string;
+        folder: string;
+        fileId: string;
+        exhibitionId: string;
+        placeId: string;
+      };
+      const candidates = filesToAdd.filter(
+        (file): file is typeof file & { path_lower: string } =>
+          !!file.path_lower && !!roomFileKind(file.name),
+      );
+      const rooms = await roomsForFolders(
+        [
+          ...candidates.map((f) => f.dropbox_folder),
+          ...roomDefs.filter((r) => synced.created.includes(r.exhibitionId)).map((r) => r.folder),
+        ],
+        supabaseServiceRole,
+      );
+      const toApply = new Map<string, RoomFile>();
+      for (const file of candidates) {
+        const room = rooms.get(file.dropbox_folder);
+        if (!room) continue; // not a room folder: ordinary content
+        toApply.set(file.path_lower, {
+          kind: roomFileKind(file.name)!,
+          path: file.path_lower,
+          folder: file.dropbox_folder,
+          fileId: file.id,
+          ...room,
+        });
+      }
+
+      // ...plus, for rooms created now, the settings files already there
+      // (a renamed staging folder, or a room Strapi used to own). Anything
+      // left from before is cleared first, and files that had been embedded
+      // as content lose their vectors.
+      const createdFolders = roomDefs
+        .filter((r) => synced.created.includes(r.exhibitionId))
+        .map((r) => r.folder);
+      if (createdFolders.length) {
+        for (const id of synced.created) {
+          for (const kind of ["prompt", "greeting", "mispronunciations"] as const) {
+            await clearRoomFile(supabaseServiceRole, kind, id);
+          }
+        }
+        const staleVectors: string[] = [];
+        for (const batch of batches(createdFolders, FOLDER_BATCH)) {
+          const { data: existing, error } = await supabaseServiceRole
+            .from("dropbox_assets")
+            .select("name, dropbox_path, dropbox_folder, dropbox_file_id, pinecone_ids")
+            .in("dropbox_folder", batch);
+          if (error) throw new Error(`room files lookup: ${describeError(error)}`);
+          for (const row of existing ?? []) {
+            const kind = roomFileKind(row.name);
+            const room = row.dropbox_folder ? rooms.get(row.dropbox_folder) : undefined;
+            if (!kind || !room || !row.dropbox_path || !row.dropbox_file_id) continue;
+            staleVectors.push(...(row.pinecone_ids ?? []));
+            if (!toApply.has(row.dropbox_path)) {
+              toApply.set(row.dropbox_path, {
+                kind,
+                path: row.dropbox_path,
+                folder: row.dropbox_folder!,
+                fileId: row.dropbox_file_id,
+                ...room,
+              });
+            }
+          }
+        }
+        if (staleVectors.length) await deleteFromIngestIndexes(staleVectors);
+      }
+
+      const owned = new Set([
+        ...synced.owned,
+        ...(await dropboxOwned(
+          supabaseServiceRole,
+          [...toApply.values()].map((f) => f.exhibitionId),
+        )),
+      ]);
+      const roomFileRecords: DropboxAssetRow[] = [];
+
+      await forEachConcurrently([...toApply.values()], METADATA_CONCURRENCY, async (file) => {
+        roomFilePaths.add(file.path);
+        const ownedHere = owned.has(file.exhibitionId);
+        roomFileRecords.push({
+          name: file.path.split("/").pop()!,
+          modified_time: new Date().toISOString(),
+          dropbox_path: file.path,
+          dropbox_folder: file.folder,
+          dropbox_file_id: file.fileId,
+          // settings, not content: never queued for push-changes
+          status: "ignore",
+          pinecone_ids: [],
+          metadata: {
+            room_file: file.kind,
+            exhibition_id: file.exhibitionId,
+            ...(ownedHere ? {} : { skipped: "strapi" }),
+          },
+        });
+        if (!ownedHere) return;
+
+        const response = await dbx.filesDownload({ path: file.path });
+        const content = (response.result as unknown as { fileBinary: Buffer }).fileBinary;
+        try {
+          const note = await applyRoomFile(supabaseServiceRole, { ...file, content });
+          if (note) Sentry.captureMessage(note, "warning");
+          appliedRoomFiles.add(`${file.exhibitionId}:${file.kind}`);
+        } catch (error) {
+          // invalid content can't be fixed by retrying: report and move on
+          if (error instanceof InvalidRoomFile) {
+            const message = `Invalid room file skipped: ${file.path}`;
+            console.error(message, error);
+            Sentry.captureMessage(message, "warning");
+            return;
+          }
+          throw error;
+        }
+      });
+
+      if (roomFileRecords.length) {
+        const { error } = await supabaseServiceRole
+          .from("dropbox_assets")
+          .upsert(roomFileRecords, { onConflict: "dropbox_file_id" });
+        if (error) throw new Error(`room files upsert: ${describeError(error)}`);
+      }
+
+      await bumpContentVersions([
+        ...synced.owned,
+        ...removed,
+        ...[...toApply.values()].map((f) => f.exhibitionId),
+      ]);
+    } catch (error) {
+      processingErrors.push(
+        `rooms: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
+    // ---------------------------------------------------------------------
     // ADDED / MODIFIED FILES
     // ---------------------------------------------------------------------
 
@@ -368,7 +602,10 @@ export async function action({ request }: ActionFunctionArgs) {
      * Every other file is simply marked for processing.
      */
     const files = filesToAdd.filter(
-      (file) => file.name !== "metadata.json" && file.name !== LIBRARIES_FILE,
+      (file) =>
+        file.name !== "metadata.json" &&
+        file.name !== LIBRARIES_FILE &&
+        !roomFilePaths.has(file.path_lower ?? ""),
     );
 
     /*
@@ -435,16 +672,18 @@ export async function action({ request }: ActionFunctionArgs) {
        */
       const pathBatches = batches(deletedPaths, PATH_BATCH);
       const deletedAssets: {
+        name: string | null;
         dropbox_path: string | null;
         dropbox_folder: string | null;
         pinecone_ids: string[] | null;
+        metadata: Json | null;
       }[] = [];
       let recordError: string | null = null;
 
       for (const batch of pathBatches) {
         const { data, error } = await supabaseServiceRole
           .from("dropbox_assets")
-          .select("dropbox_path, dropbox_folder, pinecone_ids")
+          .select("name, dropbox_path, dropbox_folder, pinecone_ids, metadata")
           .in("dropbox_path", batch);
 
         if (error) {
@@ -457,6 +696,45 @@ export async function action({ request }: ActionFunctionArgs) {
       if (recordError) {
         processingErrors.push(`Failed to find deleted assets: ${recordError}`);
       } else {
+        /*
+         * Rooms: a deleted metadata.json that defined a room retires it
+         * (unless this sync defines it again, e.g. the folder moved); a
+         * deleted settings file undoes what it set.
+         */
+        try {
+          const removedRooms = await removeRooms(
+            supabaseServiceRole,
+            deletedAssets
+              .filter((a) => a.name === "metadata.json")
+              .map((a) => roomIdFromMetadata(a.metadata))
+              .filter((id): id is string => !!id && !definedRoomIds.has(id)),
+          );
+          const settings = deletedAssets
+            .map((a) => (a.metadata ?? {}) as Record<string, unknown>)
+            .filter(
+              (m) =>
+                typeof m.room_file === "string" &&
+                typeof m.exhibition_id === "string" &&
+                !m.skipped &&
+                !removedRooms.includes(m.exhibition_id) &&
+                !appliedRoomFiles.has(`${m.exhibition_id}:${m.room_file}`),
+            ) as { room_file: RoomFileKind; exhibition_id: string }[];
+          const owned = await dropboxOwned(
+            supabaseServiceRole,
+            settings.map((m) => m.exhibition_id),
+          );
+          for (const m of settings) {
+            if (owned.has(m.exhibition_id)) {
+              await clearRoomFile(supabaseServiceRole, m.room_file, m.exhibition_id);
+            }
+          }
+          await bumpContentVersions([...removedRooms, ...settings.map((m) => m.exhibition_id)]);
+        } catch (error) {
+          processingErrors.push(
+            `rooms (deleted files): ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+
         /*
          * A file can potentially have multiple Pinecone vectors.
          *
@@ -752,7 +1030,9 @@ async function markFoldersForReprocessing(
       .update({ status: "process" })
       .or(filters.join(","))
       // config files (metadata.json, libraries.json) stay "ignore"
-      .not("name", "in", `("metadata.json","${LIBRARIES_FILE}")`);
+      .not("name", "in", `("metadata.json","${LIBRARIES_FILE}")`)
+      // and so do room settings files (room.ts)
+      .is("metadata->>room_file", null);
 
     if (error) {
       throw new Error(
@@ -839,6 +1119,34 @@ async function mergedMetadataForFolder(
     Object.assign(merged, (row.metadata ?? {}) as Record<string, unknown>);
   }
   return merged;
+}
+
+/**
+ * Folders that are rooms (their own metadata.json sets exhibition_id),
+ * mapped to the room and its inherited place. Throws on a database error.
+ */
+async function roomsForFolders(
+  folders: string[],
+  supabaseServiceRole: SupabaseClient,
+): Promise<Map<string, { exhibitionId: string; placeId: string }>> {
+  const out = new Map<string, { exhibitionId: string; placeId: string }>();
+  const unique = [...new Set(folders.filter(Boolean))];
+  for (const batch of batches(unique, PATH_BATCH)) {
+    const { data, error } = await supabaseServiceRole
+      .from("dropbox_assets")
+      .select("dropbox_folder, metadata")
+      .eq("name", "metadata.json")
+      .in("dropbox_folder", batch);
+    if (error) throw new Error(`room folder lookup: ${describeError(error)}`);
+    for (const row of data ?? []) {
+      const exhibitionId = roomIdFromMetadata(row.metadata);
+      if (!exhibitionId || !row.dropbox_folder) continue;
+      const inherited = await mergedMetadataForFolder(row.dropbox_folder, supabaseServiceRole);
+      const placeId = stringOrNull(inherited.place_id);
+      if (placeId) out.set(row.dropbox_folder, { exhibitionId, placeId });
+    }
+  }
+  return out;
 }
 
 function stringOrNull(value: unknown): string | null {

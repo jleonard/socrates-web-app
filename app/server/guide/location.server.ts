@@ -18,7 +18,8 @@ export type LocationContext = {
 /**
  * Resolves the posted location id into its place and, if it is an
  * exhibition, its exhibition id, using `location_relationships`
- * (written by api.strapi.webhook.ts when an exhibition is saved).
+ * (written by api.strapi.webhook.ts when an exhibition is saved, or by the
+ * Dropbox ingest for Dropbox-defined rooms, see utils/ragIngest/room.ts).
  *
  * Same logic as resolveLocationId in api.agent.webhook.server.ts.
  * Throws on a database error: guessing would scope retrieval to the

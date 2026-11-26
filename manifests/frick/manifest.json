@@ -14,14 +14,15 @@
     "notes": "place_id confirmed. Strapi entries are made at go-live, not during staging (see the go-live checklist)."
   },
   "go_live": {
-    "strapi_note": "Strapi is the only writer of location_relationships, which maps each room to its place. Saving an entry also writes its Strapi content into Pinecone through the webhook, so create these at go-live, not while the venue is staged.",
+    "rooms_in_dropbox": true,
+    "strapi_note": "Only the Place lives in Strapi (content language, place prompt and greeting, operational info, mispronunciations). The 35 rooms are Dropbox-defined: each room folder's metadata.json sets its exhibition_id, and its prompt.md, card.txt and card.jpg are applied by the ingest, so renaming _frick to frick creates every room. Create the Place at go-live, not while the venue is staged: saving it also writes its content into Pinecone.",
     "steps": [
       "Confirm every source decision in this manifest, and re-check placements.json against the on-view list (the hang changes).",
-      "Create the Strapi Place and one Exhibition per room (table below). Each exhibition_id must exactly match the exhibition_id in that room's Dropbox metadata.json.",
-      "Paste each entry's prompt and greeting from the drafts below (strapi-copy.json). Review them first; saving a greeting generates its mp3s.",
+      "Make sure the Dropbox-rooms ingest code is deployed (it creates the rooms and applies their prompt.md, card.txt and card.jpg). Create the Strapi Place (place_id frick-nyc) with its prompt and greeting from the drafts below; no Strapi exhibitions are needed.",
+      "Review the room drafts below (strapi-copy.json): they are already staged as each room's prompt.md and card.txt. Room greetings are off; to add them set room_greetings in pull.json and re-run the puller (each greeting is an mp3 per language, generated at go-live).",
       "Add mispronunciations to the Place (list below).",
       "Rename /wonderway rag/places/_frick to frick, and /wonderway rag/_library to library (or only the libraries this venue uses).",
-      "Wait for the next Dropbox sync (n8n, every 20 minutes) and push-changes runs, then check the guide in each room with ?place=frick-nyc and a room id."
+      "Wait for the next Dropbox sync and push-changes runs, then check: 35 rows in location_relationships with parent frick-nyc and source dropbox, the /exhibitions/<room id> landing pages, and the guide in a few rooms with ?place=<room id>."
     ],
     "mispronunciations": ["Fragonard", "Vermeer", "Boucher", "Velázquez", "Holbein", "Gainsborough", "Ingres", "Haussonville", "Cimabue", "Piero della Francesca", "Veronese", "Hobbema", "Cuyp", "Whistler", "Montesquiou", "Du Paquier", "Sèvres", "Frick"]
   },
@@ -175,6 +176,7 @@
     { "date": "2026-11-23", "topic": "Henry Clay Frick's labor history", "decision": "Be transparent. Whenever the guide talks about Frick's life or fortune, it includes the 1892 Homestead Strike and the South Fork club / Johnstown Flood, stated factually from sourced text, not left out or softened. Harvey's 1928 biography is tagged historical and framed as a period view." },
     { "date": "2026-11-23", "topic": "Artist biographies", "decision": "Shared library lib-artists: one folder per artist credited on a collection object (103 for the Frick). Wikidata facts for all, the English Wikipedia biography unless a topic library already has it, Getty ULAN where Wikipedia has none or only a stub. The Frick subscribes at place level." },
     { "date": "2026-11-23", "topic": "Artwork images", "decision": "Commons images only, license checked per file (PD, CC0, CC BY, CC BY-SA); each goes in <object>/vision/ with its license and attribution in metadata.json, and paintings get the ingest's artwork prompt. The Frick's own images are not crawled (robots.txt disallows them; site terms are non-commercial): ask for them in the Frick outreach, which would also cover the 59 objects without a Commons image." },
+    { "date": "2026-11-26", "topic": "Rooms in Dropbox, not Strapi", "decision": "The Frick's 35 rooms are defined in Dropbox (room folder metadata.json + prompt.md, card.txt, card.jpg); only the Place is a Strapi entry. location_relationships rows carry source (strapi | dropbox) and each system only manages its own. Card images: public domain or CC0 only (the landing page shows no credit), at least 700px wide." },
     { "date": "2026-11-25", "topic": "Moroni, Portrait of a Young Woman", "decision": "Left in _unassigned-objects/: Wikidata has no accession number for it, so its room (probably the South Hall) could not be confirmed." },
     { "date": "2026-11-23", "topic": "Spanish Wikipedia", "decision": "Skipped. English sources only. The guide answers in the visitor's language." }
   ],

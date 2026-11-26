@@ -12,6 +12,12 @@
  *   wonderway rag/places/_<venue>/objects/<object>/         on view, not in a room
  *   wonderway rag/places/_<venue>/_unassigned-objects/      objects without a room
  *
+ * Room settings come from manifests/<venue>/strapi-copy.json (optional):
+ * each room folder gets prompt.md, card.txt (the blurb), card.<ext> (a copy
+ * of the chosen object's public-domain image) and, when pull.json sets
+ * room_greetings, greeting.txt. The ingest applies them (utils/ragIngest/
+ * room.ts) instead of embedding them.
+ *
  * Room placement comes from manifests/<venue>/placements.json (optional):
  * { objects: { "<object_id>": { exhibition_id: "<id>" | "place", … } } }.
  *   wonderway rag/_library/<topic>/       shared libraries
@@ -25,7 +31,7 @@
  * Usage:
  *   npx tsx app/scripts/sources/pull.ts frick
  */
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { chunkParagraphs, fetchArchiveText } from "./archive";
 import { type CommonsImage, downloadImage, fetchCommonsInfo } from "./commons";
@@ -64,6 +70,8 @@ type PullPlan = {
   libraries: Record<string, string[]>;
   /** Library that gets a biography for every artist in the collection. */
   artists_library?: string;
+  /** Write greeting.txt in each room (an mp3 per language at go-live). */
+  room_greetings?: boolean;
 };
 
 const manifest = JSON.parse(
@@ -72,6 +80,15 @@ const manifest = JSON.parse(
 const plan = JSON.parse(
   readFileSync(join(MANIFEST_DIR, "pull.json"), "utf8"),
 ) as PullPlan;
+const COPY_FILE = join(MANIFEST_DIR, "strapi-copy.json");
+const roomCopy = existsSync(COPY_FILE)
+  ? (JSON.parse(readFileSync(COPY_FILE, "utf8")) as {
+      exhibitions: Record<
+        string,
+        { prompt?: string; greeting?: string; card?: { blurb: string; image_object_id?: string } }
+      >;
+    }).exhibitions
+  : {};
 const PLACEMENTS_FILE = join(MANIFEST_DIR, "placements.json");
 const placements = existsSync(PLACEMENTS_FILE)
   ? (JSON.parse(readFileSync(PLACEMENTS_FILE, "utf8")) as {
@@ -427,7 +444,7 @@ async function main() {
   // place, review copy, rooms
   write(`${PLACE_DIR}/metadata.json`, json({ place_id: manifest.place.place_id, place_name: placeName }));
   write(`${PLACE_DIR}/libraries.json`, json({ libraries: manifest.place_libraries ?? [] }));
-  for (const f of ["manifest.json", "manifest.html", "pull.json", "placements.json"].filter((f) => existsSync(join(MANIFEST_DIR, f)))) {
+  for (const f of ["manifest.json", "manifest.html", "pull.json", "placements.json", "strapi-copy.json"].filter((f) => existsSync(join(MANIFEST_DIR, f)))) {
     mkdirSync(join(STAGE, PLACE_DIR, "_review"), { recursive: true });
     cpSync(join(MANIFEST_DIR, f), join(STAGE, PLACE_DIR, "_review", f));
     report.files++;
@@ -520,6 +537,7 @@ async function main() {
   // objects: in their room folder when placements.json places them
   const roomFolder = new Map(manifest.exhibitions.map((e) => [e.id, e.folder]));
   const placed = { room: 0, place: 0, unassigned: 0 };
+  const objectFolder = new Map<string, string>();
   for (const o of objects) {
     const objectId = `${plan.object_id_prefix}${o.inventory ?? o.qid}`;
     const target = placements[objectId]?.exhibition_id;
@@ -534,6 +552,7 @@ async function main() {
     }
     placed[target === "place" ? "place" : target && roomFolder.has(target) ? "room" : "unassigned"]++;
     const folder = `${parent}/${slugify(o.label)}-${o.inventory ? slugify(o.inventory) : o.qid.toLowerCase()}`;
+    objectFolder.set(objectId, folder);
     write(`${folder}/metadata.json`, json({
       object_id: objectId,
       object_name: o.label,
@@ -555,6 +574,34 @@ async function main() {
     if (o.image) await writeImage(folder, o, images.get(o.image));
   }
   console.log(`[pull] placed: ${JSON.stringify(placed)}`);
+
+  // room settings: prompt, optional greeting, card blurb + image
+  let cards = 0;
+  for (const e of manifest.exhibitions) {
+    const copy = roomCopy[e.id];
+    if (copy?.prompt) write(`${PLACE_DIR}/${e.folder}/prompt.md`, `${copy.prompt}\n`);
+    if (plan.room_greetings && copy?.greeting) {
+      write(`${PLACE_DIR}/${e.folder}/greeting.txt`, `${copy.greeting}\n`);
+    }
+    const card = copy?.card;
+    if (!card) continue;
+    write(`${PLACE_DIR}/${e.folder}/card.txt`, `${card.blurb}\n`);
+    cards++;
+    if (!card.image_object_id) continue;
+    const src = objectFolder.get(card.image_object_id);
+    const visionDir = src ? join(STAGE, src, "vision") : null;
+    const image = visionDir && existsSync(visionDir)
+      ? readdirSync(visionDir).find((f) => /\.(jpe?g|png|webp)$/i.test(f))
+      : undefined;
+    if (!visionDir || !image) {
+      report.errors.push(`card ${e.id}: no staged image for ${card.image_object_id}`);
+      continue;
+    }
+    const ext = image.split(".").pop()!.toLowerCase().replace("jpeg", "jpg");
+    cpSync(join(visionDir, image), join(STAGE, PLACE_DIR, e.folder, `card.${ext}`));
+    report.files++;
+  }
+  if (cards) console.log(`[pull] room settings: ${cards} rooms${plan.room_greetings ? " (with greetings)" : ""}`);
   console.log(`[pull] objects: ${objects.length}; images: ${report.images}, skipped ${report.images_skipped.length}`);
 
   // shared libraries
