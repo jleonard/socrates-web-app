@@ -14,7 +14,8 @@
  *
  * Room settings come from manifests/<venue>/strapi-copy.json (optional):
  * each room folder gets prompt.md, card.txt (the blurb), card.<ext> (a copy
- * of the chosen object's public-domain image) and, when pull.json sets
+ * of the chosen object's image), card-credit.txt (its credit and source link)
+ * and, when pull.json sets
  * room_greetings, greeting.txt. The ingest applies them (utils/ragIngest/
  * room.ts) instead of embedding them.
  *
@@ -56,13 +57,39 @@ const CHUNKS_PER_FILE = 20;
 type Manifest = {
   place: { name: string; place_id: string };
   place_libraries?: string[];
-  exhibitions: { id: string; name: string; room?: number | null; floor: string; folder: string; libraries: string[] }[];
+  exhibitions: {
+    id: string;
+    name: string;
+    room?: number | null;
+    floor?: string;
+    /** outdoor venues: an area instead of a floor, and coordinates */
+    area?: string;
+    lat?: number | null;
+    lng?: number | null;
+    /** the site's own Wikidata item: excluded from objects, its image goes in the room */
+    wikidata?: string | null;
+    folder: string;
+    libraries: string[];
+  }[];
   libraries: { id: string; name: string; covers: string }[];
   sources: { id: string; decision: string | null }[];
 };
 type PullPlan = {
-  wikidata_collection: string;
+  /** Objects = items in this Wikidata collection (P195), e.g. a museum. */
+  wikidata_collection?: string;
+  /** Or items located in this Wikidata item (P131/P276/P361), e.g. a park. */
+  wikidata_located_in?: string;
+  /** Drop located-in items whose type label contains one of these (events, streets…). */
+  object_types_exclude?: string[];
+  /** Drop these Wikidata items outright (e.g. the zoo, a separate venue). */
+  object_exclude?: string[];
   object_id_prefix: string;
+  /** First paragraph of the overview chunk (what the venue is known for). */
+  overview_intro?: string;
+  /** "Artists represented include" by default; e.g. "Sculptors represented include". */
+  overview_creators_label?: string;
+  /** Wikipedia articles written into a room's own folder, by exhibition id. */
+  room_articles?: Record<string, string[]>;
   about: {
     history_articles: string[];
     archive_items: { id: string; folder: string; title: string; source_year: number }[];
@@ -242,12 +269,24 @@ type ObjectRow = {
   enwiki: string | null;
   /** Commons file name (Wikidata P18), without "File:". */
   image: string | null;
+  /** Wikidata ids of the creators (P170). */
+  creatorIds: string[];
+  lat: number | null;
+  lng: number | null;
 };
 
-async function loadObjects(collection: string): Promise<ObjectRow[]> {
+async function loadObjects(source: { collection?: string; locatedIn?: string }): Promise<ObjectRow[]> {
+  const { collection, locatedIn } = source;
+  if (!collection && !locatedIn) throw new Error("pull.json needs wikidata_collection or wikidata_located_in");
+  const where = collection
+    ? `?i p:P195 ?st . ?st ps:P195 wd:${collection} .
+  FILTER NOT EXISTS { ?st pq:P582 ?end }`
+    : `{ ?i wdt:P131 wd:${locatedIn} } UNION { ?i wdt:P276 wd:${locatedIn} } UNION { ?i wdt:P361 wd:${locatedIn} }`;
   const query = `
 SELECT ?i ?label ?desc
   (GROUP_CONCAT(DISTINCT ?creatorL; separator="|") AS ?creators)
+  (GROUP_CONCAT(DISTINCT ?c; separator="|") AS ?creatorIds)
+  (SAMPLE(?coord) AS ?coordinates)
   (GROUP_CONCAT(DISTINCT ?typeL; separator="|") AS ?types)
   (GROUP_CONCAT(DISTINCT ?matL; separator="|") AS ?materials)
   (SAMPLE(?t) AS ?time) (SAMPLE(?prec) AS ?precision)
@@ -256,15 +295,15 @@ SELECT ?i ?label ?desc
   (SAMPLE(?w) AS ?width) (SAMPLE(?wu) AS ?widthUnit)
   (SAMPLE(?article) AS ?enwiki) (SAMPLE(?img) AS ?image)
 WHERE {
-  ?i p:P195 ?st . ?st ps:P195 wd:${collection} .
-  FILTER NOT EXISTS { ?st pq:P582 ?end }
+  ${where}
   ?i rdfs:label ?label FILTER(lang(?label) = "en")
   OPTIONAL { ?i schema:description ?desc FILTER(lang(?desc) = "en") }
   OPTIONAL { ?i wdt:P170 ?c . ?c rdfs:label ?creatorL FILTER(lang(?creatorL) = "en") }
   OPTIONAL { ?i wdt:P31 ?ty . ?ty rdfs:label ?typeL FILTER(lang(?typeL) = "en") }
   OPTIONAL { ?i wdt:P186 ?m . ?m rdfs:label ?matL FILTER(lang(?matL) = "en") }
   OPTIONAL { ?i p:P571/psv:P571 [ wikibase:timeValue ?t ; wikibase:timePrecision ?prec ] }
-  OPTIONAL { ?i p:P217 ?invSt . ?invSt ps:P217 ?inv . ?invSt pq:P195 wd:${collection} }
+  ${collection ? `OPTIONAL { ?i p:P217 ?invSt . ?invSt ps:P217 ?inv . ?invSt pq:P195 wd:${collection} }` : ""}
+  OPTIONAL { ?i wdt:P625 ?coord }
   OPTIONAL { ?i p:P2048/psv:P2048 [ wikibase:quantityAmount ?h ; wikibase:quantityUnit ?hu ] }
   OPTIONAL { ?i p:P2049/psv:P2049 [ wikibase:quantityAmount ?w ; wikibase:quantityUnit ?wu ] }
   OPTIONAL { ?article schema:about ?i ; schema:isPartOf <https://en.wikipedia.org/> }
@@ -275,7 +314,7 @@ GROUP BY ?i ?label ?desc`;
   type B = Record<string, { value: string } | undefined>;
   const res = await politeJson<{ results: { bindings: B[] } }>(url, {
     // re-query at most once a day
-    cacheKey: `wikidata:v2:${collection}:${TODAY}`,
+    cacheKey: `wikidata:v3:${collection ?? `in-${locatedIn}`}:${TODAY}`,
     accept: "application/sparql-results+json",
   });
   const CM = "http://www.wikidata.org/entity/Q174728";
@@ -297,7 +336,24 @@ GROUP BY ?i ?label ?desc`;
     image: b.image?.value
       ? decodeURIComponent(b.image.value.split("/Special:FilePath/")[1] ?? "").replace(/_/g, " ") || null
       : null,
+    creatorIds: split(b.creatorIds).map((u) => u.split("/").pop()!),
+    ...parsePoint(b.coordinates?.value),
   }));
+}
+
+/** "Point(lng lat)" → { lat, lng }; nulls when absent. */
+function parsePoint(value?: string): { lat: number | null; lng: number | null } {
+  const m = value ? /Point\(([-\d.]+) ([-\d.]+)\)/.exec(value) : null;
+  return m ? { lat: Number(m[2]), lng: Number(m[1]) } : { lat: null, lng: null };
+}
+
+/** Located-in items that aren't things to visit: events, streets, the excluded. */
+function keepObject(o: ObjectRow): boolean {
+  if (plan.object_exclude?.includes(o.qid)) return false;
+  // a site that is itself a room isn't also an object inside it
+  if (manifest.exhibitions.some((e) => e.wikidata === o.qid)) return false;
+  const drop = (plan.object_types_exclude ?? []).map((t) => t.toLowerCase());
+  return !o.types.some((t) => drop.some((d) => t.toLowerCase().includes(d)));
 }
 
 function formatTime(value: string | undefined, precision: number): string | null {
@@ -327,21 +383,15 @@ type ArtistRow = {
 };
 
 /** People (Q5) credited as creator of an object in the collection. */
-async function loadArtists(collection: string): Promise<ArtistRow[]> {
+async function loadArtists(creatorIds: string[]): Promise<ArtistRow[]> {
   type B = Record<string, { value: string } | undefined>;
   const sparql = (query: string, cacheKey: string) =>
     politeJson<{ results: { bindings: B[] } }>(
       `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
       { cacheKey, accept: "application/sparql-results+json" },
     );
-  // 1. who: one cheap query (a single query with the details times out)
-  const who = await sparql(`
-SELECT DISTINCT ?c WHERE {
-  ?i p:P195 ?st . ?st ps:P195 wd:${collection} .
-  FILTER NOT EXISTS { ?st pq:P582 ?end }
-  ?i wdt:P170 ?c . ?c wdt:P31 wd:Q5 .
-}`, `wikidata:artist-ids:${collection}:${TODAY}`);
-  const qids = who.results.bindings.map((b) => b.c!.value.split("/").pop()!);
+  // the objects' creators; the details query below keeps only people (Q5)
+  const qids = [...new Set(creatorIds)].sort();
 
   // 2. details, 50 people per query
   const split = (v?: { value: string }) => (v?.value ? v.value.split("|").filter(Boolean) : []);
@@ -356,6 +406,7 @@ SELECT ?c ?label ?desc (SAMPLE(?b) AS ?born) (SAMPLE(?d) AS ?died)
   (GROUP_CONCAT(DISTINCT ?occL; separator="|") AS ?occupations)
 WHERE {
   VALUES ?c { ${batch.map((q) => `wd:${q}`).join(" ")} }
+  ?c wdt:P31 wd:Q5 .
   ?c rdfs:label ?label FILTER(lang(?label) = "en")
   OPTIONAL { ?c schema:description ?desc FILTER(lang(?desc) = "en") }
   OPTIONAL { ?c wdt:P569 ?bt BIND(YEAR(?bt) AS ?b) }
@@ -463,19 +514,29 @@ async function main() {
     report.files++;
   }
   for (const e of manifest.exhibitions) {
-    write(`${PLACE_DIR}/${e.folder}/metadata.json`, json({ exhibition_id: e.id, exhibition_name: e.name, ...(e.room ? { room_number: e.room } : {}), floor: e.floor }));
+    write(`${PLACE_DIR}/${e.folder}/metadata.json`, json({
+      exhibition_id: e.id,
+      exhibition_name: e.name,
+      ...(e.room ? { room_number: e.room } : {}),
+      ...(e.floor ? { floor: e.floor } : {}),
+      ...(e.area ? { area: e.area } : {}),
+      ...(e.lat != null && e.lng != null ? { lat: e.lat, lng: e.lng } : {}),
+    }));
     write(`${PLACE_DIR}/${e.folder}/libraries.json`, json({ libraries: e.libraries }));
   }
 
   // every Wikipedia title we need, resolved in batches of 50
-  const objects = await loadObjects(plan.wikidata_collection);
+  const objects = (
+    await loadObjects({ collection: plan.wikidata_collection, locatedIn: plan.wikidata_located_in })
+  ).filter(keepObject);
   console.log(`[pull] wikidata: ${objects.length} objects`);
-  const artists = plan.artists_library ? await loadArtists(plan.wikidata_collection) : [];
+  const artists = plan.artists_library ? await loadArtists(objects.flatMap((o) => o.creatorIds)) : [];
   if (plan.artists_library) console.log(`[pull] wikidata: ${artists.length} artists`);
   const libraryTitles = Object.values(plan.libraries).flat();
   const useWikipedia = !rejected.has("wikipedia-en");
   const objectTitles = useWikipedia ? objects.map((o) => o.enwiki).filter((t): t is string => !!t) : [];
   const artistTitles = useWikipedia ? artists.map((a) => a.enwiki).filter((t): t is string => !!t) : [];
+  const roomTitles = useWikipedia ? Object.values(plan.room_articles ?? {}).flat() : [];
   const deepTitles = useWikipedia
     ? Object.values(plan.artist_deep ?? {}).flatMap((a) => a.wikipedia ?? [])
     : [];
@@ -485,8 +546,24 @@ async function main() {
     ...objectTitles,
     ...artistTitles,
     ...deepTitles,
+    ...roomTitles,
   ]);
   console.log(`[pull] wikipedia: ${[...articleCache.values()].filter(Boolean).length} articles`);
+
+  // each room's own articles (an outdoor site's Wikipedia page, say)
+  const roomFolder0 = new Map(manifest.exhibitions.map((e) => [e.id, e.folder]));
+  for (const [exhibitionId, titles] of Object.entries(plan.room_articles ?? {})) {
+    const folder = roomFolder0.get(exhibitionId);
+    if (!folder) {
+      report.errors.push(`room_articles: ${exhibitionId} is not in manifest.json`);
+      continue;
+    }
+    write(`${PLACE_DIR}/${folder}/wikipedia/metadata.json`, json({ ...WIKIPEDIA_FOLDER_META, scope: "venue" }));
+    for (const t of titles) {
+      const a = articleCache.get(t);
+      if (a) writeArticle(`${PLACE_DIR}/${folder}/wikipedia`, a);
+    }
+  }
 
   // venue content
   write(`${PLACE_DIR}/about/metadata.json`, json({ scope: "venue" }));
@@ -527,7 +604,8 @@ async function main() {
   const byArtist = new Map<string, number>();
   for (const o of objects) for (const c of o.creators) byArtist.set(c, (byArtist.get(c) ?? 0) + 1);
   const topArtists = [...byArtist].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([n]) => n);
-  const floors = [...new Set(manifest.exhibitions.map((e) => e.floor))];
+  const groupOf = (e: Manifest["exhibitions"][number]) => e.floor ?? e.area ?? "Rooms";
+  const groups = [...new Set(manifest.exhibitions.map(groupOf))];
   const libName = new Map(manifest.libraries.map((l) => [l.id, l]));
   writeText(`${PLACE_DIR}/about/collection-overview/overview.md`, {
     title: `${placeName}: collection overview`,
@@ -536,10 +614,11 @@ async function main() {
     license: "Wonderway (written for this guide from open data)",
     retrieved_at: TODAY,
   }, [
-    `${placeName}: what's in the collection\n\n${placeName} is best known for European paintings from the Renaissance to the 19th century, shown in the rooms of Henry Clay Frick's former house alongside sculpture, furniture, porcelain and other decorative arts. Artists represented include ${topArtists.join(", ")}.`,
-    ...floors.map((floor) => {
-      const rooms = manifest.exhibitions.filter((e) => e.floor === floor);
-      return `${placeName}: rooms on the ${floor.toLowerCase()}\n\n` + rooms.map((r) => {
+    `${placeName}: what's here\n\n${plan.overview_intro ?? ""}${topArtists.length ? ` ${plan.overview_creators_label ?? "Artists represented include"} ${topArtists.join(", ")}.` : ""}`.trim(),
+    ...groups.map((group) => {
+      const rooms = manifest.exhibitions.filter((e) => groupOf(e) === group);
+      const heading = rooms[0]?.floor ? `rooms on the ${group.toLowerCase()}` : `${group}`;
+      return `${placeName}: ${heading}\n\n` + rooms.map((r) => {
         const topics = r.libraries.map((id) => libName.get(id)?.name).filter(Boolean);
         return `${r.name}${topics.length ? `: ${topics.join(", ")}` : ""}.`;
       }).join("\n");
@@ -592,6 +671,35 @@ async function main() {
   }
   console.log(`[pull] placed: ${JSON.stringify(placed)}`);
 
+  // each room with its own Wikidata item (an outdoor site) gets that item's
+  // Commons image in <room>/vision/, for visual descriptions and its card
+  const sites = manifest.exhibitions.filter((e) => e.wikidata);
+  if (sites.length && !rejected.has("commons")) {
+    type B = Record<string, { value: string } | undefined>;
+    const res = await politeJson<{ results: { bindings: B[] } }>(
+      `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(
+        `SELECT ?i (SAMPLE(?img) AS ?image) WHERE { VALUES ?i { ${sites.map((e) => `wd:${e.wikidata}`).join(" ")} } ?i wdt:P18 ?img } GROUP BY ?i`,
+      )}`,
+      { cacheKey: `wikidata:site-images:${sites.map((e) => e.wikidata).join(",")}:${TODAY}`, accept: "application/sparql-results+json" },
+    );
+    const fileOf = new Map(
+      res.results.bindings.map((b) => [
+        b.i!.value.split("/").pop()!,
+        decodeURIComponent(b.image!.value.split("/Special:FilePath/")[1] ?? "").replace(/_/g, " "),
+      ]),
+    );
+    const siteImages = await fetchCommonsInfo([...fileOf.values()].filter(Boolean));
+    let siteImageCount = 0;
+    for (const e of sites) {
+      const file = fileOf.get(e.wikidata!);
+      if (!file) continue;
+      const before = report.images;
+      await writeImage(`${PLACE_DIR}/${e.folder}`, { label: e.name, image: file, types: [] } as unknown as ObjectRow, siteImages.get(file));
+      if (report.images > before) siteImageCount++;
+    }
+    console.log(`[pull] site images: ${siteImageCount} of ${sites.length} sites`);
+  }
+
   // room settings: prompt, optional greeting, card blurb + image
   let cards = 0;
   for (const e of manifest.exhibitions) {
@@ -605,7 +713,8 @@ async function main() {
     write(`${PLACE_DIR}/${e.folder}/card.txt`, `${card.blurb}\n`);
     cards++;
     if (!card.image_object_id) continue;
-    const src = objectFolder.get(card.image_object_id);
+    // "site" = the room's own image (outdoor sites), else a placed object's
+    const src = card.image_object_id === "site" ? `${PLACE_DIR}/${e.folder}` : objectFolder.get(card.image_object_id);
     const visionDir = src ? join(STAGE, src, "vision") : null;
     const image = visionDir && existsSync(visionDir)
       ? readdirSync(visionDir).find((f) => /\.(jpe?g|png|webp)$/i.test(f))
@@ -617,6 +726,14 @@ async function main() {
     const ext = image.split(".").pop()!.toLowerCase().replace("jpeg", "jpg");
     cpSync(join(visionDir, image), join(STAGE, PLACE_DIR, e.folder, `card.${ext}`));
     report.files++;
+    // the credit shown under the card on the landing page (required for CC BY/BY-SA)
+    const visionMeta = join(visionDir, "metadata.json");
+    if (existsSync(visionMeta)) {
+      const vm = JSON.parse(readFileSync(visionMeta, "utf8")) as { attribution?: string; source_url?: string };
+      if (vm.attribution) {
+        write(`${PLACE_DIR}/${e.folder}/card-credit.txt`, `Photo: ${vm.attribution}\n${vm.source_url ?? ""}\n`);
+      }
+    }
   }
   if (cards) console.log(`[pull] room settings: ${cards} rooms${plan.room_greetings ? " (with greetings)" : ""}`);
   console.log(`[pull] objects: ${objects.length}; images: ${report.images}, skipped ${report.images_skipped.length}`);
@@ -681,7 +798,7 @@ async function writeImage(
       source_url: img.pageUrl,
       source_publisher: "Wikimedia Commons",
       license: img.licenseShort || img.license,
-      attribution: `${img.artist ?? "Unknown author"}, ${img.licenseShort || img.license}, via Wikimedia Commons`,
+      attribution: `${img.artist?.replace(/[.\s]+$/, "") || "Unknown author"}, ${img.licenseShort || img.license}, via Wikimedia Commons`,
       retrieved_at: TODAY,
     }));
     writeBinary(`${folder}/vision/${slugify(o.label)}.${ext}`, bytes);

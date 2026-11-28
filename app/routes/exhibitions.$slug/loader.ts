@@ -13,7 +13,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const { data: relationship, error } = await supabase
     .from("location_relationships")
-    .select("name, description, large_image, thumbnail, child_id")
+    .select("name, description, large_image, thumbnail, child_id, image_credit, image_credit_url")
     .eq("child_id", slug)
     .eq("child_type", "exhibition")
     .maybeSingle();

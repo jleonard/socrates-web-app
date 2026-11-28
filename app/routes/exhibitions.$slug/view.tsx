@@ -12,11 +12,30 @@ export default function ExhibitionPage() {
   return (
     <div className="mx-auto max-w-[400px] px-4 pt-10 flex flex-col gap-1">
       {exhibition?.large_image && (
-        <img
-          src={exhibition?.large_image}
-          alt={exhibition?.name ?? ""}
-          className="mb-6 w-full max-h-[45vh] rounded-lg object-cover"
-        />
+        <figure className="mb-6">
+          <img
+            src={exhibition?.large_image}
+            alt={exhibition?.name ?? ""}
+            className="w-full max-h-[45vh] rounded-lg object-cover"
+          />
+          {/* Required for CC BY / BY-SA card photos (card-credit.txt in the Dropbox room). */}
+          {exhibition?.image_credit && (
+            <figcaption className="mt-1 text-[11px] leading-snug text-neutral-500">
+              {exhibition.image_credit_url ? (
+                <a
+                  href={exhibition.image_credit_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-neutral-300 underline-offset-2"
+                >
+                  {exhibition.image_credit}
+                </a>
+              ) : (
+                exhibition.image_credit
+              )}
+            </figcaption>
+          )}
+        </figure>
       )}
       {/* Sticks to the bottom of <main>, i.e. just above the ControlBar; the image scrolls behind it. */}
       <div className="sticky bottom-0 -mx-4 px-4 pt-3 pb-3 flex flex-col gap-1 bg-neutral-50">

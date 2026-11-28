@@ -1,0 +1,220 @@
+{
+  "venue": "central-park",
+  "wikidata_located_in": "Q160409",
+  "object_types_exclude": [
+    "baseball game",
+    "event",
+    "occurrence",
+    "criminal case",
+    "festival",
+    "concert",
+    "street",
+    "neighborhood",
+    "traffic circle",
+    "literary work",
+    "census",
+    "photograph",
+    "creative work",
+    "installation",
+    "zoo",
+    "nightclub",
+    "restaurant",
+    "puppetry",
+    "amusement park",
+    "playground",
+    "tennis"
+  ],
+  "object_exclude": [
+    "Q954207",
+    "Q18157051",
+    "Q4651893",
+    "Q104523216",
+    "Q104484727"
+  ],
+  "object_id_prefix": "cp-",
+  "overview_intro": "Central Park is an 843-acre public park in Manhattan, designed by Frederick Law Olmsted and Calvert Vaux and built from 1858, with lawns, woodlands, lakes, bridges and more than a hundred monuments and statues.",
+  "overview_creators_label": "Sculptors and designers represented include",
+  "artists_library": "lib-artists",
+  "room_greetings": false,
+  "about": {
+    "history_articles": [
+      "Central Park",
+      "Central Park Conservancy",
+      "Public art in Central Park",
+      "List of arches and bridges in Central Park"
+    ],
+    "archive_items": [
+      {
+        "id": "annualreportofbo00newy_10",
+        "folder": "annual-report-1858",
+        "title": "Second Annual Report of the Board of Commissioners of the Central Park (1858)",
+        "source_year": 1859
+      },
+      {
+        "id": "annualreportofbo1860newy",
+        "folder": "annual-report-1859",
+        "title": "Third Annual Report of the Board of Commissioners of the Central Park (1859)",
+        "source_year": 1860
+      },
+      {
+        "id": "annualreportofbo00newy_8",
+        "folder": "annual-report-1861",
+        "title": "Fifth Annual Report of the Board of Commissioners of the Central Park (1861)",
+        "source_year": 1862
+      },
+      {
+        "id": "annualreportofbo00newy_7",
+        "folder": "annual-report-1862",
+        "title": "Sixth Annual Report of the Board of Commissioners of the Central Park (1862)",
+        "source_year": 1863
+      },
+      {
+        "id": "annualreportofbo00newy_3",
+        "folder": "annual-report-1867",
+        "title": "Eleventh Annual Report of the Board of Commissioners of the Central Park (1867)",
+        "source_year": 1868
+      },
+      {
+        "id": "annualreportofbo00newy_4",
+        "folder": "annual-report-1868",
+        "title": "Twelfth Annual Report of the Board of Commissioners of the Central Park (1868)",
+        "source_year": 1869
+      },
+      {
+        "id": "annualreportofbo00newy_2",
+        "folder": "annual-report-1869",
+        "title": "Thirteenth Annual Report of the Board of Commissioners of the Central Park (1869)",
+        "source_year": 1870
+      },
+      {
+        "id": "descriptionofnew00cook",
+        "folder": "cook-1869",
+        "title": "Clarence Cook, A Description of the New York Central Park",
+        "source_year": 1869
+      },
+      {
+        "id": "treesshrubsofcen00peetrich",
+        "folder": "peet-1903",
+        "title": "Louis Harman Peet, Trees and Shrubs of Central Park",
+        "source_year": 1903
+      }
+    ]
+  },
+  "room_articles": {
+    "cp-seneca-village": [
+      "Seneca Village"
+    ],
+    "cp-arsenal": [
+      "Arsenal (Central Park)"
+    ],
+    "cp-cleopatras-needle": [
+      "Cleopatra's Needle (New York City)"
+    ],
+    "cp-strawberry-fields": [
+      "Strawberry Fields (memorial)"
+    ],
+    "cp-the-mall": [
+      "Central Park Mall"
+    ],
+    "cp-alice-in-wonderland": [
+      "Alice in Wonderland (sculpture)"
+    ],
+    "cp-balto": [
+      "Statue of Balto"
+    ],
+    "cp-bethesda-terrace": [
+      "Bethesda Terrace and Fountain"
+    ],
+    "cp-bow-bridge": [
+      "Bow Bridge (Central Park)"
+    ],
+    "cp-belvedere-castle": [
+      "Belvedere Castle"
+    ],
+    "cp-the-dairy": [
+      "The Dairy"
+    ],
+    "cp-the-pond": [
+      "The Pond and Hallett Nature Sanctuary"
+    ],
+    "cp-the-ramble": [
+      "The Ramble and Lake"
+    ],
+    "cp-great-lawn": [
+      "Great Lawn and Turtle Pond"
+    ],
+    "cp-sheep-meadow": [
+      "Sheep Meadow"
+    ],
+    "cp-reservoir": [
+      "Jacqueline Kennedy Onassis Reservoir"
+    ],
+    "cp-north-woods": [
+      "North Woods and North Meadow"
+    ],
+    "cp-harlem-meer": [
+      "Harlem Meer"
+    ],
+    "cp-conservatory-garden": [
+      "Conservatory Garden"
+    ],
+    "cp-conservatory-water": [
+      "Conservatory Water"
+    ],
+    "cp-carousel": [
+      "Central Park Carousel"
+    ],
+    "cp-wollman-rink": [
+      "Wollman Rink"
+    ],
+    "cp-delacorte-theater": [
+      "Delacorte Theater"
+    ]
+  },
+  "libraries": {
+    "lib-olmsted-vaux-landscape": [
+      "Frederick Law Olmsted",
+      "Calvert Vaux",
+      "Jacob Wrey Mould",
+      "Andrew Jackson Downing",
+      "Landscape architecture",
+      "Picturesque",
+      "English landscape garden",
+      "Urban park",
+      "Prospect Park (Brooklyn)"
+    ],
+    "lib-19th-century-new-york": [
+      "History of New York City (1855–1897)",
+      "Commissioners' Plan of 1811",
+      "Croton Aqueduct",
+      "New York City draft riots",
+      "African Americans in New York City",
+      "Eminent domain in the United States"
+    ],
+    "lib-nyc-birds-and-wildlife": [
+      "Bird migration",
+      "New World warbler",
+      "Red-tailed hawk",
+      "Pale Male",
+      "Eastern gray squirrel",
+      "Urban wildlife",
+      "Birdwatching"
+    ],
+    "lib-public-sculpture-nyc": [
+      "Emma Stebbins",
+      "John Quincy Adams Ward",
+      "José de Creeft",
+      "Frederick Roth",
+      "Bronze sculpture",
+      "Lost-wax casting"
+    ],
+    "lib-beatles-and-john-lennon": [
+      "John Lennon",
+      "Yoko Ono",
+      "The Beatles",
+      "Imagine (song)",
+      "Murder of John Lennon",
+      "The Dakota"
+    ]
+  }
+}

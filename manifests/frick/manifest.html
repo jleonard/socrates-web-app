@@ -135,8 +135,8 @@ ${(M.decisions||[]).length?`<section aria-labelledby="h-dec"><div class="section
 <section aria-labelledby="h-rooms"><div class="section-head"><h2 id="h-rooms">Rooms and their libraries</h2>
   <p class="small">Each room's <code>libraries.json</code>. At the place level the guide uses every room's libraries plus the venue-wide list: ${tags(M.place_libraries)}</p></div>
   <div class="tablebox"><table>
-    <thead><tr><th>Room</th><th>Floor</th><th>exhibition_id</th><th>Libraries</th><th>Notes</th></tr></thead>
-    <tbody>${(M.exhibitions||[]).map(e=>`<tr><td><strong>${esc(e.name)}</strong><div class="small mono">${esc(e.folder)}</div></td><td class="small">${esc(e.floor)}</td><td class="id">${esc(e.id)}</td><td>${tags(e.libraries)}</td><td class="small">${esc(e.notes)}</td></tr>`).join("")}</tbody>
+    <thead><tr><th>Room</th><th>${(M.exhibitions||[]).some(e=>e.area)?"Area":"Floor"}</th><th>exhibition_id</th><th>Libraries</th><th>Notes</th></tr></thead>
+    <tbody>${(M.exhibitions||[]).map(e=>`<tr><td><strong>${esc(e.name)}</strong><div class="small mono">${esc(e.folder)}</div></td><td class="small">${esc(e.floor??e.area)}${e.area?`<div class="mono">${e.lat!=null?esc(e.lat+", "+e.lng):"no coordinates yet"}</div>`:""}</td><td class="id">${esc(e.id)}</td><td>${tags(e.libraries)}</td><td class="small">${esc(e.notes)}</td></tr>`).join("")}</tbody>
   </table></div>
 </section>
 
@@ -195,7 +195,7 @@ ${M.go_live?`<section aria-labelledby="h-live"><div class="section-head"><h2 id=
   <div class="tablebox"><table>
     <thead><tr><th>Type</th><th>ID field</th><th>Name</th><th>Place</th></tr></thead>
     <tbody><tr><td>Place</td><td class="id">place_id: ${esc(M.place.place_id)}</td><td><strong>${esc(M.place.name)}</strong></td><td class="small">—</td></tr>
-    ${(M.exhibitions||[]).map(e=>`<tr><td>${M.go_live.rooms_in_dropbox?"Room (Dropbox)":"Exhibition"}</td><td class="id">exhibition_id: ${esc(e.id)}</td><td><strong>${esc(e.name)}</strong><div class="small">${esc(e.floor)}</div></td><td class="id">${esc(M.place.place_id)}</td></tr>`).join("")}</tbody>
+    ${(M.exhibitions||[]).map(e=>`<tr><td>${M.go_live.rooms_in_dropbox?"Room (Dropbox)":"Exhibition"}</td><td class="id">exhibition_id: ${esc(e.id)}</td><td><strong>${esc(e.name)}</strong><div class="small">${esc(e.floor??e.area)}</div></td><td class="id">${esc(M.place.place_id)}</td></tr>`).join("")}</tbody>
   </table></div>
   ${M.strapi_copy?`<h3>Prompt and greeting for each entry</h3><p class="small">${esc(M.strapi_copy.note)}</p>
   ${[{label:"Place",id:"place_id: "+M.strapi_copy.place.place_id,name:M.strapi_copy.place.name,c:M.strapi_copy.place},...(M.exhibitions||[]).filter(e=>M.strapi_copy.exhibitions[e.id]).map(e=>({label:e.room?"Room "+e.room:"Exhibition",id:"exhibition_id: "+e.id,name:e.name,c:M.strapi_copy.exhibitions[e.id]}))].map(x=>`<details class="copy-entry"><summary><span class="small">${esc(x.label)}</span>${esc(x.name)}<span class="id">${esc(x.id)}</span></summary>

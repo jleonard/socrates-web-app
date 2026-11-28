@@ -20,6 +20,7 @@ import {
   InvalidRoomFile,
   type RoomFileKind,
   ROOM_FILE_KINDS,
+  parseCardCredit,
   parseMispronunciations,
 } from "./room";
 
@@ -112,7 +113,7 @@ export async function removeRooms(supabase: SupabaseClient, ids: string[]): Prom
   for (const id of owned) {
     for (const kind of ROOM_FILE_KINDS) {
       // the row goes below, so card fields need no update
-      if (kind !== "card_text" && kind !== "card_image") await clearRoomFile(supabase, kind, id);
+      if (!kind.startsWith("card_")) await clearRoomFile(supabase, kind, id);
     }
   }
   const { error } = await supabase
@@ -134,7 +135,12 @@ async function placeLanguage(placeId: string): Promise<string> {
 async function updateRow(
   supabase: SupabaseClient,
   exhibitionId: string,
-  fields: { description?: string | null; large_image?: string | null },
+  fields: {
+    description?: string | null;
+    large_image?: string | null;
+    image_credit?: string | null;
+    image_credit_url?: string | null;
+  },
 ) {
   const { error } = await supabase
     .from("location_relationships")
@@ -200,6 +206,15 @@ export async function applyRoomFile(
       await updateRow(supabase, exhibitionId, { large_image: url });
       return null;
     }
+
+    case "card_credit": {
+      const credit = parseCardCredit(text());
+      await updateRow(supabase, exhibitionId, {
+        image_credit: credit.text,
+        image_credit_url: credit.url,
+      });
+      return null;
+    }
   }
 }
 
@@ -228,6 +243,9 @@ export async function clearRoomFile(
     case "card_image":
       // old images stay in S3 (their keys are unique); only the link goes
       await updateRow(supabase, exhibitionId, { large_image: null });
+      return;
+    case "card_credit":
+      await updateRow(supabase, exhibitionId, { image_credit: null, image_credit_url: null });
       return;
   }
 }

@@ -1,0 +1,278 @@
+{
+ "note": "Draft copy. prompt = venue context the guide reads as a source (the place prompt and the site prompt both apply at a site). greeting = spoken when a visitor opens the place or a site (site greetings are off: room_greetings is false). Card images may be public domain, CC0, CC BY or CC BY-SA: each card carries its photo credit (card-credit.txt), shown under the image on the landing page.",
+ "place": {
+  "place_id": "central-park-nyc",
+  "name": "Central Park",
+  "prompt": "The visitor is in Central Park, the 843-acre public park in the middle of Manhattan, bordered by Central Park South (59th Street), Central Park North (110th Street), Fifth Avenue and Central Park West. Frederick Law Olmsted and Calvert Vaux designed it with their Greensward Plan, which won the park's design competition in 1858. Construction began in 1857 and the park was completed in 1876. To build it, the city seized existing homes and settlements through eminent domain and razed them, including Seneca Village, a majority-Black settlement on the west side between about 82nd and 89th Streets. Central Park has been a National Historic Landmark district since 1962 and a New York City scenic landmark since 1974, and it is managed by the Central Park Conservancy under an agreement with the city.\n\nSites in the park, roughly south to north: the Pond, Hallett Nature Sanctuary and Gapstow Bridge; Wollman Rink; the Dairy; the Carousel; the Arsenal; Balto; the Mall and Literary Walk; Sheep Meadow; Bethesda Terrace and Fountain; Strawberry Fields and the Imagine mosaic; Bow Bridge; Conservatory Water with the Alice in Wonderland and Hans Christian Andersen statues; the Ramble and the Lake; Belvedere Castle and the Shakespeare Garden; the Delacorte Theater; the Great Lawn and Turtle Pond; Cleopatra's Needle; Seneca Village; the Jacqueline Kennedy Onassis Reservoir; the North Woods, the Ravine and North Meadow; the Conservatory Garden; and the Harlem Meer. The Central Park Zoo is run separately by the Wildlife Conservation Society.\n\nMost of the park's sculptures were not part of the Greensward Plan; they were added later, many at the request of donors.",
+  "greeting": "Hi, I'm Wonder! Welcome to Central Park. Ask me about anything around you, from Seneca Village and Bethesda Fountain to the statues on the Mall and the birds of the Ramble. Try it in your own language, and press talk whenever you're ready."
+ },
+ "exhibitions": {
+  "cp-seneca-village": {
+   "name": "Seneca Village",
+   "room": null,
+   "prompt": "The visitor is at Seneca Village in Central Park, Manhattan. A largely Black community of landowners, with churches and a school, displaced by eminent domain in 1857 to build the park. Stated plainly, from sources. Topics for this site: 19th-century New York.",
+   "greeting": "Welcome to Seneca Village! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "A largely Black community of landowners, with churches and a school, displaced by eminent domain in 1857 to build the park.",
+    "image_object_id": "site",
+    "image_title": "Seneca Village"
+   }
+  },
+  "cp-arsenal": {
+   "name": "The Arsenal",
+   "room": null,
+   "prompt": "The visitor is at The Arsenal in Central Park, Manhattan. Built 1847–51, before the park; NYC Parks headquarters. Next to the zoo, which is a separate venue. Topics for this site: 19th-century New York.",
+   "greeting": "Welcome to The Arsenal! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Built 1847–51, before the park; NYC Parks headquarters.",
+    "image_object_id": "site",
+    "image_title": "The Arsenal"
+   }
+  },
+  "cp-cleopatras-needle": {
+   "name": "Cleopatra's Needle",
+   "room": null,
+   "prompt": "The visitor is at Cleopatra's Needle in Central Park, Manhattan. Ancient Egyptian obelisk of Thutmose III, erected behind the Met in 1881.",
+   "greeting": "Welcome to Cleopatra's Needle! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Ancient Egyptian obelisk of Thutmose III, erected behind the Met in 1881.",
+    "image_object_id": "site",
+    "image_title": "Cleopatra's Needle"
+   }
+  },
+  "cp-strawberry-fields": {
+   "name": "Strawberry Fields",
+   "room": null,
+   "prompt": "The visitor is at Strawberry Fields in Central Park, Manhattan. Memorial to John Lennon with the Imagine mosaic. Song lyrics are never quoted. The murder of John Lennon at the Dakota is covered factually. Monuments and features here include Statue of Daniel Webster by Thomas Ball; The Falconer by George Blackall Simonds; Women's Gate. Topics for this site: The Beatles and John Lennon.",
+   "greeting": "Welcome to Strawberry Fields! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Memorial to John Lennon with the Imagine mosaic.",
+    "image_object_id": "site",
+    "image_title": "Strawberry Fields"
+   }
+  },
+  "cp-the-mall": {
+   "name": "The Mall and Literary Walk",
+   "room": null,
+   "prompt": "The visitor is at The Mall and Literary Walk in Central Park, Manhattan. Elm-lined promenade; statues of Shakespeare, Burns, Scott, Halleck and Columbus on the Literary Walk. Monuments and features here include Eagles and Prey by Christopher Fratin; Fitz-Greene Halleck by James Wilson Alexander MacDonald; Indian Hunter by John Quincy Adams Ward; Ludwig van Beethoven by Henry Baerer in Central Park by Henry Baerer; Naumburg Bandshell; Sir Walter Scott by John Steell; Statue of Christopher Columbus by Napoleon LeBrun, Jeronimo Suñol; Statue of Robert Burns by John Steell; William Shakespeare by John Quincy Adams Ward; Women's Rights Pioneers Monument by Meredith Bergmann. Topics for this site: Public sculpture in New York.",
+   "greeting": "Welcome to The Mall and Literary Walk! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Elm-lined promenade; statues of Shakespeare, Burns, Scott, Halleck and Columbus on the Literary Walk.",
+    "image_object_id": "site",
+    "image_title": "The Mall and Literary Walk"
+   }
+  },
+  "cp-alice-in-wonderland": {
+   "name": "Alice in Wonderland",
+   "room": null,
+   "prompt": "The visitor is at Alice in Wonderland in Central Park, Manhattan. José de Creeft's bronze (1959) at Conservatory Water. Monuments and features here include Glade Arch (Central Park); Still Hunt. Topics for this site: Public sculpture in New York.",
+   "greeting": "Welcome to Alice in Wonderland! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "José de Creeft's bronze (1959) at Conservatory Water.",
+    "image_object_id": "site",
+    "image_title": "Alice in Wonderland"
+   }
+  },
+  "cp-hans-christian-andersen": {
+   "name": "Hans Christian Andersen",
+   "room": null,
+   "prompt": "The visitor is at Hans Christian Andersen in Central Park, Manhattan. Georg Lober's bronze (1956); summer storytelling. Topics for this site: Public sculpture in New York.",
+   "greeting": "Welcome to Hans Christian Andersen! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Georg Lober's bronze (1956); summer storytelling.",
+    "image_object_id": "site",
+    "image_title": "Hans Christian Andersen"
+   }
+  },
+  "cp-balto": {
+   "name": "Balto",
+   "room": null,
+   "prompt": "The visitor is at Balto in Central Park, Manhattan. Frederick Roth's statue (1925) of the sled dog from the 1925 serum run to Nome. Monuments and features here include Willowdell Arch (Central Park). Topics for this site: Public sculpture in New York.",
+   "greeting": "Welcome to Balto! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Frederick Roth's statue (1925) of the sled dog from the 1925 serum run to Nome.",
+    "image_object_id": "site",
+    "image_title": "Balto"
+   }
+  },
+  "cp-bethesda-terrace": {
+   "name": "Bethesda Terrace and Fountain",
+   "room": null,
+   "prompt": "The visitor is at Bethesda Terrace and Fountain in Central Park, Manhattan. The park's formal centre; Emma Stebbins's Angel of the Waters (1873), the first public art commission for a woman in New York City. Topics for this site: Olmsted, Vaux and the picturesque park, Public sculpture in New York.",
+   "greeting": "Welcome to Bethesda Terrace and Fountain! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "The park's formal centre; Emma Stebbins's Angel of the Waters (1873), the first public art commission for a woman in New York City.",
+    "image_object_id": "site",
+    "image_title": "Bethesda Terrace and Fountain"
+   }
+  },
+  "cp-bow-bridge": {
+   "name": "Bow Bridge",
+   "room": null,
+   "prompt": "The visitor is at Bow Bridge in Central Park, Manhattan. Cast-iron bridge over the Lake (1862), Vaux and Mould. HABS documented it. Topics for this site: Olmsted, Vaux and the picturesque park.",
+   "greeting": "Welcome to Bow Bridge! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Cast-iron bridge over the Lake (1862), Vaux and Mould."
+   }
+  },
+  "cp-belvedere-castle": {
+   "name": "Belvedere Castle",
+   "room": null,
+   "prompt": "The visitor is at Belvedere Castle in Central Park, Manhattan. Vaux and Mould's folly (1869) on Vista Rock; weather station. Topics for this site: Olmsted, Vaux and the picturesque park, New York's birds and urban wildlife.",
+   "greeting": "Welcome to Belvedere Castle! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Vaux and Mould's folly (1869) on Vista Rock; weather station.",
+    "image_object_id": "site",
+    "image_title": "Belvedere Castle"
+   }
+  },
+  "cp-the-dairy": {
+   "name": "The Dairy",
+   "room": null,
+   "prompt": "The visitor is at The Dairy in Central Park, Manhattan. Victorian Gothic building (1870), now a visitor centre. Topics for this site: Olmsted, Vaux and the picturesque park.",
+   "greeting": "Welcome to The Dairy! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Victorian Gothic building (1870), now a visitor centre."
+   }
+  },
+  "cp-the-pond": {
+   "name": "The Pond, Hallett Nature Sanctuary and Gapstow Bridge",
+   "room": null,
+   "prompt": "The visitor is at The Pond, Hallett Nature Sanctuary and Gapstow Bridge in Central Park, Manhattan. South-east corner: the Pond, Gapstow Bridge and the Hallett Nature Sanctuary. Topics for this site: Olmsted, Vaux and the picturesque park, New York's birds and urban wildlife.",
+   "greeting": "Welcome to The Pond, Hallett Nature Sanctuary and Gapstow Bridge! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "South-east corner: the Pond, Gapstow Bridge and the Hallett Nature Sanctuary.",
+    "image_object_id": "site",
+    "image_title": "The Pond, Hallett Nature Sanctuary and Gapstow Bridge"
+   }
+  },
+  "cp-the-ramble": {
+   "name": "The Ramble and the Lake",
+   "room": null,
+   "prompt": "The visitor is at The Ramble and the Lake in Central Park, Manhattan. Wooded paths around the Lake; one of the country's best spring migration spots for birds. Monuments and features here include Ramble Arch (Central Park). Topics for this site: Olmsted, Vaux and the picturesque park, New York's birds and urban wildlife.",
+   "greeting": "Welcome to The Ramble and the Lake! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Wooded paths around the Lake; one of the country's best spring migration spots for birds.",
+    "image_object_id": "site",
+    "image_title": "The Ramble and the Lake"
+   }
+  },
+  "cp-great-lawn": {
+   "name": "The Great Lawn and Turtle Pond",
+   "room": null,
+   "prompt": "The visitor is at The Great Lawn and Turtle Pond in Central Park, Manhattan. Former receiving reservoir (drained 1930s); concerts and ballfields. Monuments and features here include King Jagiello Monument by Stanisław Kazimierz Ostrowski. Topics for this site: 19th-century New York, New York's birds and urban wildlife.",
+   "greeting": "Welcome to The Great Lawn and Turtle Pond! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Former receiving reservoir (drained 1930s); concerts and ballfields.",
+    "image_object_id": "site",
+    "image_title": "The Great Lawn and Turtle Pond"
+   }
+  },
+  "cp-sheep-meadow": {
+   "name": "Sheep Meadow",
+   "room": null,
+   "prompt": "The visitor is at Sheep Meadow in Central Park, Manhattan. Grazed by sheep until 1934; a quiet lawn. Monuments and features here include Seventh Regiment Memorial by John Quincy Adams Ward. Topics for this site: Olmsted, Vaux and the picturesque park.",
+   "greeting": "Welcome to Sheep Meadow! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Grazed by sheep until 1934; a quiet lawn.",
+    "image_object_id": "site",
+    "image_title": "Sheep Meadow"
+   }
+  },
+  "cp-reservoir": {
+   "name": "Jacqueline Kennedy Onassis Reservoir",
+   "room": null,
+   "prompt": "The visitor is at Jacqueline Kennedy Onassis Reservoir in Central Park, Manhattan. Croton water system reservoir (1862); running track; waterbirds. Monuments and features here include Engineers' Gate; Fred Lebow Statue by Jesus Ygnacio Dominguez. Topics for this site: 19th-century New York, New York's birds and urban wildlife.",
+   "greeting": "Welcome to Jacqueline Kennedy Onassis Reservoir! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Croton water system reservoir (1862); running track; waterbirds."
+   }
+  },
+  "cp-north-woods": {
+   "name": "North Woods, the Ravine and North Meadow",
+   "room": null,
+   "prompt": "The visitor is at North Woods, the Ravine and North Meadow in Central Park, Manhattan. The park's wildest landscape: the Loch, the Ravine, Huddlestone Arch. Topics for this site: Olmsted, Vaux and the picturesque park, New York's birds and urban wildlife.",
+   "greeting": "Welcome to North Woods, the Ravine and North Meadow! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "The park's wildest landscape: the Loch, the Ravine, Huddlestone Arch.",
+    "image_object_id": "site",
+    "image_title": "North Woods, the Ravine and North Meadow"
+   }
+  },
+  "cp-harlem-meer": {
+   "name": "Harlem Meer",
+   "room": null,
+   "prompt": "The visitor is at Harlem Meer in Central Park, Manhattan. Lake at the north-east corner; Dana Discovery Center. Monuments and features here include Farmers' Gate. Topics for this site: New York's birds and urban wildlife.",
+   "greeting": "Welcome to Harlem Meer! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Lake at the north-east corner; Dana Discovery Center.",
+    "image_object_id": "site",
+    "image_title": "Harlem Meer"
+   }
+  },
+  "cp-conservatory-garden": {
+   "name": "Conservatory Garden",
+   "room": null,
+   "prompt": "The visitor is at Conservatory Garden in Central Park, Manhattan. Formal garden in Italian, French and English styles; Vanderbilt Gate.",
+   "greeting": "Welcome to Conservatory Garden! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Formal garden in Italian, French and English styles; Vanderbilt Gate.",
+    "image_object_id": "site",
+    "image_title": "Conservatory Garden"
+   }
+  },
+  "cp-shakespeare-garden": {
+   "name": "Shakespeare Garden",
+   "room": null,
+   "prompt": "The visitor is at Shakespeare Garden in Central Park, Manhattan. Garden of plants named in Shakespeare's works, below Belvedere Castle.",
+   "greeting": "Welcome to Shakespeare Garden! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Garden of plants named in Shakespeare's works, below Belvedere Castle."
+   }
+  },
+  "cp-conservatory-water": {
+   "name": "Conservatory Water",
+   "room": null,
+   "prompt": "The visitor is at Conservatory Water in Central Park, Manhattan. Model boat pond; Alice and Andersen statues nearby. Monuments and features here include Samuel Finley Breese Morse. Topics for this site: Public sculpture in New York.",
+   "greeting": "Welcome to Conservatory Water! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Model boat pond; Alice and Andersen statues nearby.",
+    "image_object_id": "site",
+    "image_title": "Conservatory Water"
+   }
+  },
+  "cp-carousel": {
+   "name": "The Carousel",
+   "room": null,
+   "prompt": "The visitor is at The Carousel in Central Park, Manhattan. Friedrich Carousel (1908), moved here in 1951.",
+   "greeting": "Welcome to The Carousel! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Friedrich Carousel (1908), moved here in 1951.",
+    "image_object_id": "site",
+    "image_title": "The Carousel"
+   }
+  },
+  "cp-wollman-rink": {
+   "name": "Wollman Rink",
+   "room": null,
+   "prompt": "The visitor is at Wollman Rink in Central Park, Manhattan. Skating rink (1949).",
+   "greeting": "Welcome to Wollman Rink! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Skating rink (1949).",
+    "image_object_id": "site",
+    "image_title": "Wollman Rink"
+   }
+  },
+  "cp-delacorte-theater": {
+   "name": "Delacorte Theater",
+   "room": null,
+   "prompt": "The visitor is at Delacorte Theater in Central Park, Manhattan. Open-air theater (1962); Shakespeare in the Park. Monuments and features here include Romeo and Juliet by Milton Hebald.",
+   "greeting": "Welcome to Delacorte Theater! I'm Wonder. Ask me about anything you see here, and press talk when you're ready.",
+   "card": {
+    "blurb": "Open-air theater (1962); Shakespeare in the Park.",
+    "image_object_id": "site",
+    "image_title": "Delacorte Theater"
+   }
+  }
+ }
+}

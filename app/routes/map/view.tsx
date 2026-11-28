@@ -1,11 +1,11 @@
 import { ClientOnly } from "components/ClientOnly/ClientOnly";
+import { LocationPane } from "components/LocationPane/LocationPane";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
   GeolocateControl,
   Layer,
   Map,
   NavigationControl,
-  Popup,
   Source,
   type GeolocateControlInstance,
   type LayerProps,
@@ -13,7 +13,7 @@ import {
   type MapMouseEvent,
 } from "react-map-gl/mapbox";
 
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 
 import { useMemo, useRef, useState } from "react";
 import type { MapLocation } from "~/types";
@@ -55,11 +55,6 @@ const LABEL_TEXT_SIZE = 12; // px
 const LABEL_TEXT_OFFSET_EM = 1.4; // text bottom sits this far above the dot
 const LABEL_PAD_Y = 8;
 const LABEL_PAD_X = 14;
-// Popup tip sits just above a one-line label's box: text offset + one line
-// (Mapbox's default 1.2em line height) + top padding, plus a small gap.
-const POPUP_OFFSET =
-  Math.ceil(LABEL_TEXT_SIZE * (LABEL_TEXT_OFFSET_EM + 1.2)) + LABEL_PAD_Y + 2;
-
 const labelLayer: LayerProps = {
   id: LABEL_LAYER,
   type: "symbol",
@@ -73,7 +68,12 @@ const labelLayer: LayerProps = {
     // White box behind the label, sized to the text.
     "icon-image": LABEL_BG_IMAGE,
     "icon-text-fit": "both",
-    "icon-text-fit-padding": [LABEL_PAD_Y, LABEL_PAD_X, LABEL_PAD_Y, LABEL_PAD_X],
+    "icon-text-fit-padding": [
+      LABEL_PAD_Y,
+      LABEL_PAD_X,
+      LABEL_PAD_Y,
+      LABEL_PAD_X,
+    ],
     // Lower sort key wins placement: on overlap the most prominent label stays.
     "symbol-sort-key": ["-", 0, ["get", "rank"]],
   },
@@ -122,6 +122,7 @@ const MapView: React.FC = () => {
   );
   const [hovering, setHovering] = useState(false);
   const geolocateRef = useRef<GeolocateControlInstance>(null);
+  const navigate = useNavigate();
 
   // Start where the user was last seen (this route or /app), else the
   // loader's default. Only read on the client; the map is client-only.
@@ -150,7 +151,7 @@ const MapView: React.FC = () => {
     [locations],
   );
 
-  // A click on a dot or label opens its popover; anywhere else closes it.
+  // A click on a dot or label opens its pane; anywhere else closes it.
   const handleClick = (e: MapMouseEvent) => {
     const id = e.features?.[0]?.id; // feature id is the map_locations id
     setSelectedLocation(
@@ -159,7 +160,8 @@ const MapView: React.FC = () => {
   };
 
   return (
-    <div style={{ width: "100%", height: "100vh" }}>
+    // Fills <main>, so the pane's bottom edge sits on top of the ControlBar.
+    <div className="relative h-full w-full">
       <ClientOnly fallback={<div>Loading map…</div>}>
         {() => (
           <Map
@@ -214,33 +216,22 @@ const MapView: React.FC = () => {
               <Layer {...dotLayer} />
               <Layer {...labelLayer} />
             </Source>
-            {/* popover */}
-            {selectedLocation && (
-              <Popup
-                longitude={selectedLocation.lng}
-                latitude={selectedLocation.lat}
-                onClose={() => setSelectedLocation(null)}
-                closeOnClick={false}
-                anchor="bottom"
-                offset={POPUP_OFFSET}
-              >
-                <div
-                  style={{ minWidth: 180, fontFamily: "system-ui, sans-serif" }}
-                >
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                    {selectedLocation.name}
-                  </div>
-                  {selectedLocation.description && (
-                    <div style={{ fontSize: 13, opacity: 0.8 }}>
-                      {selectedLocation.description}
-                    </div>
-                  )}
-                </div>
-              </Popup>
-            )}
           </Map>
         )}
       </ClientOnly>
+      {selectedLocation && (
+        <LocationPane
+          key={selectedLocation.id}
+          title={selectedLocation.name}
+          description={selectedLocation.description}
+          onClose={() => setSelectedLocation(null)}
+          onStart={() =>
+            navigate(
+              `/app/?place=${encodeURIComponent(selectedLocation.place_id)}`,
+            )
+          }
+        />
+      )}
     </div>
   );
 };

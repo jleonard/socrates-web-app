@@ -329,6 +329,8 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          image_credit: string | null
+          image_credit_url: string | null
           large_image: string | null
           name: string | null
           parent_id: string | null
@@ -342,6 +344,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          image_credit?: string | null
+          image_credit_url?: string | null
           large_image?: string | null
           name?: string | null
           parent_id?: string | null
@@ -355,6 +359,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          image_credit?: string | null
+          image_credit_url?: string | null
           large_image?: string | null
           name?: string | null
           parent_id?: string | null

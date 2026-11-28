@@ -1,0 +1,182 @@
+{
+ "source": "Wikidata coordinates (P625) of items located in Central Park, nearest site within 250 m",
+ "checked": "2026-11-27",
+ "note": "Review: proximity is a guess (the Mall is long; some statues sit between sites). exhibition_id \"place\" = park level.",
+ "objects": {
+  "cp-Q17507904": {
+   "exhibition_id": "place",
+   "evidence": "Fifth Avenue edge of the park (corrected by hand)",
+   "name": "107th Infantry Memorial"
+  },
+  "cp-Q86968666": {
+   "exhibition_id": "place",
+   "evidence": "nearest site (Seneca Village) is 387 m away",
+   "name": "Bridge No. 27"
+  },
+  "cp-Q17194240": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "nearest site, 137 m",
+   "name": "Eagles and Prey"
+  },
+  "cp-Q102427460": {
+   "exhibition_id": "cp-reservoir",
+   "evidence": "Fifth Avenue at 90th, the Reservoir entrance (corrected by hand)",
+   "name": "Engineers' Gate"
+  },
+  "cp-Q102432016": {
+   "exhibition_id": "cp-harlem-meer",
+   "evidence": "nearest site, 191 m",
+   "name": "Farmers' Gate"
+  },
+  "cp-Q18148488": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "nearest site, 72 m",
+   "name": "Fitz-Greene Halleck"
+  },
+  "cp-Q102431056": {
+   "exhibition_id": "cp-reservoir",
+   "evidence": "by Engineers' Gate at the Reservoir (corrected by hand)",
+   "name": "Fred Lebow Statue"
+  },
+  "cp-Q125458569": {
+   "exhibition_id": "cp-alice-in-wonderland",
+   "evidence": "nearest site, 172 m",
+   "name": "Glade Arch (Central Park)"
+  },
+  "cp-Q28094693": {
+   "exhibition_id": "place",
+   "evidence": "nearest site (Cleopatra's Needle) is 259 m away",
+   "name": "Group of Bears"
+  },
+  "cp-Q104904066": {
+   "exhibition_id": "place",
+   "evidence": "nearest site (Delacorte Theater) is 327 m away",
+   "name": "Hunters' Gate"
+  },
+  "cp-Q17194242": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "nearest site, 144 m",
+   "name": "Indian Hunter"
+  },
+  "cp-Q649312": {
+   "exhibition_id": "cp-great-lawn",
+   "evidence": "east end of Turtle Pond (corrected by hand)",
+   "name": "King Jagiello Monument"
+  },
+  "cp-Q125157564": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "Concert Ground at the Mall's north end (corrected by hand)",
+   "name": "Ludwig van Beethoven by Henry Baerer in Central Park"
+  },
+  "cp-Q104854994": {
+   "exhibition_id": "place",
+   "evidence": "nearest site (The Carousel) is 544 m away",
+   "name": "Merchants' Gate"
+  },
+  "cp-Q104889346": {
+   "exhibition_id": "place",
+   "evidence": "nearest site (Cleopatra's Needle) is 308 m away",
+   "name": "Miners' Gate"
+  },
+  "cp-Q124784443": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "nearest site, 181 m",
+   "name": "Naumburg Bandshell"
+  },
+  "cp-Q63001013": {
+   "exhibition_id": "cp-the-ramble",
+   "evidence": "in the Ramble (corrected by hand)",
+   "name": "Ramble Arch (Central Park)"
+  },
+  "cp-Q17984848": {
+   "exhibition_id": "cp-delacorte-theater",
+   "evidence": "nearest site, 3 m",
+   "name": "Romeo and Juliet"
+  },
+  "cp-Q18156951": {
+   "exhibition_id": "cp-conservatory-water",
+   "evidence": "nearest site, 187 m",
+   "name": "Samuel Finley Breese Morse"
+  },
+  "cp-Q17194243": {
+   "exhibition_id": "cp-sheep-meadow",
+   "evidence": "nearest site, 235 m",
+   "name": "Seventh Regiment Memorial"
+  },
+  "cp-Q18157039": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "Literary Walk statue (corrected by hand)",
+   "name": "Sir Walter Scott"
+  },
+  "cp-Q19473784": {
+   "exhibition_id": "place",
+   "evidence": "East Drive near 83rd Street (corrected by hand)",
+   "name": "Statue of Alexander Hamilton"
+  },
+  "cp-Q6022984": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "Literary Walk statue (corrected by hand)",
+   "name": "Statue of Christopher Columbus"
+  },
+  "cp-Q18148326": {
+   "exhibition_id": "cp-strawberry-fields",
+   "evidence": "nearest site, 90 m",
+   "name": "Statue of Daniel Webster"
+  },
+  "cp-Q24088425": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "Literary Walk statue, no coordinates (corrected by hand)",
+   "name": "Statue of Robert Burns"
+  },
+  "cp-Q104640732": {
+   "exhibition_id": "cp-alice-in-wonderland",
+   "evidence": "nearest site, 195 m",
+   "name": "Still Hunt"
+  },
+  "cp-Q3793894": {
+   "exhibition_id": "cp-strawberry-fields",
+   "evidence": "nearest site, 161 m",
+   "name": "The Falconer"
+  },
+  "cp-Q17194246": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "Literary Walk statue (corrected by hand)",
+   "name": "William Shakespeare"
+  },
+  "cp-Q124784533": {
+   "exhibition_id": "cp-balto",
+   "evidence": "nearest site, 26 m",
+   "name": "Willowdell Arch (Central Park)"
+  },
+  "cp-Q104854625": {
+   "exhibition_id": "cp-strawberry-fields",
+   "evidence": "nearest site, 143 m",
+   "name": "Women's Gate"
+  },
+  "cp-Q104646228": {
+   "exhibition_id": "cp-the-mall",
+   "evidence": "nearest site, 66 m",
+   "name": "Women's Rights Pioneers Monument"
+  },
+  "cp-Q104641697": {
+   "exhibition_id": "place",
+   "evidence": "nearest site (Conservatory Garden) is 733 m away",
+   "name": "Woodmans' Gate"
+  },
+  "cp-Q86249812": {
+   "exhibition_id": "place",
+   "evidence": "Central Park South entrance (corrected by hand)",
+   "name": "equestrian statue of José Martí"
+  },
+  "cp-Q86754008": {
+   "exhibition_id": "place",
+   "evidence": "Central Park South entrance (corrected by hand)",
+   "name": "equestrian statue of José de San Martín"
+  },
+  "cp-Q86249687": {
+   "exhibition_id": "place",
+   "evidence": "Central Park South entrance (corrected by hand)",
+   "name": "equestrian statue of Simón Bolívar"
+  }
+ }
+}

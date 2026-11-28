@@ -11,6 +11,8 @@
  *   mispronunciations.json  [{ "entry": "Fragonard", "aliases": "frago nard\nfragonard" }]
  *   card.txt                landing-page blurb (location_relationships.description)
  *   card.jpg|png|webp       landing-page image, uploaded to S3 (large_image)
+ *   card-credit.txt         the image's credit: line 1 the credit text, line 2
+ *                           an optional link to its source (image_credit, image_credit_url)
  *
  * In any other folder the same names are ordinary content. Pure helpers
  * here; the side effects live in room.server.ts.
@@ -21,7 +23,8 @@ export type RoomFileKind =
   | "greeting"
   | "mispronunciations"
   | "card_text"
-  | "card_image";
+  | "card_image"
+  | "card_credit";
 
 export const ROOM_FILE_KINDS: RoomFileKind[] = [
   "prompt",
@@ -29,6 +32,7 @@ export const ROOM_FILE_KINDS: RoomFileKind[] = [
   "mispronunciations",
   "card_text",
   "card_image",
+  "card_credit",
 ];
 
 const BY_NAME: Record<string, RoomFileKind> = {
@@ -36,6 +40,7 @@ const BY_NAME: Record<string, RoomFileKind> = {
   "greeting.txt": "greeting",
   "mispronunciations.json": "mispronunciations",
   "card.txt": "card_text",
+  "card-credit.txt": "card_credit",
 };
 
 /** The room setting a file name stands for, or null for ordinary files. */
@@ -54,6 +59,13 @@ export function roomIdFromMetadata(metadata: unknown): string | null {
 
 /** A settings file whose content is invalid: report and skip, don't retry. */
 export class InvalidRoomFile extends Error {}
+
+/** card-credit.txt → credit text (line 1) and optional http(s) link (line 2). */
+export function parseCardCredit(text: string): { text: string | null; url: string | null } {
+  const [first, second] = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const url = second && /^https?:\/\//.test(second) ? second : null;
+  return { text: first ?? null, url };
+}
 
 export type Mispronunciation = { entry: string; aliases: string };
 
